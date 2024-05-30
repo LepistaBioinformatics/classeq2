@@ -14,6 +14,7 @@ use std::collections::{HashMap, HashSet};
 /// ```
 ///
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KmersMap(HashMap<String, HashSet<i32>>);
 
 impl KmersMap {

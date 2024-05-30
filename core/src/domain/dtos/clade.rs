@@ -3,6 +3,7 @@ use super::annotation::Annotation;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum NodeType {
     Internal,
     Root,
@@ -10,6 +11,7 @@ pub enum NodeType {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Clade {
     pub id: i32,
     pub name: Option<String>,
@@ -17,25 +19,21 @@ pub struct Clade {
     pub support: Option<f64>,
     pub length: Option<f64>,
     pub parent: Option<i32>,
-    pub children: Option<Vec<Self>>,
     pub annotation: Option<Annotation>,
+    pub children: Option<Vec<Self>>,
 }
 
 impl Clade {
-    pub(super) fn new_root(
-        name: Option<String>,
-        length: f64,
-        children: Option<Vec<Clade>>,
-    ) -> Clade {
+    pub(super) fn new_root(length: f64, children: Option<Vec<Clade>>) -> Clade {
         Clade {
             id: 0,
-            name,
+            name: None,
             node_type: NodeType::Root,
             support: None,
             length: Some(length),
             parent: None,
-            children,
             annotation: None,
+            children,
         }
     }
 
@@ -52,8 +50,8 @@ impl Clade {
             support: None,
             length,
             parent,
-            children: None,
             annotation: None,
+            children: None,
         }
     }
 
@@ -72,8 +70,8 @@ impl Clade {
             support,
             length,
             parent,
-            children,
             annotation: None,
+            children,
         }
     }
 

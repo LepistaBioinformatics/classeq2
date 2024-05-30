@@ -1,11 +1,13 @@
 use super::clade::Clade;
 
+use mycelium_base::utils::errors::MappedErrors;
 use phylotree::tree::Tree as PhyloTree;
 use serde::{Deserialize, Serialize};
 use std::{ffi::OsStr, fs::read_to_string, path::Path};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Tree {
     /// The unique identifier for the tree.
     ///
@@ -81,7 +83,7 @@ impl Tree {
     ///
     /// The phylotre::tree::Tree is parsed from the file and converted to a Tree
     /// object with a root Clade.
-    pub fn from_file(tree_path: &Path) -> Tree {
+    pub fn from_file(tree_path: &Path) -> Result<Tree, MappedErrors> {
         assert!(tree_path.extension() == Some(OsStr::new("nwk")));
 
         let newick_content =
@@ -100,7 +102,7 @@ impl Tree {
             None
         };
 
-        let root_clade = Clade::new_root(root_name.to_owned(), 0.0, None);
+        let root_clade = Clade::new_root(0.0, None);
 
         let root_tree = match tree.get_root() {
             Err(err) => panic!("Could not get root: {err}"),
@@ -122,7 +124,7 @@ impl Tree {
 
         new_tree.root.children = response;
 
-        new_tree
+        Ok(new_tree)
     }
 
     /// Recursively extract children nodes from a PhyloTree.
@@ -206,12 +208,6 @@ impl Tree {
                     } else {
                         return None;
                     }
-
-                    //if let Some(nested_children) = Self::get_children_nodes(tree, &child) {
-                    //    children.extend(nested_children);
-                    //} else {
-                    //    return None;
-                    //};
                 }
             }
 
@@ -233,6 +229,8 @@ mod tests {
 
         let tree = Tree::from_file(&path);
 
-        tree.pretty_print();
+        assert!(tree.is_ok());
+
+        tree.unwrap().pretty_print();
     }
 }
