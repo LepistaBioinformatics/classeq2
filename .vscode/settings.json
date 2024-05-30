@@ -1,8 +1,13 @@
 {
     "cSpell.words": [
         "clades",
+        "classeq",
+        "hashset",
         "kmer",
         "kmers",
-        "newick"
+        "newick",
+        "Phylo",
+        "phylotre",
+        "phylotree"
     ]
 }

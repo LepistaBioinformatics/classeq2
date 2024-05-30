@@ -29,7 +29,11 @@ impl KmersMap {
     /// set and the function will return false. Otherwise, the kmer will be
     /// inserted and the function will return true.
     ///
-    pub fn insert_or_append(&mut self, kmer: String, nodes: HashSet<i32>) -> bool {
+    pub fn insert_or_append(
+        &mut self,
+        kmer: String,
+        nodes: HashSet<i32>,
+    ) -> bool {
         if self.0.contains_key(&kmer) {
             self.0.get_mut(&kmer).unwrap().extend(nodes);
             return false;
@@ -209,7 +213,10 @@ impl KmersMap {
     /// ].iter().cloned().collect());
     /// ```
     ///
-    pub fn get_existing_kmers(&self, kmers: &HashSet<String>) -> HashSet<String> {
+    pub fn get_existing_kmers(
+        &self,
+        kmers: &HashSet<String>,
+    ) -> HashSet<String> {
         kmers
             .par_iter()
             .filter(|kmer| self.0.contains_key(*kmer))
