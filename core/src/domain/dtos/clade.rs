@@ -1,4 +1,4 @@
-use super::{annotation::Annotation, clade_kmers::CladeKmers};
+use super::annotation::Annotation;
 
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +19,6 @@ pub struct Clade {
     pub parent: Option<i32>,
     pub children: Option<Vec<Self>>,
     pub annotation: Option<Annotation>,
-    pub kmers: Option<CladeKmers>,
 }
 
 impl Clade {
@@ -37,7 +36,6 @@ impl Clade {
             parent: None,
             children,
             annotation: None,
-            kmers: None,
         }
     }
 
@@ -56,7 +54,6 @@ impl Clade {
             parent,
             children: None,
             annotation: None,
-            kmers: None,
         }
     }
 
@@ -77,7 +74,6 @@ impl Clade {
             parent,
             children,
             annotation: None,
-            kmers: None,
         }
     }
 
