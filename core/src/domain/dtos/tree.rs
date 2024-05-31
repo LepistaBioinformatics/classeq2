@@ -1,4 +1,4 @@
-use super::clade::Clade;
+use super::{annotation::Annotation, clade::Clade};
 
 use mycelium_base::utils::errors::MappedErrors;
 use phylotree::tree::Tree as PhyloTree;
@@ -26,6 +26,13 @@ pub struct Tree {
     /// The root is the root Clade of the tree. The root Clade is the starting
     /// point of the tree and contains the children nodes.
     pub root: Clade,
+
+    /// The annotations associated with the tree.
+    ///
+    /// The annotations are the taxonomic annotations associated with nodes in
+    /// the tree. The annotations are stored as a vector of Annotation objects.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub annotations: Option<Vec<Annotation>>,
 }
 
 impl Tree {
@@ -35,7 +42,12 @@ impl Tree {
     /// The id is a unique identifier for the tree. The name is a human-readable
     /// name for the tree. The root is the root Clade of the tree.
     pub fn new(id: Uuid, name: String, root: Clade) -> Tree {
-        Tree { id, name, root }
+        Tree {
+            id,
+            name,
+            root,
+            annotations: None,
+        }
     }
 
     /// Pretty print the tree.
@@ -162,10 +174,6 @@ impl Tree {
                             .clone()
                             .unwrap_or("Unnamed".to_string()),
                         child_node.parent_edge,
-                        Some(
-                            child_node.parent.expect("Could not convert parent")
-                                as i32,
-                        ),
                     );
                     children.push(leaf_node);
 
@@ -195,12 +203,6 @@ impl Tree {
                                     .expect("Could not convert name to f64"),
                             ),
                             child_node.parent_edge,
-                            Some(
-                                child_node
-                                    .parent
-                                    .expect("Could not convert parent")
-                                    as i32,
-                            ),
                             Some(nested_children),
                         );
 

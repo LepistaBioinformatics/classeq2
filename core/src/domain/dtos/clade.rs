@@ -1,5 +1,3 @@
-use super::annotation::Annotation;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -14,12 +12,18 @@ pub enum NodeType {
 #[serde(rename_all = "camelCase")]
 pub struct Clade {
     pub id: i32,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     pub node_type: NodeType,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub support: Option<f64>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub length: Option<f64>,
-    pub parent: Option<i32>,
-    pub annotation: Option<Annotation>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub children: Option<Vec<Self>>,
 }
 
@@ -31,8 +35,6 @@ impl Clade {
             node_type: NodeType::Root,
             support: None,
             length: Some(length),
-            parent: None,
-            annotation: None,
             children,
         }
     }
@@ -41,7 +43,6 @@ impl Clade {
         id: i32,
         name: String,
         length: Option<f64>,
-        parent: Option<i32>,
     ) -> Clade {
         Clade {
             id,
@@ -49,8 +50,6 @@ impl Clade {
             node_type: NodeType::Terminal,
             support: None,
             length,
-            parent,
-            annotation: None,
             children: None,
         }
     }
@@ -60,7 +59,6 @@ impl Clade {
         name: Option<String>,
         support: Option<f64>,
         length: Option<f64>,
-        parent: Option<i32>,
         children: Option<Vec<Clade>>,
     ) -> Clade {
         Clade {
@@ -69,8 +67,6 @@ impl Clade {
             node_type: NodeType::Internal,
             support,
             length,
-            parent,
-            annotation: None,
             children,
         }
     }
