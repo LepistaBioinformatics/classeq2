@@ -3,9 +3,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum NodeType {
-    Internal,
+    /// The root of the tree
     Root,
-    Terminal,
+
+    /// An internal node
+    Node,
+
+    /// A terminal node
+    Leaf,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -16,7 +21,7 @@ pub struct Clade {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
-    pub node_type: NodeType,
+    pub kind: NodeType,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support: Option<f64>,
@@ -33,7 +38,7 @@ impl Clade {
         Clade {
             id: 0,
             name: None,
-            node_type: NodeType::Root,
+            kind: NodeType::Root,
             support: None,
             length: Some(length),
             children,
@@ -48,7 +53,7 @@ impl Clade {
         Clade {
             id,
             name: Some(name),
-            node_type: NodeType::Terminal,
+            kind: NodeType::Leaf,
             support: None,
             length,
             children: None,
@@ -65,7 +70,7 @@ impl Clade {
         Clade {
             id,
             name,
-            node_type: NodeType::Internal,
+            kind: NodeType::Node,
             support,
             length,
             children,
@@ -100,7 +105,7 @@ impl Clade {
     }
 
     pub fn is_root(&self) -> bool {
-        if let NodeType::Root = self.node_type {
+        if let NodeType::Root = self.kind {
             true
         } else {
             false
@@ -108,7 +113,7 @@ impl Clade {
     }
 
     pub fn is_leaf(&self) -> bool {
-        if let NodeType::Terminal = self.node_type {
+        if let NodeType::Leaf = self.kind {
             true
         } else {
             false
@@ -116,7 +121,7 @@ impl Clade {
     }
 
     pub fn is_internal(&self) -> bool {
-        if let NodeType::Internal = self.node_type {
+        if let NodeType::Node = self.kind {
             true
         } else {
             false

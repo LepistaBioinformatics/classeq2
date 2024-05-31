@@ -3,1532 +3,1532 @@ name: Colletotrichum_acutatum_gapdh-PhyML.nwk
 inMemorySize: 0.000176 Mb
 root:
   id: 0
-  nodeType: ROOT
+  kind: ROOT
   length: 0.0
   children:
   - id: 1
-    nodeType: INTERNAL
+    kind: NODE
     support: 94.0
     length: 0.0129858
     children:
     - id: 2
       name: Col_orchidophilum_LCTJ_05
-      nodeType: TERMINAL
+      kind: LEAF
       length: 0.00428422
     - id: 3
-      nodeType: INTERNAL
+      kind: NODE
       support: 10.0
       length: 1e-8
       children:
       - id: 4
         name: Col_orchidophilum_BJ103_2
-        nodeType: TERMINAL
+        kind: LEAF
         length: 0.0213821
       - id: 5
-        nodeType: INTERNAL
+        kind: NODE
         support: 24.0
         length: 1e-8
         children:
         - id: 6
           name: Col_orchidophilum_LCTJ_03
-          nodeType: TERMINAL
+          kind: LEAF
           length: 1e-8
         - id: 7
-          nodeType: INTERNAL
+          kind: NODE
           support: 67.0
           length: 0.00426529
           children:
           - id: 8
             name: Col_orchidophilum_LCTJ_06
-            nodeType: TERMINAL
+            kind: LEAF
             length: 1e-8
           - id: 9
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 1e-8
             children:
             - id: 10
               name: Col_orchidophilum_LCTJ_04
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 11
               name: Col_orchidophilum_LCTJ_02
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
   - id: 12
-    nodeType: INTERNAL
+    kind: NODE
     support: 77.0
     length: 0.0143485
     children:
     - id: 13
       name: Col_orchidophilum_COUFAL0219
-      nodeType: TERMINAL
+      kind: LEAF
       length: 0.00885715
     - id: 14
-      nodeType: INTERNAL
+      kind: NODE
       support: 95.0
       length: 0.0134991
       children:
       - id: 15
-        nodeType: INTERNAL
+        kind: NODE
         support: -1.0
         length: 1e-8
         children:
         - id: 16
           name: Col_orchidophilum_CBS_63180
-          nodeType: TERMINAL
+          kind: LEAF
           length: 1e-8
         - id: 17
           name: Col_orchidophilum_CBS_63280
-          nodeType: TERMINAL
+          kind: LEAF
           length: 1e-8
       - id: 18
-        nodeType: INTERNAL
+        kind: NODE
         support: 79.0
         length: 0.00420055
         children:
         - id: 19
-          nodeType: INTERNAL
+          kind: NODE
           support: -1.0
           length: 1e-8
           children:
           - id: 20
             name: Col_orchidophilum_CBS_119291
-            nodeType: TERMINAL
+            kind: LEAF
             length: 1e-8
           - id: 21
             name: Col_orchidophilum_IMI_309357
-            nodeType: TERMINAL
+            kind: LEAF
             length: 1e-8
         - id: 22
-          nodeType: INTERNAL
+          kind: NODE
           support: -1.0
           length: 1e-8
           children:
           - id: 23
             name: Col_orchidophilum_BS06
-            nodeType: TERMINAL
+            kind: LEAF
             length: 1e-8
           - id: 24
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 1e-8
             children:
             - id: 25
               name: Col_orchidophilum_BS10
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 26
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 27
                 name: Col_orchidophilum_BS11
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 28
                 name: Col_orchidophilum_BS05
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
   - id: 29
-    nodeType: INTERNAL
+    kind: NODE
     support: 100.0
     length: 0.161096
     children:
     - id: 30
-      nodeType: INTERNAL
+      kind: NODE
       support: 97.0
       length: 0.0330524
       children:
       - id: 31
-        nodeType: INTERNAL
+        kind: NODE
         support: 98.0
         length: 0.033698
         children:
         - id: 32
-          nodeType: INTERNAL
+          kind: NODE
           support: -1.0
           length: 0.00362216
           children:
           - id: 33
             name: Col_fioriniae_CBS_20035
-            nodeType: TERMINAL
+            kind: LEAF
             length: 1e-8
           - id: 34
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 1e-8
             children:
             - id: 35
               name: Col_fioriniae_CBS_16786
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 36
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 37
                 name: Col_fioriniae_CBS_129947
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 38
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 1e-8
                 children:
                 - id: 39
                   name: Col_fioriniae_CBS_129946
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 40
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 1e-8
                   children:
                   - id: 41
                     name: Col_fioriniae_CBS_127601
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 42
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 43
                       name: Col_cuscutae_IMI_384569
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 44
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 45
                         name: Col_cuscutae_IMI_345578
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 46
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 47
                           name: Col_cuscutae_CSL_318
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 48
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 49
                             name: Col_cuscutae_CBS_128498
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 50
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 51
                               name: Col_cuscutae_CBS_125970
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 52
                               name: Col_fioriniae_CBS_49092
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
         - id: 53
-          nodeType: INTERNAL
+          kind: NODE
           support: 62.0
           length: 0.00452543
           children:
           - id: 54
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 1e-8
             children:
             - id: 55
               name: Col_cuscutae_CBS_129940
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 56
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 57
                 name: Col_cuscutae_CBS_126523
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 58
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 1e-8
                 children:
                 - id: 59
                   name: Col_fioriniae_IMI_324991
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 60
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 1e-8
                   children:
                   - id: 61
                     name: Col_fioriniae_CBS_129948
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 62
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 63
                       name: Col_fioriniae_CBS_126526
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 64
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 65
                         name: Col_fioriniae_CBS_126509
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 66
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 67
                           name: Col_fioriniae_CBS_126508
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 68
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 69
                             name: Col_fioriniae_CBS_125956_
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 70
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 71
                               name: Col_fioriniae_CBS_125396
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 72
-                              nodeType: INTERNAL
+                              kind: NODE
                               support: -1.0
                               length: 1e-8
                               children:
                               - id: 73
                                 name: Col_fioriniae_CBS_124958
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
                               - id: 74
-                                nodeType: INTERNAL
+                                kind: NODE
                                 support: -1.0
                                 length: 1e-8
                                 children:
                                 - id: 75
                                   name: Col_fioriniae_ATCC_12097
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
                                 - id: 76
-                                  nodeType: INTERNAL
+                                  kind: NODE
                                   support: -1.0
                                   length: 1e-8
                                   children:
                                   - id: 77
                                     name: Col_cuscutae_CSL_473
-                                    nodeType: TERMINAL
+                                    kind: LEAF
                                     length: 1e-8
                                   - id: 78
-                                    nodeType: INTERNAL
+                                    kind: NODE
                                     support: -1.0
                                     length: 1e-8
                                     children:
                                     - id: 79
                                       name: Col_cuscutae_CBS_128517
-                                      nodeType: TERMINAL
+                                      kind: LEAF
                                       length: 1e-8
                                     - id: 80
                                       name: Col_cuscutae_CBS_78686
-                                      nodeType: TERMINAL
+                                      kind: LEAF
                                       length: 1e-8
           - id: 81
-            nodeType: INTERNAL
+            kind: NODE
             support: 33.0
             length: 1e-8
             children:
             - id: 82
               name: Col_fioriniae_CBS_29367
-              nodeType: TERMINAL
+              kind: LEAF
               length: 0.00815388
             - id: 83
-              nodeType: INTERNAL
+              kind: NODE
               support: 19.0
               length: 1e-8
               children:
               - id: 84
                 name: Col_cuscutae_IMI_363003
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 0.00406707
               - id: 85
                 name: Col_cuscutae_CBS_98169
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 0.00406696
       - id: 86
-        nodeType: INTERNAL
+        kind: NODE
         support: 80.0
         length: 0.0142366
         children:
         - id: 87
-          nodeType: INTERNAL
+          kind: NODE
           support: 99.0
           length: 0.0242118
           children:
           - id: 88
-            nodeType: INTERNAL
+            kind: NODE
             support: 9.0
             length: 1e-8
             children:
             - id: 89
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 0.00408131
               children:
               - id: 90
                 name: Col_acutatum_CBS_129919
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 91
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 1e-8
                 children:
                 - id: 92
                   name: Col_acutatum_CBS_127539
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 93
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 1e-8
                   children:
                   - id: 94
                     name: Col_acutatum_CBS_126506
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 95
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 96
                       name: Col_acutatum_CBS_126505
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 97
                       name: Col_acutatum_CSL_287
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
             - id: 98
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 99
                 name: Col_acutatum_CBS_112990
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 100
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 1e-8
                 children:
                 - id: 101
                   name: Col_acutatum_CBS_110735
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 102
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 1e-8
                   children:
                   - id: 103
                     name: Col_acutatum_CBS_127540
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 104
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 105
                       name: Col_acutatum_IMI_384175
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 106
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 107
                         name: Col_acutatum_IMI_336479
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 108
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 109
                           name: Col_acutatum_CBS_127602
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 110
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 111
                             name: Col_acutatum_CBS_127598
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 112
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 113
                               name: Col_acutatum_CBS_115393
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 114
                               name: Col_acutatum_CBS_113006
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
           - id: 115
-            nodeType: INTERNAL
+            kind: NODE
             support: 1.0
             length: 1e-8
             children:
             - id: 116
               name: Col_acutatum_CBS_14429
-              nodeType: TERMINAL
+              kind: LEAF
               length: 0.00406996
             - id: 117
-              nodeType: INTERNAL
+              kind: NODE
               support: 8.0
               length: 1e-8
               children:
               - id: 118
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 0.01237
                 children:
                 - id: 119
                   name: Col_acutatum_CBS_128499
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 120
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 1e-8
                   children:
                   - id: 121
                     name: Col_acutatum_CBS_112996
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 122
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 123
                       name: Col_acutatum_CBS_111993
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 124
                       name: Col_acutatum_CBS_36973
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
               - id: 125
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 0.00818722
                 children:
                 - id: 126
                   name: Col_acutatum_IMI_216370
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 127
                   name: Col_acutatum_CBS_112759
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
         - id: 128
-          nodeType: INTERNAL
+          kind: NODE
           support: 80.0
           length: 0.00943854
           children:
           - id: 129
-            nodeType: INTERNAL
+            kind: NODE
             support: 77.0
             length: 0.00440992
             children:
             - id: 130
-              nodeType: INTERNAL
+              kind: NODE
               support: 90.0
               length: 0.0119465
               children:
               - id: 131
-                nodeType: INTERNAL
+                kind: NODE
                 support: 64.0
                 length: 0.00421703
                 children:
                 - id: 132
                   name: Col_cairnsense_BRIP_63642
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 0.0297069
                 - id: 133
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 57.0
                   length: 0.00385172
                   children:
                   - id: 134
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 0.0169908
                     children:
                     - id: 135
                       name: Col_chrysanthemi_CBS_126518
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 136
                       name: Col_chrysanthemi_IMI_364540
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                   - id: 137
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 0.00827687
                     children:
                     - id: 138
                       name: Col_scovillei_CBS_120708
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 139
                       name: Col_scovillei_CBS_126529
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
               - id: 140
-                nodeType: INTERNAL
+                kind: NODE
                 support: 27.0
                 length: 1e-8
                 children:
                 - id: 141
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 0.00408419
                   children:
                   - id: 142
                     name: Col_nymphaeae_CBS_126528
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 143
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 144
                       name: Col_nymphaeae_CBS_100064
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 145
                       name: Col_nymphaeae_CBS_127612
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                 - id: 146
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 17.0
                   length: 1e-8
                   children:
                   - id: 147
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: 31.0
                     length: 1e-8
                     children:
                     - id: 148
                       name: Col_cosmi_CBS_85373
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 0.00851245
                     - id: 149
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: 59.0
                       length: 0.004091
                       children:
                       - id: 150
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 0.0126533
                         children:
                         - id: 151
                           name: Col_nymphaeae_CBS_129926
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 152
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 153
                             name: Col_citri_ZJUC41
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 154
                             name: Col_nymphaeae_IMI_360386
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                       - id: 155
                         name: Col_guajavae_IMI_350839
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 0.00411143
                   - id: 156
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: 23.0
                     length: 1e-8
                     children:
                     - id: 157
                       name: Col_walleri_CBS_125472
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 0.00408347
                     - id: 158
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: 73.0
                       length: 0.00408828
                       children:
                       - id: 159
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 160
                           name: Col_nymphaeae_CBS_51678
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 161
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 162
                             name: Col_nymphaeae_CSL_455
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 163
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 164
                               name: Col_nymphaeae_CBS_48282
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 165
-                              nodeType: INTERNAL
+                              kind: NODE
                               support: -1.0
                               length: 1e-8
                               children:
                               - id: 166
                                 name: Col_nymphaeae_CBS_15827
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
                               - id: 167
                                 name: Col_nymphaeae_CBS_52677
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
                       - id: 168
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: 71.0
                         length: 0.0040925
                         children:
                         - id: 169
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 170
                             name: Col_nymphaeae_CBS_119294
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 171
                             name: Col_nymphaeae_IMI_370491
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                         - id: 172
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: 70.0
                           length: 0.00411318
                           children:
                           - id: 173
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 174
                               name: Col_nymphaeae_IMI_301119
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 175
-                              nodeType: INTERNAL
+                              kind: NODE
                               support: -1.0
                               length: 1e-8
                               children:
                               - id: 176
                                 name: Col_nymphaeae_CBS_23149
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
                               - id: 177
-                                nodeType: INTERNAL
+                                kind: NODE
                                 support: -1.0
                                 length: 1e-8
                                 children:
                                 - id: 178
                                   name: Col_nymphaeae_CBS_122111
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
                                 - id: 179
-                                  nodeType: INTERNAL
+                                  kind: NODE
                                   support: -1.0
                                   length: 1e-8
                                   children:
                                   - id: 180
                                     name: Col_nymphaeae_CBS_122110
-                                    nodeType: TERMINAL
+                                    kind: LEAF
                                     length: 1e-8
                                   - id: 181
-                                    nodeType: INTERNAL
+                                    kind: NODE
                                     support: -1.0
                                     length: 1e-8
                                     children:
                                     - id: 182
                                       name: Col_nymphaeae_CBS_112202
-                                      nodeType: TERMINAL
+                                      kind: LEAF
                                       length: 1e-8
                                     - id: 183
                                       name: Col_nymphaeae_CBS_17351
-                                      nodeType: TERMINAL
+                                      kind: LEAF
                                       length: 1e-8
                           - id: 184
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: 62.0
                             length: 1e-8
                             children:
                             - id: 185
                               name: Col_sp_1985
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 186
-                              nodeType: INTERNAL
+                              kind: NODE
                               support: 65.0
                               length: 1e-8
                               children:
                               - id: 187
-                                nodeType: INTERNAL
+                                kind: NODE
                                 support: -1.0
                                 length: 1e-8
                                 children:
                                 - id: 188
                                   name: Col_sp_1989
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
                                 - id: 189
                                   name: Col_sp_2058
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
                               - id: 190
                                 name: Col_sp_2056
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
             - id: 191
-              nodeType: INTERNAL
+              kind: NODE
               support: 70.0
               length: 0.00813292
               children:
               - id: 192
-                nodeType: INTERNAL
+                kind: NODE
                 support: 100.0
                 length: 0.0338279
                 children:
                 - id: 193
                   name: Col_simmondsii_IMI_313840
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 194
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 0.00404058
                   children:
                   - id: 195
                     name: Col_simmondsii_CBS_111531
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 196
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 197
                       name: Col_simmondsii_CBS_29567
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 198
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 199
                         name: Col_simmondsii_CBS_126524
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 200
                         name: Col_simmondsii_CBS_122122
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
               - id: 201
-                nodeType: INTERNAL
+                kind: NODE
                 support: 69.0
                 length: 0.00404563
                 children:
                 - id: 202
                   name: Col_brisbanense_CBS_29267
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 0.0247084
                 - id: 203
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 59.0
                   length: 1e-8
                   children:
                   - id: 204
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: 65.0
                     length: 0.00407307
                     children:
                     - id: 205
                       name: Col_indonesiense_CBS_127551
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 0.00409315
                     - id: 206
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 0.00811628
                       children:
                       - id: 207
                         name: Col_laticiphilum_CBS_112989
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 208
                         name: Col_laticiphilum_CBS_129827
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                   - id: 209
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: 23.0
                     length: 1e-8
                     children:
                     - id: 210
                       name: Col_sloanei_IMI_364297
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 211
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 0.00405251
                       children:
                       - id: 212
                         name: Col_paxtonii_CBS_50297
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 213
                         name: Col_paxtonii_IMI_165753
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
           - id: 214
-            nodeType: INTERNAL
+            kind: NODE
             support: 89.0
             length: 0.0128374
             children:
             - id: 215
-              nodeType: INTERNAL
+              kind: NODE
               support: 63.0
               length: 0.00409022
               children:
               - id: 216
                 name: Col_melonis_CBS_15984
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 0.0164932
               - id: 217
-                nodeType: INTERNAL
+                kind: NODE
                 support: 54.0
                 length: 1e-8
                 children:
                 - id: 218
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 98.0
                   length: 0.0124564
                   children:
                   - id: 219
                     name: Col_sp_2031
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 220
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 221
                       name: Col_tamarilloi_CBS_129814
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 222
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 223
                         name: Col_tamarilloi_CBS_129811
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 224
                         name: Col_tamarilloi_CBS_129954
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                 - id: 225
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 1.0
                   length: 1e-8
                   children:
                   - id: 226
                     name: Col_sp_CBS_101611
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 227
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: 4.0
                     length: 1e-8
                     children:
                     - id: 228
                       name: Col_sp_CBS_129820
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 0.00411897
                     - id: 229
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: 85.0
                       length: 0.00819079
                       children:
                       - id: 230
                         name: Col_limetticola_CBS_11414
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 0.0040759
                       - id: 231
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: 21.0
                         length: 1e-8
                         children:
                         - id: 232
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 0.00818075
                           children:
                           - id: 233
                             name: Col_costaricense_CBS_21178
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 234
                             name: Col_costaricense_CBS_33075
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                         - id: 235
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: 52.0
                           length: 1e-8
                           children:
                           - id: 236
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 237
                               name: Col_paranaense_CBS_134729
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 238
                               name: Col_sp_IMI_384185
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                           - id: 239
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: 95.0
                             length: 1e-8
                             children:
                             - id: 240
                               name: Col_sp_1957
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 0.00462389
                             - id: 241
-                              nodeType: INTERNAL
+                              kind: NODE
                               support: -1.0
                               length: 1e-8
                               children:
                               - id: 242
                                 name: Col_sp_1959
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
                               - id: 243
-                                nodeType: INTERNAL
+                                kind: NODE
                                 support: -1.0
                                 length: 1e-8
                                 children:
                                 - id: 244
                                   name: Col_sp_1960
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
                                 - id: 245
                                   name: Col_sp_1966
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
             - id: 246
-              nodeType: INTERNAL
+              kind: NODE
               support: 8.0
               length: 1e-8
               children:
               - id: 247
                 name: Col_cuscutae_IMI_304802
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 0.00823513
               - id: 248
-                nodeType: INTERNAL
+                kind: NODE
                 support: 66.0
                 length: 0.00409283
                 children:
                 - id: 249
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: -1.0
                   length: 0.00409623
                   children:
                   - id: 250
                     name: Col_lupini_CBS_129944
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 1e-8
                   - id: 251
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 252
                       name: Col_lupini_IMI_375715
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 253
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 254
                         name: Col_lupini_IMI_351261
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 255
                         name: Col_lupini_CBS_46676
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                 - id: 256
                   name: Col_sp_CBS_129810
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
     - id: 257
-      nodeType: INTERNAL
+      kind: NODE
       support: 93.0
       length: 0.0259945
       children:
       - id: 258
-        nodeType: INTERNAL
+        kind: NODE
         support: 62.0
         length: 0.00503567
         children:
         - id: 259
-          nodeType: INTERNAL
+          kind: NODE
           support: 6.0
           length: 1e-8
           children:
           - id: 260
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 0.0208681
             children:
             - id: 261
               name: Col_australe_CBS_116478
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 262
               name: Col_australe_CBS_131325
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
           - id: 263
-            nodeType: INTERNAL
+            kind: NODE
             support: 83.0
             length: 0.0164953
             children:
             - id: 264
               name: Col_godetiae_CBS_127561
-              nodeType: TERMINAL
+              kind: LEAF
               length: 0.00407971
             - id: 265
-              nodeType: INTERNAL
+              kind: NODE
               support: 5.0
               length: 1e-8
               children:
               - id: 266
-                nodeType: INTERNAL
+                kind: NODE
                 support: -1.0
                 length: 1e-8
                 children:
                 - id: 267
                   name: Col_godetiae_CBS_129809
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
                 - id: 268
                   name: Col_godetiae_CBS_129917
-                  nodeType: TERMINAL
+                  kind: LEAF
                   length: 1e-8
               - id: 269
-                nodeType: INTERNAL
+                kind: NODE
                 support: 8.0
                 length: 1e-8
                 children:
                 - id: 270
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 59.0
                   length: 0.00411386
                   children:
                   - id: 271
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 1e-8
                     children:
                     - id: 272
                       name: Col_johnstonii_CBS_128532
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 273
                       name: Col_johnstonii_IMI_357027
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                   - id: 274
                     name: Col_pyricola_CBS_128531
-                    nodeType: TERMINAL
+                    kind: LEAF
                     length: 0.0207428
                 - id: 275
-                  nodeType: INTERNAL
+                  kind: NODE
                   support: 38.0
                   length: 0.00408106
                   children:
                   - id: 276
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: -1.0
                     length: 0.00408104
                     children:
                     - id: 277
                       name: Col_godetiae_IMI_351262
-                      nodeType: TERMINAL
+                      kind: LEAF
                       length: 1e-8
                     - id: 278
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 279
                         name: Col_godetiae_IMI_351248
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 280
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 281
                           name: Col_godetiae_CBS_19853
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 282
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 283
                             name: Col_godetiae_CBS_19332
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 284
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 285
                               name: Col_godetiae_CBS_129911
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 286
                               name: Col_godetiae_CBS_129934
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                   - id: 287
-                    nodeType: INTERNAL
+                    kind: NODE
                     support: 50.0
                     length: 1e-8
                     children:
                     - id: 288
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 1e-8
                       children:
                       - id: 289
                         name: Col_godetiae_IMI_376331
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 290
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 291
                           name: Col_godetiae_CBS_15525
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 292
                           name: Col_godetiae_CBS_131332
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                     - id: 293
-                      nodeType: INTERNAL
+                      kind: NODE
                       support: -1.0
                       length: 0.00409452
                       children:
                       - id: 294
                         name: Col_godetiae_CBS_79672
-                        nodeType: TERMINAL
+                        kind: LEAF
                         length: 1e-8
                       - id: 295
-                        nodeType: INTERNAL
+                        kind: NODE
                         support: -1.0
                         length: 1e-8
                         children:
                         - id: 296
                           name: Col_godetiae_CBS_17159
-                          nodeType: TERMINAL
+                          kind: LEAF
                           length: 1e-8
                         - id: 297
-                          nodeType: INTERNAL
+                          kind: NODE
                           support: -1.0
                           length: 1e-8
                           children:
                           - id: 298
                             name: Col_godetiae_CBS_16050
-                            nodeType: TERMINAL
+                            kind: LEAF
                             length: 1e-8
                           - id: 299
-                            nodeType: INTERNAL
+                            kind: NODE
                             support: -1.0
                             length: 1e-8
                             children:
                             - id: 300
                               name: Col_godetiae_CBS_13344
-                              nodeType: TERMINAL
+                              kind: LEAF
                               length: 1e-8
                             - id: 301
-                              nodeType: INTERNAL
+                              kind: NODE
                               support: -1.0
                               length: 1e-8
                               children:
                               - id: 302
                                 name: Col_godetiae_CBS_129951
-                                nodeType: TERMINAL
+                                kind: LEAF
                                 length: 1e-8
                               - id: 303
-                                nodeType: INTERNAL
+                                kind: NODE
                                 support: -1.0
                                 length: 1e-8
                                 children:
                                 - id: 304
                                   name: Col_godetiae_CBS_129942
-                                  nodeType: TERMINAL
+                                  kind: LEAF
                                   length: 1e-8
                                 - id: 305
-                                  nodeType: INTERNAL
+                                  kind: NODE
                                   support: -1.0
                                   length: 1e-8
                                   children:
                                   - id: 306
                                     name: Col_godetiae_CBS_126522
-                                    nodeType: TERMINAL
+                                    kind: LEAF
                                     length: 1e-8
                                   - id: 307
-                                    nodeType: INTERNAL
+                                    kind: NODE
                                     support: -1.0
                                     length: 1e-8
                                     children:
                                     - id: 308
                                       name: Col_godetiae_CBS_126520
-                                      nodeType: TERMINAL
+                                      kind: LEAF
                                       length: 1e-8
                                     - id: 309
-                                      nodeType: INTERNAL
+                                      kind: NODE
                                       support: -1.0
                                       length: 1e-8
                                       children:
                                       - id: 310
                                         name: Col_godetiae_CBS_126512
-                                        nodeType: TERMINAL
+                                        kind: LEAF
                                         length: 1e-8
                                       - id: 311
                                         name: Col_godetiae_IMI_362149b
-                                        nodeType: TERMINAL
+                                        kind: LEAF
                                         length: 1e-8
         - id: 312
-          nodeType: INTERNAL
+          kind: NODE
           support: 53.0
           length: 0.00487596
           children:
           - id: 313
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 0.0166578
             children:
             - id: 314
               name: Col_rhombiforme_CBS_129953
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 315
               name: Col_rhombiforme_CBS_131322
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
           - id: 316
-            nodeType: INTERNAL
+            kind: NODE
             support: 34.0
             length: 1e-8
             children:
             - id: 317
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 318
                 name: Col_phormii_CBS_102054
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 319
                 name: Col_phormii_CBS_118201
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
             - id: 320
               name: Col_kinghornii_CBS_19835
-              nodeType: TERMINAL
+              kind: LEAF
               length: 0.00977748
       - id: 321
-        nodeType: INTERNAL
+        kind: NODE
         support: 98.0
         length: 0.0253664
         children:
         - id: 322
-          nodeType: INTERNAL
+          kind: NODE
           support: -1.0
           length: 0.00396323
           children:
           - id: 323
             name: Col_salicis_CBS_11514
-            nodeType: TERMINAL
+            kind: LEAF
             length: 1e-8
           - id: 324
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 1e-8
             children:
             - id: 325
               name: Col_salicis_CBS_11314
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 326
               name: Col_salicis_CBS_19156
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
         - id: 327
-          nodeType: INTERNAL
+          kind: NODE
           support: 36.0
           length: 1e-8
           children:
           - id: 328
-            nodeType: INTERNAL
+            kind: NODE
             support: -1.0
             length: 1e-8
             children:
             - id: 329
               name: Col_salicis_CBS_23949
-              nodeType: TERMINAL
+              kind: LEAF
               length: 1e-8
             - id: 330
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 331
                 name: Col_salicis_CBS_18097
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 332
                 name: Col_salicis_CBS_46583
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
           - id: 333
-            nodeType: INTERNAL
+            kind: NODE
             support: 64.0
             length: 0.00396954
             children:
             - id: 334
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 335
                 name: Col_salicis_CBS_128559
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 336
                 name: Col_salicis_CBS_129972
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
             - id: 337
-              nodeType: INTERNAL
+              kind: NODE
               support: -1.0
               length: 1e-8
               children:
               - id: 338
                 name: Col_salicis_IMI_345585
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
               - id: 339
                 name: Col_salicis_CBS_129356
-                nodeType: TERMINAL
+                kind: LEAF
                 length: 1e-8
 kmersMap:
   AAAAACACCCAA:
