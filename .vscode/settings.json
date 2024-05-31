@@ -11,6 +11,7 @@
         "newick",
         "Phylo",
         "phylotre",
-        "phylotree"
+        "phylotree",
+        "Taxid"
     ]
 }
