@@ -103,6 +103,7 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     tree.kmers_map = Some(map);
+    tree.update_in_memory_size();
 
     Ok(tree)
 }

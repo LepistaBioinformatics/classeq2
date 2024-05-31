@@ -3,7 +3,7 @@ use super::{annotation::Annotation, clade::Clade, kmers_map::KmersMap};
 use mycelium_base::utils::errors::MappedErrors;
 use phylotree::tree::Tree as PhyloTree;
 use serde::{Deserialize, Serialize};
-use std::{ffi::OsStr, fs::read_to_string, path::Path};
+use std::{ffi::OsStr, fs::read_to_string, mem::size_of_val, path::Path};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,6 +20,11 @@ pub struct Tree {
     /// When the tree is created using the from_file function, the name is set
     /// from the file name where the tree is parsed from.
     pub name: String,
+
+    /// The in-memory size of the tree (in Mb).
+    ///
+    /// This is usual to predict the memory usage of the tree index.
+    in_memory_size: Option<String>,
 
     /// The root Clade of the tree.
     ///
@@ -48,10 +53,39 @@ impl Tree {
         Tree {
             id,
             name,
+            in_memory_size: None,
             root,
             annotations: None,
             kmers_map: None,
         }
+    }
+
+    pub fn update_in_memory_size(&mut self) {
+        let id_size = size_of_val(&self.id);
+
+        let name_size = size_of_val(&self.name);
+
+        let root_size = size_of_val(&self.root);
+
+        let annotations_size = match &self.annotations {
+            Some(annotations) => size_of_val(annotations),
+            None => 0,
+        };
+
+        let kmers_map_size = match &self.kmers_map {
+            Some(kmers_map) => size_of_val(kmers_map),
+            None => 0,
+        };
+
+        self.in_memory_size = Some(format!(
+            "{:.6} Mb",
+            ((id_size +
+                name_size +
+                root_size +
+                annotations_size +
+                kmers_map_size) as f64 *
+                0.000001) as f64
+        ));
     }
 
     /// Pretty print the tree.
@@ -108,7 +142,7 @@ impl Tree {
         let tree = PhyloTree::from_newick(&newick_content.as_str())
             .expect("Could not parse tree");
 
-        let root_name = if let Some(name) = tree_path.file_name() {
+        let root_name = (if let Some(name) = tree_path.file_name() {
             Some(
                 name.to_str()
                     .expect("Could not convert path to string")
@@ -116,7 +150,8 @@ impl Tree {
             )
         } else {
             None
-        };
+        })
+        .unwrap_or("UnnamedTree".to_string());
 
         let root_clade = Clade::new_root(0.0, None);
 
@@ -130,8 +165,8 @@ impl Tree {
         }
 
         let mut new_tree = Tree::new(
-            Uuid::new_v4(),
-            root_name.unwrap_or("UnnamedTree".to_string()),
+            Uuid::new_v3(&Uuid::NAMESPACE_DNS, &*root_name.as_bytes()),
+            root_name,
             root_clade.to_owned(),
         );
 
