@@ -13,6 +13,17 @@ use std::collections::{HashMap, HashSet};
 /// }
 /// ```
 ///
+/// ```yaml
+/// ATCGATCG:
+/// - 1
+/// - 2
+/// - 3
+/// ATGCATGC:
+/// - 4
+/// - 5
+/// - 6
+/// ```
+///
 #[derive(Clone, Debug, Deserialize)]
 pub struct KmersMap {
     map: HashMap<String, HashSet<i32>>,
