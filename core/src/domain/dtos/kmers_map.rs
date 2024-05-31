@@ -1,5 +1,5 @@
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
 use std::collections::{HashMap, HashSet};
 
 /// A map from kmers to sets of node IDs.
@@ -13,18 +13,46 @@ use std::collections::{HashMap, HashSet};
 /// }
 /// ```
 ///
-#[derive(Debug, Serialize, Deserialize)]
-pub struct KmersMap(HashMap<String, HashSet<i32>>);
+#[derive(Clone, Debug, Deserialize)]
+pub struct KmersMap {
+    map: HashMap<String, HashSet<i32>>,
+}
+
+impl Serialize for KmersMap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(self.map.len()))?;
+
+        // Sort keys
+        let mut ordered_keys = self.map.keys().collect::<Vec<_>>();
+        ordered_keys.sort();
+
+        // Sort values
+        for key in &ordered_keys {
+            let values = self.map.get(*key).unwrap();
+            let mut ordered_values = values.iter().collect::<Vec<_>>();
+            ordered_values.sort();
+            map.serialize_entry(&key.to_string(), &ordered_values)?;
+        }
+
+        // Finish
+        map.end()
+    }
+}
 
 impl KmersMap {
     /// The constructor for a new KmersMap.
     pub fn new() -> Self {
-        KmersMap(HashMap::new())
+        KmersMap {
+            map: HashMap::new(),
+        }
     }
 
     /// Get the map of kmers.
     pub fn get_map(&self) -> &HashMap<String, HashSet<i32>> {
-        &self.0
+        &self.map
     }
 
     /// Insert a kmer into the map.
@@ -38,12 +66,21 @@ impl KmersMap {
         kmer: String,
         nodes: HashSet<i32>,
     ) -> bool {
-        if self.0.contains_key(&kmer) {
-            self.0.get_mut(&kmer).unwrap().extend(nodes);
+        if self.map.contains_key(&kmer) {
+            if let Some(set) = self.map.get_mut(&kmer) {
+                set.extend(nodes);
+                let mut set_as_vec: Vec<i32> =
+                    set.clone().into_iter().collect();
+
+                set_as_vec.sort();
+                set.clear();
+                set.extend(set_as_vec);
+            }
+
             return false;
         }
 
-        self.0.insert(kmer, nodes);
+        self.map.insert(kmer, nodes);
         true
     }
 
@@ -75,7 +112,7 @@ impl KmersMap {
     /// ```
     ///
     pub fn get_clades_with_kmer(&self, kmer: &str) -> Option<&HashSet<i32>> {
-        self.0.get(kmer).to_owned()
+        self.map.get(kmer).to_owned()
     }
 
     /// Get all kmers that contain a given node.
@@ -108,7 +145,7 @@ impl KmersMap {
     ///
     pub fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<&str>> {
         match self
-            .0
+            .map
             .par_iter()
             .filter_map(|(kmer, nodes)| {
                 if nodes.contains(&node) {
@@ -223,7 +260,7 @@ impl KmersMap {
     ) -> HashSet<String> {
         kmers
             .par_iter()
-            .filter(|kmer| self.0.contains_key(*kmer))
+            .filter(|kmer| self.map.contains_key(*kmer))
             .cloned()
             .collect()
     }
@@ -292,6 +329,22 @@ impl KmersMap {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_insert_or_append() {
+        let mut kmers_map = KmersMap::new();
+        let kmer = "ATCG".to_string();
+
+        let result = kmers_map.insert_or_append(kmer.clone(), HashSet::new());
+        assert_eq!(result, true);
+
+        kmers_map.insert_or_append(kmer.clone(), [2].iter().cloned().collect());
+        kmers_map.insert_or_append(kmer.clone(), [1].iter().cloned().collect());
+
+        let result = kmers_map
+            .insert_or_append(kmer.clone(), [2].iter().cloned().collect());
+        assert_eq!(result, false);
+    }
 
     #[test]
     fn test_get_clades_with_kmer() {

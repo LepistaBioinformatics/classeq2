@@ -121,9 +121,7 @@ mod tests {
         let tree = map_kmers_to_tree(tree_path, msa_path)?;
 
         let content = match serde_yaml::to_string(&tree) {
-            Err(err) => {
-                panic!("Error: {err}");
-            }
+            Err(err) => panic!("Error: {err}"),
             Ok(content) => content,
         };
 
