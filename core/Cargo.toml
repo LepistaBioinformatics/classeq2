@@ -21,3 +21,6 @@ uuid.workspace = true
 
 phylotree = "0.1.2"
 rayon = "1.10"
+
+[dev-dependencies]
+serde_yaml.workspace = true

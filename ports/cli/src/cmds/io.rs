@@ -1,5 +1,5 @@
 use clap::Parser;
-use classeq_core::domain::dtos::tree::Tree;
+use classeq_core::domain::dtos::{kmers_map::KmersMap, tree::Tree};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -26,7 +26,16 @@ pub(crate) enum Commands {
     ///
     /// Serialize a tree in Newick format to JSON or YAML formats.
     Tree(SerializeTreeArguments),
+
+    /// Get sequence kmers
+    ///
+    /// Extract kmers from a sequence.
+    Kmers(GetKmersArguments),
 }
+
+// ? ---------------------------------------------------------------------------
+// ? Serialize a tree
+// ? ---------------------------------------------------------------------------
 
 #[derive(Parser, Debug)]
 pub(crate) struct SerializeTreeArguments {
@@ -81,5 +90,31 @@ pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) {
             }
         }
         None => println!("{}", content),
+    }
+}
+
+// ? ---------------------------------------------------------------------------
+// ? Get sequence kmers
+// ? ---------------------------------------------------------------------------
+
+#[derive(Parser, Debug)]
+pub(crate) struct GetKmersArguments {
+    /// Path to the MSA file
+    ///
+    /// The file should be in FASTA format.
+    pub(super) sequence: String,
+
+    /// Kmer length
+    ///
+    /// The length of the kmers to be extracted.
+    #[arg(short, long, default_value = "31")]
+    pub(super) kmer_length: usize,
+}
+
+pub(crate) fn get_kmers_cmd(args: GetKmersArguments) {
+    for kmer in
+        KmersMap::build_kmers_from_string(args.sequence, args.kmer_length)
+    {
+        println!("{}", kmer);
     }
 }

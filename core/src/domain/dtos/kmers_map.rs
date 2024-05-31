@@ -14,14 +14,17 @@ use std::collections::{HashMap, HashSet};
 /// ```
 ///
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct KmersMap(HashMap<String, HashSet<i32>>);
 
 impl KmersMap {
     /// The constructor for a new KmersMap.
-    ///
     pub fn new() -> Self {
         KmersMap(HashMap::new())
+    }
+
+    /// Get the map of kmers.
+    pub fn get_map(&self) -> &HashMap<String, HashSet<i32>> {
+        &self.0
     }
 
     /// Insert a kmer into the map.
@@ -72,7 +75,7 @@ impl KmersMap {
     /// ```
     ///
     pub fn get_clades_with_kmer(&self, kmer: &str) -> Option<&HashSet<i32>> {
-        self.0.get(kmer)
+        self.0.get(kmer).to_owned()
     }
 
     /// Get all kmers that contain a given node.
@@ -223,5 +226,116 @@ impl KmersMap {
             .filter(|kmer| self.0.contains_key(*kmer))
             .cloned()
             .collect()
+    }
+
+    /// Build kmers from a string
+    ///
+    /// Returns a vector of kmers from a given string. This method is used to
+    /// build kmers from a given sequence.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use classeq_core::domain::dtos::kmers_map::KmersMap;
+    ///
+    /// let sequence = "ATCG".to_string();
+    ///
+    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 1);
+    /// assert_eq!(kmers, ["A", "T", "C", "G"]);
+    ///
+    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 2);
+    /// assert_eq!(kmers, ["AT", "TC", "CG"]);
+    ///
+    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 3);
+    /// assert_eq!(kmers, ["ATC", "TCG"]);
+    ///
+    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 4);
+    /// assert_eq!(kmers, ["ATCG"]);
+    ///
+    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 5);
+    /// assert_eq!(kmers, Vec::<String>::new());
+    /// ```
+    ///
+    pub fn build_kmers_from_string(
+        sequence: String,
+        size: usize,
+    ) -> Vec<String> {
+        let mut kmers = Vec::new();
+
+        if sequence.len() < size {
+            return vec![];
+        }
+
+        let sequence = sequence.as_bytes();
+
+        for i in 0..sequence.len() - size + 1 {
+            let kmer =
+                String::from_utf8(sequence[i..i + size].to_vec()).unwrap();
+            kmers.push(kmer);
+        }
+
+        kmers
+    }
+
+    pub fn remove_non_iupac_from_sequence(sequence: &str) -> String {
+        sequence
+            .to_uppercase()
+            .chars()
+            .filter(|c| match c {
+                'A' | 'C' | 'G' | 'T' => true,
+                _ => false,
+            })
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_clades_with_kmer() {
+        let mut kmers_map = KmersMap::new();
+        kmers_map.insert_or_append("ATCG".to_string(), HashSet::new());
+        kmers_map.insert_or_append("ATGC".to_string(), HashSet::new());
+
+        kmers_map.insert_or_append(
+            "ATCG".to_string(),
+            [1].iter().cloned().collect(),
+        );
+
+        kmers_map.insert_or_append(
+            "ATGC".to_string(),
+            [2].iter().cloned().collect(),
+        );
+
+        let ids: Option<&HashSet<i32>> = kmers_map.get_clades_with_kmer("ATCG");
+        assert_eq!(ids, Some(&[1].iter().cloned().collect::<HashSet<i32>>()));
+
+        let ids = kmers_map.get_clades_with_kmer("ATGC");
+        assert_eq!(ids, Some(&[2].iter().cloned().collect::<HashSet<i32>>()));
+
+        let ids = kmers_map.get_clades_with_kmer("ATTA");
+        assert_eq!(ids, None);
+    }
+
+    #[test]
+    fn test_get_kmers_with_node() {
+        let sequence = "ATCG".to_string();
+
+        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 1);
+        assert_eq!(kmers, ["A", "T", "C", "G"]);
+
+        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 2);
+        assert_eq!(kmers, ["AT", "TC", "CG"]);
+
+        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 3);
+        assert_eq!(kmers, ["ATC", "TCG"]);
+
+        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 4);
+        assert_eq!(kmers, ["ATCG"]);
+
+        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 5);
+        assert_eq!(kmers, Vec::<String>::new());
     }
 }

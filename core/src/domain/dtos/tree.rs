@@ -1,4 +1,4 @@
-use super::{annotation::Annotation, clade::Clade};
+use super::{annotation::Annotation, clade::Clade, kmers_map::KmersMap};
 
 use mycelium_base::utils::errors::MappedErrors;
 use phylotree::tree::Tree as PhyloTree;
@@ -33,6 +33,9 @@ pub struct Tree {
     /// the tree. The annotations are stored as a vector of Annotation objects.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<Vec<Annotation>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kmers_map: Option<KmersMap>,
 }
 
 impl Tree {
@@ -47,6 +50,7 @@ impl Tree {
             name,
             root,
             annotations: None,
+            kmers_map: None,
         }
     }
 

@@ -46,6 +46,9 @@ fn main() {
     match Cli::parse() {
         Convert(io_args) => match io_args.convert {
             io::Commands::Tree(tree_args) => io::serialize_tree_cmd(tree_args),
+            io::Commands::Kmers(kmers_args) => {
+                io::get_kmers_cmd(kmers_args);
+            }
         },
     }
 }

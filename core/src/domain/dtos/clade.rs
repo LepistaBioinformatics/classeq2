@@ -15,6 +15,7 @@ pub struct Clade {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+
     pub node_type: NodeType,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -69,6 +70,33 @@ impl Clade {
             length,
             children,
         }
+    }
+
+    pub fn get_leaves(
+        &self,
+        parent_ids: Option<Vec<i32>>,
+    ) -> Vec<(Clade, Vec<i32>)> {
+        // Each entry contains the clade itself and the list of parent clade ids
+        let mut leaves = Vec::<(Clade, Vec<i32>)>::new();
+
+        // If the parent_ids is None, then the current clade is the root
+        let parent_ids = match parent_ids {
+            None => vec![self.id],
+            Some(mut ids) => {
+                ids.push(self.id);
+                ids
+            }
+        };
+
+        if self.is_leaf() {
+            leaves.push((self.clone(), parent_ids));
+        } else {
+            for child in self.children.to_owned().unwrap() {
+                leaves.extend(child.get_leaves(Some(parent_ids.clone())));
+            }
+        }
+
+        leaves
     }
 
     pub fn is_root(&self) -> bool {

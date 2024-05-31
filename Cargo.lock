@@ -231,6 +231,7 @@ dependencies = [
  "phylotree",
  "rayon",
  "serde 1.0.198",
+ "serde_yaml",
  "tracing",
  "tracing-subscriber",
  "uuid",
