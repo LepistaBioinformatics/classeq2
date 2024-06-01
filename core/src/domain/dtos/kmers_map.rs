@@ -8,20 +8,25 @@ use std::collections::{HashMap, HashSet};
 ///
 /// ```json
 /// {
-///    "ATCGATCG": [1, 2, 3],
-///    "ATGCATGC": [4, 5, 6]
+///     "kSize": 8,
+///     "map": {
+///         "ATCGATCG": [1, 2, 3],
+///         "ATGCATGC": [4, 5, 6]
+///     }
 /// }
 /// ```
 ///
 /// ```yaml
-/// ATCGATCG:
-/// - 1
-/// - 2
-/// - 3
-/// ATGCATGC:
-/// - 4
-/// - 5
-/// - 6
+/// kSize: 8
+/// map:
+///     ATCGATCG:
+///     - 1
+///     - 2
+///     - 3
+///     ATGCATGC:
+///     - 4
+///     - 5
+///     - 6
 /// ```
 ///
 #[derive(Clone, Debug, Deserialize)]
