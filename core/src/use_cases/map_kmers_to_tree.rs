@@ -15,6 +15,7 @@ use std::{collections::HashSet, io::BufRead, path::PathBuf};
 pub fn map_kmers_to_tree(
     tree_path: PathBuf,
     msa_path: PathBuf,
+    k_size: usize,
 ) -> Result<Tree, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Validate the input arguments
@@ -38,7 +39,7 @@ pub fn map_kmers_to_tree(
     // ? Initialize mappings
     // ? -----------------------------------------------------------------------
 
-    let mut map = KmersMap::new();
+    let mut map = KmersMap::new(k_size);
     let tree_leaves = tree.root.get_leaves(None);
 
     // ? -----------------------------------------------------------------------
@@ -81,7 +82,7 @@ pub fn map_kmers_to_tree(
                 Some((_, path)) => path,
             };
 
-            let kmers = KmersMap::build_kmers_from_string(seq.clone(), 12);
+            let kmers = map.build_kmers_from_string(seq.clone(), None);
 
             for kmer in kmers {
                 map.insert_or_append(
@@ -119,7 +120,7 @@ mod tests {
         let tree_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
         let msa_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh_mafft.fasta");
 
-        let tree = map_kmers_to_tree(tree_path, msa_path)?;
+        let tree = map_kmers_to_tree(tree_path, msa_path, 12)?;
 
         let content = match serde_yaml::to_string(&tree) {
             Err(err) => panic!("Error: {err}"),

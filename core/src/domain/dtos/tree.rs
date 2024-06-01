@@ -39,7 +39,7 @@ pub struct Tree {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<Vec<Annotation>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    //#[serde(skip_serializing_if = "Option::is_none")]
     pub kmers_map: Option<KmersMap>,
 }
 

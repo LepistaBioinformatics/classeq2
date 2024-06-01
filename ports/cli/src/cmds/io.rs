@@ -112,9 +112,8 @@ pub(crate) struct GetKmersArguments {
 }
 
 pub(crate) fn get_kmers_cmd(args: GetKmersArguments) {
-    for kmer in
-        KmersMap::build_kmers_from_string(args.sequence, args.kmer_length)
-    {
+    let mapper = KmersMap::new(args.kmer_length);
+    for kmer in mapper.build_kmers_from_string(args.sequence, None) {
         println!("{}", kmer);
     }
 }

@@ -26,6 +26,9 @@ use std::collections::{HashMap, HashSet};
 ///
 #[derive(Clone, Debug, Deserialize)]
 pub struct KmersMap {
+    #[serde(rename = "kSize")]
+    k_size: usize,
+
     map: HashMap<String, HashSet<i32>>,
 }
 
@@ -35,6 +38,7 @@ impl Serialize for KmersMap {
         S: Serializer,
     {
         let mut map = serializer.serialize_map(Some(self.map.len()))?;
+        let mut serialized_map = self.map.clone();
 
         // Sort keys
         let mut ordered_keys = self.map.keys().collect::<Vec<_>>();
@@ -45,18 +49,22 @@ impl Serialize for KmersMap {
             let values = self.map.get(*key).unwrap();
             let mut ordered_values = values.iter().collect::<Vec<_>>();
             ordered_values.sort();
-            map.serialize_entry(&key.to_string(), &ordered_values)?;
+            //map.serialize_entry(&key.to_string(), &ordered_values)?;
+            serialized_map.insert(key.to_string(), values.clone());
         }
 
-        // Finish
+        map.serialize_entry("kSize", &self.k_size)?;
+        map.serialize_entry("map", &serialized_map)?;
+
         map.end()
     }
 }
 
 impl KmersMap {
     /// The constructor for a new KmersMap.
-    pub fn new() -> Self {
+    pub fn new(k_size: usize) -> Self {
         KmersMap {
+            k_size,
             map: HashMap::new(),
         }
     }
@@ -64,6 +72,11 @@ impl KmersMap {
     /// Get the map of kmers.
     pub fn get_map(&self) -> &HashMap<String, HashSet<i32>> {
         &self.map
+    }
+
+    /// Get the kmer size.
+    pub fn get_k_size(&self) -> usize {
+        self.k_size
     }
 
     /// Insert a kmer into the map.
@@ -172,108 +185,18 @@ impl KmersMap {
         }
     }
 
-    /// Get existing kmers from hashset of kmers
-    ///
-    /// Returns a hashset of kmers that are present in the KmersMap. This method
-    /// is used to get all kmers that are present in the KmersMap.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use std::collections::HashSet;
-    /// use classeq_core::domain::dtos::kmers_map::KmersMap;
-    ///
-    /// let mut kmers_map = KmersMap::new();
-    /// kmers_map.insert_or_append("ATCG".to_string(), HashSet::new());
-    /// kmers_map.insert_or_append("ATGC".to_string(), HashSet::new());
-    /// kmers_map.insert_or_append("ATCG".to_string(), [1].iter().cloned().collect());
-    /// kmers_map.insert_or_append("ATGC".to_string(), [2].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATCG".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATCG".to_string()
-    /// ].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string(),
-    ///     "ATTA".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATTA".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, HashSet::new());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&HashSet::new());
-    /// assert_eq!(kmers, HashSet::new());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATTA".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATTA".to_string(),
-    ///     "ATGC".to_string(),
-    ///     "ATCG".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATTA".to_string(),
-    ///     "ATGC".to_string(),
-    ///     "ATCG".to_string(),
-    ///     "ATTA".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    ///
-    /// let kmers = kmers_map.get_existing_kmers(&[
-    ///     "ATTA".to_string(),
-    ///     "ATGC".to_string(),
-    ///     "ATCG".to_string(),
-    ///     "ATTA".to_string(),
-    ///     "ATTA".to_string()
-    /// ].iter().cloned().collect());
-    /// assert_eq!(kmers, [
-    ///     "ATCG".to_string(),
-    ///     "ATGC".to_string()
-    /// ].iter().cloned().collect());
-    /// ```
-    ///
-    pub fn get_existing_kmers(
-        &self,
-        kmers: &HashSet<String>,
-    ) -> HashSet<String> {
-        kmers
-            .par_iter()
-            .filter(|kmer| self.map.contains_key(*kmer))
-            .cloned()
-            .collect()
+    /// Filter map keys by a set of kmers.
+    pub fn get_overlapping_kmers(&self, kmers: &HashSet<String>) -> Self {
+        let mut map = Self::new(self.k_size);
+
+        kmers.iter().for_each(|kmer| {
+            if let Some(nodes) = self.map.get(kmer) {
+                map.map
+                    .insert(kmer.to_string(), nodes.iter().cloned().collect());
+            }
+        });
+
+        map
     }
 
     /// Build kmers from a string
@@ -287,30 +210,33 @@ impl KmersMap {
     /// use classeq_core::domain::dtos::kmers_map::KmersMap;
     ///
     /// let sequence = "ATCG".to_string();
+    /// let kmers_map = KmersMap::new(0);
     ///
-    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 1);
+    /// let kmers = kmers_map.build_kmers_from_string(sequence.to_owned(), Some(1));
     /// assert_eq!(kmers, ["A", "T", "C", "G"]);
     ///
-    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 2);
+    /// let kmers = kmers_map.build_kmers_from_string(sequence.to_owned(), Some(2));
     /// assert_eq!(kmers, ["AT", "TC", "CG"]);
     ///
-    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 3);
+    /// let kmers = kmers_map.build_kmers_from_string(sequence.to_owned(), Some(3));
     /// assert_eq!(kmers, ["ATC", "TCG"]);
     ///
-    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 4);
+    /// let kmers = kmers_map.build_kmers_from_string(sequence.to_owned(), Some(4));
     /// assert_eq!(kmers, ["ATCG"]);
     ///
-    /// let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 5);
+    /// let kmers = kmers_map.build_kmers_from_string(sequence.to_owned(), Some(5));
     /// assert_eq!(kmers, Vec::<String>::new());
     /// ```
     ///
     pub fn build_kmers_from_string(
+        &self,
         sequence: String,
-        size: usize,
+        k_size: Option<usize>,
     ) -> Vec<String> {
         let mut kmers = Vec::new();
+        let size = k_size.unwrap_or(self.k_size);
 
-        if sequence.len() < size {
+        if sequence.len() < self.k_size {
             return vec![];
         }
 
@@ -325,6 +251,10 @@ impl KmersMap {
         kmers
     }
 
+    /// Remove non-IUPAC characters from a sequence
+    ///
+    /// Returns a string with only IUPAC characters. This method is used to
+    /// remove non-IUPAC characters from a given sequence.
     pub fn remove_non_iupac_from_sequence(sequence: &str) -> String {
         sequence
             .to_uppercase()
@@ -343,7 +273,7 @@ mod tests {
 
     #[test]
     fn test_insert_or_append() {
-        let mut kmers_map = KmersMap::new();
+        let mut kmers_map = KmersMap::new(0);
         let kmer = "ATCG".to_string();
 
         let result = kmers_map.insert_or_append(kmer.clone(), HashSet::new());
@@ -359,7 +289,7 @@ mod tests {
 
     #[test]
     fn test_get_clades_with_kmer() {
-        let mut kmers_map = KmersMap::new();
+        let mut kmers_map = KmersMap::new(0);
         kmers_map.insert_or_append("ATCG".to_string(), HashSet::new());
         kmers_map.insert_or_append("ATGC".to_string(), HashSet::new());
 
@@ -386,20 +316,26 @@ mod tests {
     #[test]
     fn test_get_kmers_with_node() {
         let sequence = "ATCG".to_string();
+        let kmers_map = KmersMap::new(0);
 
-        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 1);
+        let kmers =
+            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(1));
         assert_eq!(kmers, ["A", "T", "C", "G"]);
 
-        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 2);
+        let kmers =
+            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(2));
         assert_eq!(kmers, ["AT", "TC", "CG"]);
 
-        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 3);
+        let kmers =
+            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(3));
         assert_eq!(kmers, ["ATC", "TCG"]);
 
-        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 4);
+        let kmers =
+            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(4));
         assert_eq!(kmers, ["ATCG"]);
 
-        let kmers = KmersMap::build_kmers_from_string(sequence.to_owned(), 5);
+        let kmers =
+            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(5));
         assert_eq!(kmers, Vec::<String>::new());
     }
 }
