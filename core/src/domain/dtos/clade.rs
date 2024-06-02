@@ -13,7 +13,7 @@ pub enum NodeType {
     Leaf,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Clade {
     pub id: i32,

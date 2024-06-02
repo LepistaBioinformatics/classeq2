@@ -172,7 +172,7 @@ impl KmersMap {
     /// assert_eq!(kmers, None);
     /// ```
     ///
-    pub fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<&str>> {
+    pub fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<String>> {
         match self
             .map
             .par_iter()
@@ -186,7 +186,7 @@ impl KmersMap {
             .collect::<HashSet<&str>>()
         {
             set if set.is_empty() => None,
-            set => Some(set),
+            set => Some(set.iter().map(|s| s.to_string()).collect()),
         }
     }
 
