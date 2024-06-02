@@ -30,7 +30,7 @@ pub fn place_sequence(
 
     let query_kmers = kmers_map.build_kmers_from_string(sequence, None);
 
-    if query_kmers.is_empty() || query_kmers.len() == 1 {
+    if query_kmers.len() < 2 {
         panic!("The sequence does not contain enough kmers.");
     }
 
