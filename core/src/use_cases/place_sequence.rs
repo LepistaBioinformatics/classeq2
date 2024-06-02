@@ -7,6 +7,11 @@ use crate::domain::dtos::{
 
 use mycelium_base::{dtos::UntaggedParent, utils::errors::MappedErrors};
 
+/// Place a sequence in the tree.
+///
+/// This function tries to place a sequence in the tree using the overlapping
+/// kmers. The function uses a recursive strategy to traverse the tree and
+/// evaluate the adherence of the query sequence to the clades.
 pub fn place_sequence(
     sequence: String,
     tree: Tree,
@@ -195,6 +200,10 @@ sequence is not related to the phylogeny."
             return Ok(MaxResolutionReached(clade.id));
         }
 
+        //
+        // If only one clade has a higher adherence than the sibling clades, the
+        // query sequence is placed at the current clade.
+        //
         if filtered_proposals.len() == 1 {
             let adherence: AdherenceTest = match filtered_proposals.first() {
                 Some(adherence) => adherence.clone(),
@@ -218,6 +227,11 @@ sequence is not related to the phylogeny."
             };
         }
 
+        //
+        // If more than one clade has a higher adherence than the sibling
+        // clades, the search is considered inconclusive. The query sequence is
+        // placed at the current clade.
+        //
         if filtered_proposals.len() > 1 {
             return Ok(Inconclusive(
                 filtered_proposals
