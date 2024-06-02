@@ -1,9 +1,9 @@
 mod cmds;
+use cmds::convert;
 
 use self::Cli::*;
 
 use clap::Parser;
-use cmds::io;
 use std::str::FromStr;
 use tracing::debug;
 use tracing_subscriber::{fmt, EnvFilter};
@@ -12,7 +12,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 #[command(author, version, about, long_about = None)]
 enum Cli {
     /// Input/Output commands
-    Convert(io::Arguments),
+    Convert(convert::Arguments),
 }
 
 /// Get the command line arguments.
@@ -45,9 +45,11 @@ fn main() {
 
     match Cli::parse() {
         Convert(io_args) => match io_args.convert {
-            io::Commands::Tree(tree_args) => io::serialize_tree_cmd(tree_args),
-            io::Commands::Kmers(kmers_args) => {
-                io::get_kmers_cmd(kmers_args);
+            convert::Commands::Tree(tree_args) => {
+                convert::serialize_tree_cmd(tree_args)
+            }
+            convert::Commands::Kmers(kmers_args) => {
+                convert::get_kmers_cmd(kmers_args);
             }
         },
     }
