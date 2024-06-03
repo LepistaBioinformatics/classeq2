@@ -1,5 +1,4 @@
 mod cmds;
-use cmds::convert;
 
 use self::Cli::*;
 
@@ -12,7 +11,10 @@ use tracing_subscriber::{fmt, EnvFilter};
 #[command(author, version, about, long_about = None)]
 enum Cli {
     /// Input/Output commands
-    Convert(convert::Arguments),
+    Convert(cmds::convert::Arguments),
+
+    /// Build the index database
+    BuildDb(cmds::build_db::BuildDatabaseArguments),
 }
 
 /// Get the command line arguments.
@@ -45,12 +47,13 @@ fn main() {
 
     match Cli::parse() {
         Convert(io_args) => match io_args.convert {
-            convert::Commands::Tree(tree_args) => {
-                convert::serialize_tree_cmd(tree_args)
+            cmds::convert::Commands::Tree(tree_args) => {
+                cmds::convert::serialize_tree_cmd(tree_args)
             }
-            convert::Commands::Kmers(kmers_args) => {
-                convert::get_kmers_cmd(kmers_args);
+            cmds::convert::Commands::Kmers(kmers_args) => {
+                cmds::convert::get_kmers_cmd(kmers_args);
             }
         },
+        BuildDb(db_args) => cmds::build_db::build_database_cmd(db_args),
     }
 }

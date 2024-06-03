@@ -16,6 +16,7 @@ pub fn map_kmers_to_tree(
     tree_path: PathBuf,
     msa_path: PathBuf,
     k_size: usize,
+    min_branch_support: Option<f64>,
 ) -> Result<Tree, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Validate the input arguments
@@ -33,7 +34,17 @@ pub fn map_kmers_to_tree(
     // ? Read the phylogenetic tree
     // ? -----------------------------------------------------------------------
 
-    let mut tree = Tree::from_file(&tree_path)?;
+    let mut tree =
+        Tree::from_file(&tree_path, min_branch_support.unwrap_or(95.0))?;
+
+    // ? -----------------------------------------------------------------------
+    // TODO
+    //
+    // The is not sanitized. It should be sanitized before returning it.
+    //
+    // ? -----------------------------------------------------------------------
+
+    // let sanitized_tree = tree.sanitize()?;
 
     // ? -----------------------------------------------------------------------
     // ? Initialize mappings
@@ -120,7 +131,7 @@ mod tests {
         let tree_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
         let msa_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh_mafft.fasta");
 
-        let tree = map_kmers_to_tree(tree_path, msa_path, 12)?;
+        let tree = map_kmers_to_tree(tree_path, msa_path, 12, None)?;
 
         let content = match serde_yaml::to_string(&tree) {
             Err(err) => panic!("Error: {err}"),

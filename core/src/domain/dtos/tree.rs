@@ -133,13 +133,16 @@ impl Tree {
     ///
     /// The phylotre::tree::Tree is parsed from the file and converted to a Tree
     /// object with a root Clade.
-    pub fn from_file(tree_path: &Path) -> Result<Tree, MappedErrors> {
+    pub fn from_file(
+        tree_path: &Path,
+        min_branch_support: f64,
+    ) -> Result<Tree, MappedErrors> {
         assert!(tree_path.extension() == Some(OsStr::new("nwk")));
 
         let newick_content =
             read_to_string(tree_path).expect("Could not read file");
 
-        let tree = PhyloTree::from_newick(&newick_content.as_str())
+        let phylo_tree = PhyloTree::from_newick(&newick_content.as_str())
             .expect("Could not parse tree");
 
         let root_name = (if let Some(name) = tree_path.file_name() {
@@ -153,29 +156,64 @@ impl Tree {
         })
         .unwrap_or("UnnamedTree".to_string());
 
-        let root_clade = Clade::new_root(0.0, None);
-
-        let root_tree = match tree.get_root() {
+        let root_tree = match phylo_tree.get_root() {
             Err(err) => panic!("Could not get root: {err}"),
-            Ok(root) => tree.get(&root).expect("Could not get root"),
+            Ok(root) => phylo_tree.get(&root).expect("Could not get root"),
         };
 
         if !root_tree.is_root() {
             panic!("Root node is not a root");
         }
 
-        let mut new_tree = Tree::new(
+        let children = Self::get_children_nodes(&phylo_tree, &root_tree.id);
+
+        let sanitized_root =
+            Tree::sanitize(Clade::new_root(0.0, children), min_branch_support)?;
+
+        let new_tree = Tree::new(
             Uuid::new_v3(&Uuid::NAMESPACE_DNS, &*root_name.as_bytes()),
             root_name,
-            root_clade.to_owned(),
+            sanitized_root,
         );
 
-        let response =
-            Self::get_children_nodes(&tree, &root_clade, &root_tree.id);
-
-        new_tree.root.children = response;
-
         Ok(new_tree)
+    }
+
+    /// Remove low supported branches
+    ///
+    /// The function removes low supported branches from the tree, reconnecting
+    /// children to the parent node.
+    fn sanitize(
+        clade: Clade,
+        min_branch_support: f64,
+    ) -> Result<Clade, MappedErrors> {
+        let mut children = Vec::<Clade>::new();
+
+        if let Some(clade_children) = clade.to_owned().children {
+            for child in clade_children {
+                let sanitized_child =
+                    Self::sanitize(child, min_branch_support)?;
+
+                if sanitized_child.support.unwrap_or(-1.0) >= min_branch_support ||
+                    sanitized_child.is_leaf()
+                {
+                    children.push(sanitized_child);
+                } else {
+                    for grandchild in sanitized_child.children.unwrap() {
+                        children.push(grandchild);
+                    }
+                }
+            }
+        }
+
+        let mut sanitized_clade = clade.clone();
+
+        sanitized_clade.children = match children.len() {
+            0 => None,
+            _ => Some(children),
+        };
+
+        Ok(sanitized_clade)
     }
 
     /// Recursively extract children nodes from a PhyloTree.
@@ -185,7 +223,6 @@ impl Tree {
     /// Clade objects.
     fn get_children_nodes(
         tree: &PhyloTree,
-        root: &Clade,
         node_id: &usize,
     ) -> Option<Vec<Clade>> {
         if let Ok(node) = tree.get(node_id) {
@@ -223,7 +260,7 @@ impl Tree {
                 //
                 } else {
                     let nested_children =
-                        Self::get_children_nodes(tree, root, &child_id);
+                        Self::get_children_nodes(tree, &child_id);
 
                     if let Some(nested_children) = nested_children {
                         let internal_node = Clade::new_internal(
@@ -268,7 +305,7 @@ mod tests {
     fn test_tree_from_file() {
         let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
 
-        let tree = Tree::from_file(&path);
+        let tree = Tree::from_file(&path, 80.0);
 
         assert!(tree.is_ok());
 

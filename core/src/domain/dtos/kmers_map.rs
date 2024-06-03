@@ -1,5 +1,5 @@
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::{ser::SerializeMap, Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 /// A map from kmers to sets of node IDs.
@@ -29,7 +29,7 @@ use std::collections::{HashMap, HashSet};
 ///     - 6
 /// ```
 ///
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KmersMap {
     #[serde(rename = "kSize")]
     k_size: usize,
@@ -37,33 +37,38 @@ pub struct KmersMap {
     map: HashMap<String, HashSet<i32>>,
 }
 
-impl Serialize for KmersMap {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut map = serializer.serialize_map(Some(self.map.len()))?;
-        let mut serialized_map = self.map.clone();
-
-        // Sort keys
-        let mut ordered_keys = self.map.keys().collect::<Vec<_>>();
-        ordered_keys.sort();
-
-        // Sort values
-        for key in &ordered_keys {
-            let values = self.map.get(*key).unwrap();
-            let mut ordered_values = values.iter().collect::<Vec<_>>();
-            ordered_values.sort();
-            //map.serialize_entry(&key.to_string(), &ordered_values)?;
-            serialized_map.insert(key.to_string(), values.clone());
-        }
-
-        map.serialize_entry("kSize", &self.k_size)?;
-        map.serialize_entry("map", &serialized_map)?;
-
-        map.end()
-    }
-}
+// TODO:
+// - Implement sorting on serialize record
+//impl Serialize for KmersMap {
+//    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//    where
+//        S: Serializer,
+//    {
+//        let mut map = serializer.serialize_map(Some(self.map.len()))?;
+//        let mut serialized_map = HashMap::<String, HashSet<i32>>::new();
+//
+//        // Sort keys
+//        let mut ordered_keys = self.map.keys().collect::<Vec<_>>();
+//        ordered_keys.sort();
+//
+//        // Sort values
+//        for key in &ordered_keys {
+//            let values = self.map.get(*key).unwrap();
+//            let mut ordered_values = values.iter().collect::<Vec<_>>();
+//            ordered_values.sort();
+//
+//            serialized_map.insert(
+//                key.to_string(),
+//                ordered_values.clone().into_iter().cloned().collect(),
+//            );
+//        }
+//
+//        map.serialize_entry("kSize", &self.k_size)?;
+//        map.serialize_entry("map", &serialized_map)?;
+//
+//        map.end()
+//    }
+//}
 
 impl KmersMap {
     /// The constructor for a new KmersMap.

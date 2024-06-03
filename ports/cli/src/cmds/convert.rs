@@ -1,17 +1,8 @@
+use super::utils::OutputFormat;
+
 use clap::Parser;
 use classeq_core::domain::dtos::{kmers_map::KmersMap, tree::Tree};
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-
-#[derive(Clone, Debug, Serialize, Deserialize, clap::ValueEnum)]
-#[serde(rename_all = "camelCase")]
-pub enum OutputFormat {
-    /// JSON format
-    Json,
-
-    /// YAML format
-    Yaml,
-}
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -50,15 +41,24 @@ pub(crate) struct SerializeTreeArguments {
     #[arg(short, long)]
     pub(super) output_file_path: Option<PathBuf>,
 
+    /// Minimum branch support
+    ///
+    /// The minimum branch support value to consider a branch in the tree.
+    #[arg(long)]
+    pub(super) min_branch_support: Option<f64>,
+
     /// Output format
     ///
     /// The format in which the tree will be serialized.
-    #[arg(long, default_value = "json")]
+    #[arg(long, default_value = "yaml")]
     pub(super) out_format: OutputFormat,
 }
 
 pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) {
-    let tree = match Tree::from_file(args.tree_file_path.as_path()) {
+    let tree = match Tree::from_file(
+        args.tree_file_path.as_path(),
+        args.min_branch_support.unwrap_or(95.0),
+    ) {
         Ok(tree) => tree,
         Err(e) => {
             eprintln!("Error: {}", e);
