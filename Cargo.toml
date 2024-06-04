@@ -20,7 +20,7 @@ authors = ["Samuel Galvão Elias <sgelias@outlook.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/sgelias/classeq-rs"
 readme = "README.md"
-keywords = ["bioinformatics", "phylogenetic placement", "phylogeny"]
+keywords = ["bioinformatics", "DNA", "placement", "phylogeny"]
 categories = ["science", "command-line-interface", "command-line-utilities"]
 
 
