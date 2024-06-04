@@ -1,3 +1,4 @@
+use self::PlacementStatus::*;
 use super::adherence_test::AdherenceTest;
 
 use serde::{Deserialize, Serialize};
@@ -34,13 +35,11 @@ pub enum PlacementStatus {
 impl ToString for PlacementStatus {
     fn to_string(&self) -> String {
         match self {
-            PlacementStatus::Unclassifiable(_) => "Unclassifiable".to_string(),
-            PlacementStatus::IdentityFound(_) => "IdentityFound".to_string(),
-            PlacementStatus::MaxResolutionReached(_) => {
-                "MaxResolutionReached".to_string()
-            }
-            PlacementStatus::NextIteration(_) => "NextIteration".to_string(),
-            PlacementStatus::Inconclusive(_) => "Inconclusive".to_string(),
+            Unclassifiable(_) => "Unclassifiable".to_string(),
+            IdentityFound(_) => "IdentityFound".to_string(),
+            MaxResolutionReached(_) => "MaxResolutionReached".to_string(),
+            NextIteration(_) => "NextIteration".to_string(),
+            Inconclusive(_) => "Inconclusive".to_string(),
         }
     }
 }

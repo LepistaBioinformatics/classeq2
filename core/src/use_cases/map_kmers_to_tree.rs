@@ -2,6 +2,7 @@ use crate::domain::dtos::{kmers_map::KmersMap, tree::Tree};
 
 use mycelium_base::utils::errors::MappedErrors;
 use std::{collections::HashSet, io::BufRead, path::PathBuf};
+use tracing::debug;
 
 /// Map kmers to nodes in a phylogenetic tree
 ///
@@ -12,6 +13,7 @@ use std::{collections::HashSet, io::BufRead, path::PathBuf};
 /// A tree with the kmers map attached to it. A kmer map is a KmersMap struct
 /// that contains a mapping of kmers to a set of nodes along the tree.
 ///
+#[tracing::instrument(name = "Building Classeq database")]
 pub fn map_kmers_to_tree(
     tree_path: PathBuf,
     msa_path: PathBuf,
@@ -34,17 +36,9 @@ pub fn map_kmers_to_tree(
     // ? Read the phylogenetic tree
     // ? -----------------------------------------------------------------------
 
+    debug!("Reading the phylogenetic tree");
     let mut tree =
         Tree::from_file(&tree_path, min_branch_support.unwrap_or(95.0))?;
-
-    // ? -----------------------------------------------------------------------
-    // TODO
-    //
-    // The is not sanitized. It should be sanitized before returning it.
-    //
-    // ? -----------------------------------------------------------------------
-
-    // let sanitized_tree = tree.sanitize()?;
 
     // ? -----------------------------------------------------------------------
     // ? Initialize mappings
@@ -60,6 +54,7 @@ pub fn map_kmers_to_tree(
     //
     // ? -----------------------------------------------------------------------
 
+    debug!("Reading the MSA file");
     let mut headers = Vec::<String>::new();
     let mut header = String::new();
     let mut sequence = String::new();

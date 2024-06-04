@@ -45,7 +45,10 @@ pub(crate) struct PlaceSequencesArguments {
     pub(super) force_overwrite: bool,
 }
 
-pub(crate) fn place_sequences_cmd(args: PlaceSequencesArguments) {
+pub(crate) fn place_sequences_cmd(
+    args: PlaceSequencesArguments,
+    threads: usize,
+) {
     let database_file = match read_to_string(&args.database_file_path) {
         Err(err) => {
             eprintln!("{}", err);
@@ -62,14 +65,13 @@ pub(crate) fn place_sequences_cmd(args: PlaceSequencesArguments) {
         Ok(buffer) => buffer,
     };
 
-    if let Err(err) = place_sequences(
+    place_sequences(
         args.query,
         tree,
         args.output_file_path,
         args.max_iterations,
         &args.force_overwrite,
         args.out_format,
-    ) {
-        panic!("{err}")
-    };
+        threads,
+    );
 }
