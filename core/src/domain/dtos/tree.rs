@@ -194,14 +194,20 @@ impl Tree {
                 let sanitized_child =
                     Self::sanitize(child, min_branch_support)?;
 
-                if sanitized_child.support.unwrap_or(-1.0) >= min_branch_support ||
-                    sanitized_child.is_leaf()
-                {
-                    children.push(sanitized_child);
-                } else {
-                    for grandchild in sanitized_child.children.unwrap() {
-                        children.push(grandchild);
+                if let Some(support) = sanitized_child.support {
+                    if support >= min_branch_support ||
+                        sanitized_child.is_leaf()
+                    {
+                        children.push(sanitized_child);
+                    } else {
+                        if let Some(grand_children) = sanitized_child.children {
+                            for grand_child in grand_children {
+                                children.push(grand_child);
+                            }
+                        }
                     }
+                } else {
+                    children.push(sanitized_child);
                 }
             }
         }
@@ -269,15 +275,13 @@ impl Tree {
                                 .try_into()
                                 .expect("Could not convert id"),
                             None,
-                            //Convert child_node.name to f64
-                            Some(
-                                child_node
-                                    .name
-                                    .clone()
-                                    .unwrap_or("Unnamed".to_string())
-                                    .parse::<f64>()
-                                    .expect("Could not convert name to f64"),
-                            ),
+                            match child_node.name.clone() {
+                                Some(name) => match name.parse::<f64>() {
+                                    Err(_) => None,
+                                    Ok(value) => Some(value),
+                                },
+                                None => None,
+                            },
                             child_node.parent_edge,
                             Some(nested_children),
                         );

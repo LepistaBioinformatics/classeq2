@@ -83,7 +83,7 @@ pub fn map_kmers_to_tree(
                 clade.name.as_ref().unwrap().to_owned() == header
             }) {
                 None => {
-                    panic!("The sequence header does not match any tree leaf")
+                    panic!("The sequence header does not match any tree leaf: {header}")
                 }
                 Some((_, path)) => path,
             };

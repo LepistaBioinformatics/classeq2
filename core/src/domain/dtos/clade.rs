@@ -96,8 +96,10 @@ impl Clade {
         if self.is_leaf() {
             leaves.push((self.clone(), parent_ids));
         } else {
-            for child in self.children.to_owned().unwrap() {
-                leaves.extend(child.get_leaves(Some(parent_ids.clone())));
+            if let Some(children) = &self.children {
+                for child in children {
+                    leaves.extend(child.get_leaves(Some(parent_ids.clone())));
+                }
             }
         }
 
