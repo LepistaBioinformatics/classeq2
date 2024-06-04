@@ -27,5 +27,5 @@ tracing-subscriber.workspace = true
 
 
 [[bin]]
-name = "cls2"
+name = "cls"
 path = "src/main.rs"

@@ -36,7 +36,7 @@ enum Opts {
 }
 
 #[derive(Parser, Debug)]
-#[clap(name = "cls2", version, author, about)]
+#[clap(name = "cls", version, author, about)]
 struct Cli {
     #[clap(subcommand)]
     opts: Opts,
