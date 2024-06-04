@@ -1,3 +1,9 @@
+## v0.2.1 (2024-06-04)
+
+### Refactor
+
+- rename cli port from cls2 to cls
+
 ## v0.2.0 (2024-06-04)
 
 ### Feat
