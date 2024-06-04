@@ -1,3 +1,30 @@
+## v0.2.0 (2024-06-04)
+
+### Feat
+
+- wip - implements the multi sequence placement method
+- implements the build database feature as a cli port
+- wip - implements the basis for the sequence placement based on the classeq-py rules
+- turn tree uuid fixed with uuid3 to allow identification of the same tree index
+- implements a use-case to map kmers to the tree nodes
+
+### Fix
+
+- include the kmer-size into the kmers-map object to persist it into the indexing object
+- turn kmers map sorted on serialize to allow better evaluation of indices
+
+### Refactor
+
+- rename io port to convert mirroring the command used to execute
+- refactor stuff logif of the place-sequence use-case
+- refactor annotation to allow more informative tags
+- rename node-type to reduce number of characters used for storage index
+- move annotations to the tree struct and turn unused fields unserialized
+
+### Perf
+
+- improve performance on control the thread pool used during predictions
+
 ## v0.1.0 (2024-05-30)
 
 ### Feat
