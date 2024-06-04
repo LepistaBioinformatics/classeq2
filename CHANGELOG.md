@@ -1,3 +1,9 @@
+## v0.2.2 (2024-06-04)
+
+### Fix
+
+- fix branch tree and clade data loading without branch support
+
 ## v0.2.1 (2024-06-04)
 
 ### Refactor
