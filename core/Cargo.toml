@@ -1,15 +1,16 @@
 [package]
+
 name = "classeq-core"
+description = "Core library for the classeq project"
+readme = "README.md"
+
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 

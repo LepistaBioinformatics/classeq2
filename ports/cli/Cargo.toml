@@ -2,20 +2,20 @@
 
 name = "classeq-cli"
 description = "A command line interface for the classeq library"
+readme = "README.md"
 
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-readme.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
 
 [dependencies]
 
-classeq-core = { path = "../../core" }
+classeq-core = { path = "../../core", version = "0.2.1" }
 
 clap.workspace = true
 serde.workspace = true
