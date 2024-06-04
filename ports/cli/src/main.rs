@@ -15,6 +15,9 @@ enum Cli {
 
     /// Build the index database
     BuildDb(cmds::build_db::BuildDatabaseArguments),
+
+    /// Place sequences on the tree
+    Place(cmds::place_sequences::PlaceSequencesArguments),
 }
 
 /// Get the command line arguments.
@@ -55,5 +58,8 @@ fn main() {
             }
         },
         BuildDb(db_args) => cmds::build_db::build_database_cmd(db_args),
+        Place(place_args) => {
+            cmds::place_sequences::place_sequences_cmd(place_args)
+        }
     }
 }

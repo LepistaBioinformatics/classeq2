@@ -1,7 +1,7 @@
-use super::utils::OutputFormat;
-
 use clap::Parser;
-use classeq_core::domain::dtos::{kmers_map::KmersMap, tree::Tree};
+use classeq_core::domain::dtos::{
+    kmers_map::KmersMap, output_format::OutputFormat, tree::Tree,
+};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -67,7 +67,7 @@ pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) {
     };
 
     let content = match args.out_format {
-        OutputFormat::Json => match serde_json::to_string_pretty(&tree) {
+        OutputFormat::Jsonl => match serde_json::to_string_pretty(&tree) {
             Err(err) => {
                 eprintln!("Error: {err}");
                 return;

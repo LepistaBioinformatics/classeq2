@@ -13,6 +13,7 @@ categories.workspace = true
 
 [dependencies]
 
+clap.workspace = true
 mycelium-base.workspace = true
 serde.workspace = true
 serde_yaml.workspace = true
@@ -23,3 +24,4 @@ uuid.workspace = true
 
 phylotree = "0.1.2"
 rayon = "1.10"
+thiserror = "1.0"

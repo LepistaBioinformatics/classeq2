@@ -236,12 +236,14 @@ dependencies = [
 name = "classeq-core"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "mycelium-base",
  "phylotree",
  "rayon",
  "serde 1.0.198",
  "serde_json",
  "serde_yaml",
+ "thiserror",
  "tracing",
  "tracing-subscriber",
  "uuid",

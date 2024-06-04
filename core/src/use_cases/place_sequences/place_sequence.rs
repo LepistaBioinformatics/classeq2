@@ -6,15 +6,16 @@ use crate::domain::dtos::{
 };
 
 use mycelium_base::{dtos::UntaggedParent, utils::errors::MappedErrors};
+use std::collections::HashMap;
 
 /// Place a sequence in the tree.
 ///
 /// This function tries to place a sequence in the tree using the overlapping
 /// kmers. The function uses a recursive strategy to traverse the tree and
 /// evaluate the adherence of the query sequence to the clades.
-pub fn place_sequence(
+pub(super) fn place_sequence(
     sequence: String,
-    tree: Tree,
+    tree: &Tree,
     max_iterations: Option<i32>,
 ) -> Result<PlacementStatus, MappedErrors> {
     let max_iterations = max_iterations.unwrap_or(1000);
@@ -73,7 +74,7 @@ sequence is not related to the phylogeny."
     };
 
     let mut iteration = 0;
-    let mut clade = tree.root;
+    let mut clade = tree.root.to_owned();
 
     loop {
         // ? -------------------------------------------------------------------
@@ -233,20 +234,49 @@ sequence is not related to the phylogeny."
         // placed at the current clade.
         //
         if filtered_proposals.len() > 1 {
+            let fold_proposals = filtered_proposals.iter().fold(
+                HashMap::<i32, Vec<AdherenceTest>>::new(),
+                |mut acc, a| {
+                    acc.entry(a.one - a.rest).or_insert(vec![]).push(a.clone());
+                    acc
+                },
+            );
+
+            let max_diff_key = fold_proposals.keys().max().unwrap();
+            let max_diff_value = fold_proposals.get(max_diff_key).unwrap();
+
+            if max_diff_value.len() == 1 {
+                let adherence = max_diff_value.first().unwrap();
+
+                clade = match adherence.clade.to_owned() {
+                    UntaggedParent::Record(clade) => clade,
+                    UntaggedParent::Id(_) => {
+                        panic!(
+                            "The adherence test does not contain a clade record."
+                        );
+                    }
+                };
+
+                children = match clade.to_owned().children {
+                    Some(children) => children,
+                    None => return Ok(IdentityFound(adherence.clone())),
+                };
+
+                continue;
+            }
+
             return Ok(Inconclusive(
                 filtered_proposals
                     .iter()
-                    .map(|adherence| AdherenceTest {
-                        clade: match &adherence.clade {
+                    .map(|item| AdherenceTest {
+                        clade: match &item.clade {
                             UntaggedParent::Record(clade) => {
                                 UntaggedParent::Id(clade.id.to_owned())
                             }
-                            UntaggedParent::Id(id) => {
-                                UntaggedParent::Id(id.to_owned())
-                            }
+                            id => id.to_owned(),
                         },
-                        one: adherence.one,
-                        rest: adherence.rest,
+                        one: item.one,
+                        rest: item.rest,
                     })
                     .collect(),
             ));
@@ -261,22 +291,31 @@ mod tests {
 
     #[test]
     fn test_place_sequence() {
-        let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/outputs/Colletotrichum_acutatum_gapdh-PhyML.yaml");
+        //let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/outputs/Colletotrichum_acutatum_gapdh-PhyML.yaml");
+        let path = PathBuf::from("/tmp/cls2.yaml");
 
         // Load the tree from file
         let file = std::fs::File::open(path).unwrap();
         let tree: Tree = serde_yaml::from_reader(file).unwrap();
 
         // Col_orchidophilum
-        let query_set = "CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATGATGATATCACATCTGTCACGACAATACCAGCCTCATCGGCCACTGGGAAAGAAATGAGCTAGCACTCTCGATCCTGTGACCCAGGATACTGAAGCGGCTCGTCCCAATGGCATGATGTGA";
+        let query_set = "\
+CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATGATGATAT\
+CACATCTGTCACGACAATACCAGCCTCATCGGCCACTGGGAAAGAAATGAGCTAGCACTC\
+TCGATCCTGTGACCCAGGATACTGAAGCGGCTCGTCCCAATGGCATGATGTGA";
 
-        // Col_nymphaeae_CBS_52677
-        // let query_set = "CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATCATGATATCACGTCTGCCACGATAACACCAGCTTCGTCGATATCCACGGGAAAAGAGTCGGAGCTAGCACTCTCAACTCTTTTGCCCCAAGGTTTCGATTGGGCTTGTTGTAACGACACGACGTGACACAATCATGCAGAAACAGCCGAGACAAAACTTGCTGACAGACAATCATCACAGGCCTACATGCTCAAGTAC";
+        // Col_laticiphilum_CBS_129827
+        //let query_set = "\
+        //CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATCATGATAT\
+        //CACGCCTACCACGATAACACCAGCTTCGTCGTTATCCACGGGGAAAAGAGTCAGAGCTAG\
+        //CACTCTCGACTCTTTTGCCCCAAGGTTTCGATTGGGCTTGTTGTAATGAAACGACGTGAC\
+        //ACAATCATGCAGAAACAGCCGAGACAAAATTTGCTGACAGACCATCCATCACAGGCCTAC\
+        //ATGCTCAAGTAC";
 
         // A random sequence
         // let invalid_query = "ASDFASDFASDFASDFASDFADSF";
 
-        match place_sequence(query_set.to_string(), tree, None) {
+        match place_sequence(query_set.to_string(), &tree, None) {
             Err(err) => panic!("Error: {err}"),
             Ok(response) => {
                 println!("{:?}", serde_json::to_string(&response).unwrap());

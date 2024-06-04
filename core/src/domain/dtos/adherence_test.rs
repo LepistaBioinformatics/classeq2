@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::clade::Clade;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "camelCase")]
 pub struct AdherenceTest {
     /// The unique identifier for the clade to be tested.
     pub clade: UntaggedParent<Clade, i32>,

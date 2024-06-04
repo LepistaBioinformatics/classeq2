@@ -62,7 +62,7 @@ pub fn map_kmers_to_tree(
 
     let mut headers = Vec::<String>::new();
     let mut header = String::new();
-    let mut seq = String::new();
+    let mut sequence = String::new();
 
     let reader = match std::fs::File::open(msa_path) {
         Err(err) => panic!("The MSA file could not be opened: {err}"),
@@ -93,7 +93,7 @@ pub fn map_kmers_to_tree(
                 Some((_, path)) => path,
             };
 
-            let kmers = map.build_kmers_from_string(seq.clone(), None);
+            let kmers = map.build_kmers_from_string(sequence.clone(), None);
 
             for kmer in kmers {
                 map.insert_or_append(
@@ -102,9 +102,9 @@ pub fn map_kmers_to_tree(
                 );
             }
 
-            seq.clear();
+            sequence.clear();
         } else {
-            seq.push_str(
+            sequence.push_str(
                 KmersMap::remove_non_iupac_from_sequence(&line).as_str(),
             );
         }

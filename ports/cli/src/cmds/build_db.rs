@@ -1,5 +1,3 @@
-use super::utils::OutputFormat;
-
 use clap::Parser;
 use classeq_core::use_cases::map_kmers_to_tree;
 use std::path::PathBuf;
@@ -33,12 +31,6 @@ pub(crate) struct BuildDatabaseArguments {
     /// The minimum branch support value to consider a branch in the tree.
     #[arg(long)]
     pub(super) min_branch_support: Option<f64>,
-
-    /// Output format
-    ///
-    /// The format in which the tree will be serialized.
-    #[arg(long, default_value = "yaml")]
-    pub(super) out_format: OutputFormat,
 }
 
 pub(crate) fn build_database_cmd(args: BuildDatabaseArguments) {
@@ -49,22 +41,12 @@ pub(crate) fn build_database_cmd(args: BuildDatabaseArguments) {
         args.min_branch_support,
     ) {
         Ok(tree) => {
-            let content = match args.out_format {
-                OutputFormat::Json => match serde_json::to_string_pretty(&tree)
-                {
-                    Err(err) => {
-                        eprintln!("Error: {}", err);
-                        return;
-                    }
-                    Ok(content) => content,
-                },
-                OutputFormat::Yaml => match serde_yaml::to_string(&tree) {
-                    Err(err) => {
-                        eprintln!("Error: {}", err);
-                        return;
-                    }
-                    Ok(content) => content,
-                },
+            let content = match serde_yaml::to_string(&tree) {
+                Err(err) => {
+                    eprintln!("Error: {}", err);
+                    return;
+                }
+                Ok(content) => content,
             };
 
             match args.output_file_path {

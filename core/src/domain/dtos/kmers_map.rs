@@ -1,6 +1,6 @@
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use serde::{Deserialize, Serialize, Serializer};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 /// A map from kmers to sets of node IDs.
 ///
@@ -34,41 +34,24 @@ pub struct KmersMap {
     #[serde(rename = "kSize")]
     k_size: usize,
 
+    #[serde(serialize_with = "ordered_map")]
     map: HashMap<String, HashSet<i32>>,
 }
 
-// TODO:
-// - Implement sorting on serialize record
-//impl Serialize for KmersMap {
-//    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//    where
-//        S: Serializer,
-//    {
-//        let mut map = serializer.serialize_map(Some(self.map.len()))?;
-//        let mut serialized_map = HashMap::<String, HashSet<i32>>::new();
-//
-//        // Sort keys
-//        let mut ordered_keys = self.map.keys().collect::<Vec<_>>();
-//        ordered_keys.sort();
-//
-//        // Sort values
-//        for key in &ordered_keys {
-//            let values = self.map.get(*key).unwrap();
-//            let mut ordered_values = values.iter().collect::<Vec<_>>();
-//            ordered_values.sort();
-//
-//            serialized_map.insert(
-//                key.to_string(),
-//                ordered_values.clone().into_iter().cloned().collect(),
-//            );
-//        }
-//
-//        map.serialize_entry("kSize", &self.k_size)?;
-//        map.serialize_entry("map", &serialized_map)?;
-//
-//        map.end()
-//    }
-//}
+/// Serialize a HashMap as an ordered map.
+///
+/// Sort keys and values in a HashMap before serializing it.
+fn ordered_map<S, K: Ord + Serialize, V: Serialize + Into<HashSet<i32>>>(
+    value: &HashMap<K, V>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    V: Into<HashSet<i32>>,
+{
+    let ordered: BTreeMap<_, _> = value.iter().collect();
+    ordered.serialize(serializer)
+}
 
 impl KmersMap {
     /// The constructor for a new KmersMap.
@@ -250,11 +233,20 @@ impl KmersMap {
             return vec![];
         }
 
-        let sequence = sequence.as_bytes();
-
-        for i in 0..sequence.len() - size + 1 {
+        let original_sequence = sequence.as_bytes();
+        for i in 0..original_sequence.len() - size + 1 {
             let kmer =
-                String::from_utf8(sequence[i..i + size].to_vec()).unwrap();
+                String::from_utf8(original_sequence[i..i + size].to_vec())
+                    .unwrap();
+            kmers.push(kmer);
+        }
+
+        let binding = sequence.chars().rev().collect::<String>();
+        let reverse_sequence = binding.as_bytes();
+        for i in 0..reverse_sequence.len() - size + 1 {
+            let kmer =
+                String::from_utf8(reverse_sequence[i..i + size].to_vec())
+                    .unwrap();
             kmers.push(kmer);
         }
 
