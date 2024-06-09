@@ -78,6 +78,7 @@ pub fn place_sequences(
     // ? -----------------------------------------------------------------------
 
     let (writer, file) = write_or_append_to_file(out_dir_path.as_path());
+
     match query_sequence.sequence_content() {
         Err(err) => panic!("Error reading sequence content: {err}"),
         Ok(source_sequences) => source_sequences

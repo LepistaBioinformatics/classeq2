@@ -253,26 +253,45 @@ impl KmersMap {
             return vec![];
         }
 
-        let sequence_uppercase = sequence.to_uppercase();
+        kmers.extend(KmersMap::build_kmers_from_sequence(
+            sequence.to_owned(),
+            size,
+        ));
 
-        let original_sequence = sequence_uppercase.as_bytes();
-        for i in 0..original_sequence.len() - size + 1 {
-            let kmer =
-                String::from_utf8(original_sequence[i..i + size].to_vec())
-                    .unwrap();
-            kmers.push(kmer);
-        }
+        kmers.extend(KmersMap::build_kmers_from_sequence(
+            KmersMap::reverse_complement(sequence),
+            size,
+        ));
 
-        let binding = sequence_uppercase.chars().rev().collect::<String>();
-        let reverse_sequence = binding.as_bytes();
-        for i in 0..reverse_sequence.len() - size + 1 {
+        kmers
+    }
+
+    fn build_kmers_from_sequence(sequence: String, size: usize) -> Vec<String> {
+        let mut kmers = Vec::new();
+        let binding = sequence.to_uppercase();
+        let sequence = binding.as_bytes();
+
+        for i in 0..sequence.len() - size + 1 {
             let kmer =
-                String::from_utf8(reverse_sequence[i..i + size].to_vec())
-                    .unwrap();
+                String::from_utf8(sequence[i..i + size].to_vec()).unwrap();
             kmers.push(kmer);
         }
 
         kmers
+    }
+
+    fn reverse_complement(sequence: String) -> String {
+        sequence
+            .chars()
+            .rev()
+            .map(|c| match c {
+                'a' | 'A' => 'T',
+                't' | 'T' => 'A',
+                'c' | 'C' => 'G',
+                'g' | 'G' => 'C',
+                _ => c,
+            })
+            .collect()
     }
 }
 

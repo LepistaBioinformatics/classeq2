@@ -55,10 +55,17 @@ pub(super) fn place_sequence(
 
     debug!("Sub-sampling kmers map from the query kmers.");
 
-    let query_kmers_map =
-        kmers_map.get_overlapping_kmers(&query_kmers.into_iter().collect());
+    let query_kmers_map = kmers_map
+        .get_overlapping_kmers(&query_kmers.to_owned().into_iter().collect());
 
     let query_kmers_len = query_kmers_map.get_map().keys().len();
+
+    if query_kmers_len == 0 {
+        warn!(
+            "Query sequence {:?} may not be related to the phylogeny",
+            header
+        );
+    }
 
     // ? -----------------------------------------------------------------------
     // ? Try to place the sequence
