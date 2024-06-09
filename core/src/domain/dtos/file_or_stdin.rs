@@ -5,12 +5,13 @@
 /// implementation.
 ///
 ///
+use super::sequence::{Sequence, SequenceBody};
+
 use std::io::{self, BufRead};
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::atomic::AtomicBool;
 use thiserror::Error;
-
 static STDIN_HAS_BEEN_USED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Debug, Error)]
@@ -65,26 +66,6 @@ pub struct FileOrStdin<T = String> {
     _type: PhantomData<T>,
 }
 
-#[derive(Debug, Clone)]
-pub struct Sequence {
-    header: String,
-    sequence: String,
-}
-
-impl Sequence {
-    pub fn header(&self) -> &str {
-        &self.header
-    }
-
-    pub fn sequence(&self) -> &str {
-        &self.sequence
-    }
-
-    pub fn to_fasta(&self) -> String {
-        format!(">{}\n{}\n", self.header, self.sequence)
-    }
-}
-
 impl FileOrStdin {
     /// Read content and build a fasta sequence
     ///
@@ -107,10 +88,8 @@ impl FileOrStdin {
 
             if line.starts_with('>') {
                 if !header.is_empty() {
-                    sequences.push(Sequence {
-                        header: header.clone(),
-                        sequence: sequence.clone(),
-                    });
+                    sequences
+                        .push(Sequence::new(header.clone(), sequence.clone()));
                     sequence.clear();
                 } else if !sequence.is_empty() {
                     return Err(StdinError::FromStr(
@@ -120,12 +99,15 @@ impl FileOrStdin {
 
                 header = line.replace(">", "");
             } else {
-                sequence.push_str(&line);
+                sequence.push_str(
+                    SequenceBody::remove_non_iupac_from_sequence(&line)
+                        .as_str(),
+                );
             }
         }
 
         if !header.is_empty() && !sequence.is_empty() {
-            sequences.push(Sequence { header, sequence });
+            sequences.push(Sequence::new(header, sequence));
         }
 
         Ok(sequences)

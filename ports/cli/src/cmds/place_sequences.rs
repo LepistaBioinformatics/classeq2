@@ -6,9 +6,10 @@ use classeq_core::{
     use_cases::place_sequences,
 };
 use std::{fs::read_to_string, path::PathBuf};
+use tracing::info;
 
 #[derive(Parser, Debug)]
-pub(crate) struct PlaceSequencesArguments {
+pub(crate) struct Arguments {
     /// If the value is "-", the STDIN will be used and this command will expect
     /// to receive the blutils output from the STDIN.
     #[clap(default_value = "-")]
@@ -45,10 +46,7 @@ pub(crate) struct PlaceSequencesArguments {
     pub(super) force_overwrite: bool,
 }
 
-pub(crate) fn place_sequences_cmd(
-    args: PlaceSequencesArguments,
-    threads: usize,
-) {
+pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
     let database_file = match read_to_string(&args.database_file_path) {
         Err(err) => {
             eprintln!("{}", err);
@@ -65,7 +63,7 @@ pub(crate) fn place_sequences_cmd(
         Ok(buffer) => buffer,
     };
 
-    place_sequences(
+    let times = place_sequences(
         args.query,
         tree,
         args.output_file_path,
@@ -73,5 +71,30 @@ pub(crate) fn place_sequences_cmd(
         &args.force_overwrite,
         args.out_format,
         threads,
+    );
+
+    let times = times
+        .into_iter()
+        .map(|time| time.time as f64)
+        .collect::<Vec<_>>();
+
+    let average_time: f64 = times.iter().sum::<f64>() / times.len() as f64;
+    let max_time: f64 = *times
+        .iter()
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+
+    let min_time: f64 = *times
+        .iter()
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+
+    let total_in_seconds: f64 = times.iter().sum();
+
+    info!("Placement times:");
+    info!("total\taverage\tmax\tmin");
+    info!(
+        "{:.2}\t{:.2}\t{:.2}\t{:.2}",
+        total_in_seconds, average_time, max_time, min_time
     );
 }

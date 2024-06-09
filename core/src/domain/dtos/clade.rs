@@ -33,6 +33,12 @@ pub struct Clade {
     pub children: Option<Vec<Self>>,
 }
 
+impl std::fmt::Display for Clade {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Clade: {}", self.id)
+    }
+}
+
 impl Clade {
     pub(super) fn new_root(length: f64, children: Option<Vec<Clade>>) -> Clade {
         Clade {

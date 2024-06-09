@@ -182,14 +182,34 @@ impl KmersMap {
     pub fn get_overlapping_kmers(&self, kmers: &HashSet<String>) -> Self {
         let mut map = Self::new(self.k_size);
 
-        kmers.iter().for_each(|kmer| {
-            if let Some(nodes) = self.map.get(kmer) {
-                map.map
-                    .insert(kmer.to_string(), nodes.iter().cloned().collect());
-            }
-        });
+        self.map
+            .par_iter()
+            .map(|(key, _)| key.to_string())
+            .collect::<HashSet<String>>()
+            .intersection(kmers)
+            .for_each(|kmer: &String| {
+                if let Some(nodes) = self.map.get(kmer) {
+                    map.map.insert(
+                        kmer.to_string(),
+                        nodes.iter().cloned().collect(),
+                    );
+                }
+            });
 
         map
+    }
+
+    pub fn get_kmers_intersection(
+        &self,
+        kmers: &HashSet<String>,
+    ) -> HashSet<String> {
+        self.map
+            .par_iter()
+            .map(|(key, _)| key.to_string())
+            .collect::<HashSet<String>>()
+            .intersection(kmers)
+            .cloned()
+            .collect()
     }
 
     /// Build kmers from a string
@@ -233,7 +253,9 @@ impl KmersMap {
             return vec![];
         }
 
-        let original_sequence = sequence.as_bytes();
+        let sequence_uppercase = sequence.to_uppercase();
+
+        let original_sequence = sequence_uppercase.as_bytes();
         for i in 0..original_sequence.len() - size + 1 {
             let kmer =
                 String::from_utf8(original_sequence[i..i + size].to_vec())
@@ -241,7 +263,7 @@ impl KmersMap {
             kmers.push(kmer);
         }
 
-        let binding = sequence.chars().rev().collect::<String>();
+        let binding = sequence_uppercase.chars().rev().collect::<String>();
         let reverse_sequence = binding.as_bytes();
         for i in 0..reverse_sequence.len() - size + 1 {
             let kmer =
@@ -251,21 +273,6 @@ impl KmersMap {
         }
 
         kmers
-    }
-
-    /// Remove non-IUPAC characters from a sequence
-    ///
-    /// Returns a string with only IUPAC characters. This method is used to
-    /// remove non-IUPAC characters from a given sequence.
-    pub fn remove_non_iupac_from_sequence(sequence: &str) -> String {
-        sequence
-            .to_uppercase()
-            .chars()
-            .filter(|c| match c {
-                'A' | 'C' | 'G' | 'T' => true,
-                _ => false,
-            })
-            .collect()
     }
 }
 

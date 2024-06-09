@@ -3,7 +3,7 @@ use classeq_core::use_cases::map_kmers_to_tree;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-pub(crate) struct BuildDatabaseArguments {
+pub(crate) struct Arguments {
     /// Path to the tree file
     ///
     /// The file should be in Newick format.
@@ -33,7 +33,7 @@ pub(crate) struct BuildDatabaseArguments {
     pub(super) min_branch_support: Option<f64>,
 }
 
-pub(crate) fn build_database_cmd(args: BuildDatabaseArguments) {
+pub(crate) fn build_database_cmd(args: Arguments) {
     match map_kmers_to_tree(
         args.tree_file_path,
         args.msa_file_path,

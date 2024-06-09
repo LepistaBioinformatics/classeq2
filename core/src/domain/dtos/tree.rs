@@ -137,7 +137,15 @@ impl Tree {
         tree_path: &Path,
         min_branch_support: f64,
     ) -> Result<Tree, MappedErrors> {
-        assert!(tree_path.extension() == Some(OsStr::new("nwk")));
+        assert!(
+            vec!["nwk", "newick", "tree"].contains(
+                &tree_path
+                    .extension()
+                    .and_then(OsStr::to_str)
+                    .expect("Could not get extension")
+            ),
+            "Tree file format is not supported"
+        );
 
         let newick_content =
             read_to_string(tree_path).expect("Could not read file");
@@ -155,6 +163,10 @@ impl Tree {
             None
         })
         .unwrap_or("UnnamedTree".to_string());
+
+        if !phylo_tree.is_rooted().unwrap_or(false) {
+            panic!("Tree is not rooted");
+        }
 
         let root_tree = match phylo_tree.get_root() {
             Err(err) => panic!("Could not get root: {err}"),

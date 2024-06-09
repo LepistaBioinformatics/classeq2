@@ -29,10 +29,10 @@ enum Opts {
     Convert(cmds::convert::Arguments),
 
     /// Build the index database
-    BuildDb(cmds::build_db::BuildDatabaseArguments),
+    BuildDb(cmds::build_db::Arguments),
 
     /// Place sequences on the tree
-    Place(cmds::place_sequences::PlaceSequencesArguments),
+    Place(cmds::place_sequences::Arguments),
 }
 
 #[derive(Parser, Debug)]
@@ -64,16 +64,31 @@ fn get_arguments() {
 fn main() {
     let args = Cli::parse();
 
+    // ? -----------------------------------------------------------------------
+    // ? Configure logger
+    // ? -----------------------------------------------------------------------
+
     let log_level = args.log_level.unwrap_or("info".to_string());
-    let log_file =
-        PathBuf::from(args.log_file.unwrap_or("cls2.log".to_string()));
 
-    let file_appender = tracing_appender::rolling::minutely(
-        log_file.parent().unwrap(),
-        log_file.file_name().unwrap(),
-    );
+    let (non_blocking, _guard) = match args.log_file {
+        //
+        // If no log file is provided, log to stderr
+        //
+        None => tracing_appender::non_blocking(std::io::stderr()),
+        //
+        // If a log file is provided, log to the file
+        //
+        Some(file) => {
+            let log_file = PathBuf::from(file);
 
-    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+            let file_appender = tracing_appender::rolling::minutely(
+                log_file.parent().unwrap(),
+                log_file.file_name().unwrap(),
+            );
+
+            tracing_appender::non_blocking(file_appender)
+        }
+    };
 
     let tracing_config = tracing_subscriber::fmt()
         .event_format(
@@ -91,6 +106,10 @@ fn main() {
         LogFormat::Ansi => tracing_config.pretty().init(),
         LogFormat::Json => tracing_config.json().init(),
     };
+
+    // ? -----------------------------------------------------------------------
+    // ? Get command line arguments
+    // ? -----------------------------------------------------------------------
 
     get_arguments();
 

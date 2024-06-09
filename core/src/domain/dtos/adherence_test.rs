@@ -15,3 +15,13 @@ pub struct AdherenceTest {
     /// The number of kmer matches with sibling clades.
     pub rest: i32,
 }
+
+impl std::fmt::Display for AdherenceTest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "AdherenceTest: {} - {} - {}",
+            self.clade, self.one, self.rest
+        )
+    }
+}

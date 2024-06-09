@@ -1,35 +1,44 @@
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
-    kmers_map::KmersMap,
     placement_response::PlacementStatus::{self, *},
+    sequence::{SequenceBody, SequenceHeader},
     tree::Tree,
 };
 
 use mycelium_base::{dtos::UntaggedParent, utils::errors::MappedErrors};
-use std::collections::HashMap;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use std::collections::{HashMap, HashSet};
+use tracing::{debug, warn};
 
 /// Place a sequence in the tree.
 ///
 /// This function tries to place a sequence in the tree using the overlapping
 /// kmers. The function uses a recursive strategy to traverse the tree and
 /// evaluate the adherence of the query sequence to the clades.
+#[tracing::instrument(name = "Place a sequence", skip(sequence, tree))]
 pub(super) fn place_sequence(
-    sequence: String,
+    header: SequenceHeader,
+    sequence: SequenceBody,
     tree: &Tree,
     max_iterations: Option<i32>,
+    min_match_coverage: Option<f64>,
 ) -> Result<PlacementStatus, MappedErrors> {
     let max_iterations = max_iterations.unwrap_or(1000);
-
-    // ? -----------------------------------------------------------------------
-    // ? Build and validate query kmers
-    // ? -----------------------------------------------------------------------
+    let min_match_coverage = min_match_coverage.unwrap_or(0.7);
 
     let kmers_map = tree
         .kmers_map
         .to_owned()
         .expect("The tree does not have a kmers map.");
 
-    let query_kmers = kmers_map.build_kmers_from_string(sequence, None);
+    // ? -----------------------------------------------------------------------
+    // ? Build and validate query kmers
+    // ? -----------------------------------------------------------------------
+
+    debug!("Building kmers from the query sequence.");
+
+    let query_kmers =
+        kmers_map.build_kmers_from_string(sequence.seq().to_string(), None);
 
     if query_kmers.len() < 2 {
         panic!("The sequence does not contain enough kmers.");
@@ -44,8 +53,12 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
+    debug!("Sub-sampling kmers map from the query kmers.");
+
     let query_kmers_map =
         kmers_map.get_overlapping_kmers(&query_kmers.into_iter().collect());
+
+    let query_kmers_len = query_kmers_map.get_map().keys().len();
 
     // ? -----------------------------------------------------------------------
     // ? Try to place the sequence
@@ -55,8 +68,12 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
+    debug!("Starting the placement process.");
+
     let root_kmers = match query_kmers_map.get_kmers_with_node(tree.root.id) {
-        Some(kmers) => kmers,
+        Some(kmers) => {
+            query_kmers_map.get_overlapping_kmers(&kmers.into_iter().collect())
+        }
         None => {
             return Ok(Unclassifiable(
                 "\
@@ -112,16 +129,19 @@ sequence is not related to the phylogeny."
                 // clade of the classification. Sucker kmers set should be used
                 // to test against the sibling kmers set.
                 //
-                let child_kmers_map: KmersMap =
-                    query_kmers_map.get_overlapping_kmers(&root_kmers);
+                let child_kmers_map =
+                    match root_kmers.get_kmers_with_node(clade.id) {
+                        None => 0,
+                        Some(kmers) => kmers.len(),
+                    };
 
                 //
                 // The sibling set represents the `rest` part of the
                 // `one-vs-rest` strategy. The sibling kmers set should be used
                 // to test against the sucker kmers set.
                 //
-                let sibling_clades: KmersMap = children
-                    .iter()
+                let sibling_clades: usize = children
+                    .par_iter()
                     .filter_map(|c| {
                         if c.id != child.id && !c.is_leaf() {
                             Some(c)
@@ -130,50 +150,37 @@ sequence is not related to the phylogeny."
                         }
                     })
                     .filter_map(|clade| {
-                        if let Some(kmers) =
-                            query_kmers_map.get_kmers_with_node(clade.id)
-                        {
-                            Some((clade.id, kmers))
-                        } else {
-                            None
-                        }
+                        root_kmers.get_kmers_with_node(clade.id)
                     })
-                    .fold(
-                        KmersMap::new(kmers_map.get_k_size()),
-                        |mut acc, c| {
-                            let (node, kmers) = c;
-                            for kmer in kmers.iter() {
-                                acc.insert_or_append(
-                                    kmer.clone(),
-                                    [node].iter().cloned().collect(),
-                                );
-                            }
-
-                            acc
-                        },
-                    );
+                    .flatten()
+                    .collect::<HashSet<String>>()
+                    .len();
 
                 (child_kmers_map, sibling_clades)
             };
 
-            if one.get_map().is_empty() {
-                // TODO:
-                // This is a special case where the query kmers do not
-                // overlap with the child kmers. This should be handled
-                // differently.
-            }
+            //
+            // This rule is used to determine if the child node has enough kmers
+            // to be considered for the adherence test. If the child node does
+            // not have enough kmers, the search process should perform a young
+            // return with MaxResolutionReached status.
+            //
+            let expected_min_clade_coverage =
+                query_kmers_len as f64 * min_match_coverage;
 
-            if rest.get_map().is_empty() {
-                // TODO:
-                // This is a special case where the query kmers do not
-                // overlap with the sibling kmers. This should be handled
-                // differently.
+            if one < expected_min_clade_coverage as usize {
+                debug!(
+                    "Not enough kmers in node {child_id}.",
+                    child_id = child.id
+                );
+
+                return Ok(MaxResolutionReached(clade.id));
             }
 
             clade_proposals.push(AdherenceTest {
                 clade: UntaggedParent::Record(child.to_owned()),
-                one: one.get_map().keys().len() as i32,
-                rest: rest.get_map().keys().len() as i32,
+                one: one as i32,
+                rest: rest as i32,
             });
         }
 
@@ -182,7 +189,7 @@ sequence is not related to the phylogeny."
         // sibling clades.
         //
         let filtered_proposals: Vec<AdherenceTest> = clade_proposals
-            .iter()
+            .par_iter()
             .filter_map(|adherence| {
                 if adherence.one > adherence.rest {
                     Some(adherence.clone())
@@ -287,6 +294,7 @@ sequence is not related to the phylogeny."
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::dtos::sequence::Sequence;
     use std::path::PathBuf;
 
     #[test]
@@ -299,10 +307,10 @@ mod tests {
         let tree: Tree = serde_yaml::from_reader(file).unwrap();
 
         // Col_orchidophilum
-        let query_set = "\
-CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATGATGATAT\
-CACATCTGTCACGACAATACCAGCCTCATCGGCCACTGGGAAAGAAATGAGCTAGCACTC\
-TCGATCCTGTGACCCAGGATACTGAAGCGGCTCGTCCCAATGGCATGATGTGA";
+        let query_sequence = Sequence::new(
+            "Col_orchidophilum",
+            "CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATGATGATATCACATCTGTCACGACAATACCAGCCTCATCGGCCACTGGGAAAGAAATGAGCTAGCACTCTCGATCCTGTGACCCAGGATACTGAAGCGGCTCGTCCCAATGGCATGATGTGA",
+        );
 
         // Col_laticiphilum_CBS_129827
         //let query_set = "\
@@ -315,7 +323,13 @@ TCGATCCTGTGACCCAGGATACTGAAGCGGCTCGTCCCAATGGCATGATGTGA";
         // A random sequence
         // let invalid_query = "ASDFASDFASDFASDFASDFADSF";
 
-        match place_sequence(query_set.to_string(), &tree, None) {
+        match place_sequence(
+            query_sequence.header().to_owned(),
+            query_sequence.sequence().to_owned(),
+            &tree,
+            None,
+            None,
+        ) {
             Err(err) => panic!("Error: {err}"),
             Ok(response) => {
                 println!("{:?}", serde_json::to_string(&response).unwrap());

@@ -8,15 +8,22 @@ use crate::domain::dtos::{
 };
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
+use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir, remove_file},
     path::PathBuf,
 };
 use tracing::{debug, warn};
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PlacementTime {
+    pub sequence: String,
+    pub time: u128,
+}
+
 #[tracing::instrument(
     name = "Placing multiple sequences",
-    skip(query_sequence, tree,)
+    skip(query_sequence, tree)
 )]
 pub fn place_sequences(
     query_sequence: FileOrStdin,
@@ -26,7 +33,7 @@ pub fn place_sequences(
     overwrite: &bool,
     output_format: OutputFormat,
     threads: usize,
-) {
+) -> Vec<PlacementTime> {
     // ? -----------------------------------------------------------------------
     // ? Create a thread pool configured globally
     // ? -----------------------------------------------------------------------
@@ -71,17 +78,23 @@ pub fn place_sequences(
     // ? -----------------------------------------------------------------------
 
     let (writer, file) = write_or_append_to_file(out_dir_path.as_path());
-
     match query_sequence.sequence_content() {
         Err(err) => panic!("Error reading sequence content: {err}"),
         Ok(source_sequences) => source_sequences
             .into_iter()
             .par_bridge()
-            .for_each(|sequence| {
-                debug!("Processing {:?}", sequence.header());
+            .map(|sequence| {
+                debug!("Processing {:?}", sequence.header_content());
 
-                match place_sequence(sequence.to_fasta(), &tree, max_iterations)
-                {
+                let time = std::time::Instant::now();
+
+                match place_sequence(
+                    sequence.header().to_owned(),
+                    sequence.sequence().to_owned(),
+                    &tree,
+                    max_iterations,
+                    None,
+                ) {
                     Err(err) => {
                         panic!("Error placing sequence: {err}");
                     }
@@ -89,7 +102,7 @@ pub fn place_sequences(
                         debug!("Placed sequence: {:?}", placement);
 
                         let output = PlacementResponse::new(
-                            sequence.header().to_string(),
+                            sequence.header_content().to_string(),
                             placement.to_string(),
                             placement,
                         );
@@ -109,14 +122,18 @@ pub fn place_sequences(
                             }
                         };
 
-                        match writer(output_content, file.try_clone().expect(
+                        if let Err(err) = writer(output_content, file.try_clone().expect(
                             "Unexpected error detected on write blast result",
                         )) {
-                            Err(err) => panic!("Error writing to file: {err}"),
-                            Ok(_) => (),
+                             panic!("Error writing to file: {err}")
+                        }
+
+                        PlacementTime {
+                            sequence: sequence.header_content().to_string(),
+                            time: time.elapsed().as_millis(),
                         }
                     }
                 }
-            }),
-    };
+            }).collect(),
+    }
 }

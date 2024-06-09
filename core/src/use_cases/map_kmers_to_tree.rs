@@ -1,4 +1,6 @@
-use crate::domain::dtos::{kmers_map::KmersMap, tree::Tree};
+use crate::domain::dtos::{
+    kmers_map::KmersMap, sequence::SequenceBody, tree::Tree,
+};
 
 use mycelium_base::utils::errors::MappedErrors;
 use std::{collections::HashSet, io::BufRead, path::PathBuf};
@@ -100,7 +102,7 @@ pub fn map_kmers_to_tree(
             sequence.clear();
         } else {
             sequence.push_str(
-                KmersMap::remove_non_iupac_from_sequence(&line).as_str(),
+                SequenceBody::remove_non_iupac_from_sequence(&line).as_str(),
             );
         }
     }
