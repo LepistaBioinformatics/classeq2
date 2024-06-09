@@ -1,3 +1,13 @@
+## v0.2.3 (2024-06-09)
+
+### Fix
+
+- fix the kmers generation that will not use the reverse complement of sequences
+
+### Refactor
+
+- refactor the sequence management to add parallel processing to key steps of thesequence placement
+
 ## v0.2.2 (2024-06-04)
 
 ### Fix
