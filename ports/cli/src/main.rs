@@ -91,14 +91,10 @@ fn main() {
     };
 
     let tracing_config = tracing_subscriber::fmt()
-        .event_format(
-            fmt::format()
-                // don't include levels in formatted output
-                .with_level(true)
-                // don't include targets
-                .with_target(false)
-                .compact(),
-        )
+        .event_format(fmt::format().with_level(true).compact())
+        .with_target(false)
+        .with_file(false)
+        .with_line_number(false)
         .with_writer(non_blocking)
         .with_env_filter(EnvFilter::from_str(log_level.as_str()).unwrap());
 

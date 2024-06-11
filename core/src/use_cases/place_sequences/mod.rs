@@ -7,18 +7,19 @@ use crate::domain::dtos::{
     placement_response::PlacementResponse, tree::Tree,
 };
 
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir, remove_file},
     path::PathBuf,
+    time::Duration,
 };
 use tracing::{debug, warn};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlacementTime {
     pub sequence: String,
-    pub time: u128,
+    pub milliseconds_time: Duration,
 }
 
 #[tracing::instrument(
@@ -27,19 +28,19 @@ pub struct PlacementTime {
 )]
 pub fn place_sequences(
     query_sequence: FileOrStdin,
-    tree: Tree,
-    out_file: PathBuf,
-    max_iterations: Option<i32>,
+    tree: &Tree,
+    out_file: &PathBuf,
+    max_iterations: &Option<i32>,
     overwrite: &bool,
-    output_format: OutputFormat,
-    threads: usize,
+    output_format: &OutputFormat,
+    threads: &usize,
 ) -> Vec<PlacementTime> {
     // ? -----------------------------------------------------------------------
     // ? Create a thread pool configured globally
     // ? -----------------------------------------------------------------------
 
     rayon::ThreadPoolBuilder::new()
-        .num_threads(threads)
+        .num_threads(threads.to_owned())
         .build_global()
         .expect("Error creating thread pool");
 
@@ -82,18 +83,17 @@ pub fn place_sequences(
     match query_sequence.sequence_content() {
         Err(err) => panic!("Error reading sequence content: {err}"),
         Ok(source_sequences) => source_sequences
-            .into_iter()
-            .par_bridge()
+            .par_iter()
             .map(|sequence| {
                 debug!("Processing {:?}", sequence.header_content());
 
                 let time = std::time::Instant::now();
 
                 match place_sequence(
-                    sequence.header().to_owned(),
-                    sequence.sequence().to_owned(),
+                    &sequence.header().to_owned(),
+                    &sequence.sequence().to_owned(),
                     &tree,
-                    max_iterations,
+                    &max_iterations,
                     None,
                 ) {
                     Err(err) => {
@@ -131,7 +131,7 @@ pub fn place_sequences(
 
                         PlacementTime {
                             sequence: sequence.header_content().to_string(),
-                            time: time.elapsed().as_millis(),
+                            milliseconds_time: time.elapsed(),
                         }
                     }
                 }

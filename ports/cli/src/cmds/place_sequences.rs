@@ -5,7 +5,7 @@ use classeq_core::{
     },
     use_cases::place_sequences,
 };
-use std::{fs::read_to_string, path::PathBuf};
+use std::{fs::read_to_string, path::PathBuf, time::Duration};
 use tracing::info;
 
 #[derive(Parser, Debug)]
@@ -47,54 +47,48 @@ pub(crate) struct Arguments {
 }
 
 pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
-    let database_file = match read_to_string(&args.database_file_path) {
-        Err(err) => {
-            eprintln!("{}", err);
-            std::process::exit(1);
-        }
-        Ok(content) => content,
+    use std::time::Instant;
+    let now = Instant::now();
+
+    let per_seq_time = {
+        let database_file = match read_to_string(&args.database_file_path) {
+            Err(err) => {
+                eprintln!("{}", err);
+                std::process::exit(1);
+            }
+            Ok(content) => content,
+        };
+
+        let tree = match serde_yaml::from_str::<Tree>(database_file.as_str()) {
+            Err(err) => {
+                eprintln!("{}", err);
+                std::process::exit(1);
+            }
+            Ok(buffer) => buffer,
+        };
+
+        place_sequences(
+            args.query,
+            &tree,
+            &args.output_file_path,
+            &args.max_iterations,
+            &args.force_overwrite,
+            &args.out_format,
+            &threads,
+        )
     };
 
-    let tree = match serde_yaml::from_str::<Tree>(database_file.as_str()) {
-        Err(err) => {
-            eprintln!("{}", err);
-            std::process::exit(1);
-        }
-        Ok(buffer) => buffer,
-    };
+    let elapsed = now.elapsed();
 
-    let times = place_sequences(
-        args.query,
-        tree,
-        args.output_file_path,
-        args.max_iterations,
-        &args.force_overwrite,
-        args.out_format,
-        threads,
-    );
-
-    let times = times
+    let average = per_seq_time
+        .to_owned()
         .into_iter()
-        .map(|time| time.time as f64)
-        .collect::<Vec<_>>();
+        .map(|i| i.milliseconds_time)
+        .sum::<Duration>() /
+        per_seq_time.len() as u32;
 
-    let average_time: f64 = times.iter().sum::<f64>() / times.len() as f64;
-    let max_time: f64 = *times
-        .iter()
-        .max_by(|a, b| a.partial_cmp(b).unwrap())
-        .unwrap();
-
-    let min_time: f64 = *times
-        .iter()
-        .min_by(|a, b| a.partial_cmp(b).unwrap())
-        .unwrap();
-
-    let total_in_seconds: f64 = times.iter().sum();
-
-    info!("Placement times:");
-    info!("total\taverage\tmax\tmin");
     info!(
-        "{:.2}\t{:.2}\t{:.2}\t{:.2}",
-        total_in_seconds, average_time, max_time, min_time
+        "Execution times:\n{0: <10} | {1: <20?}\n{2: <10} | {3: <20?}",
+        "total", elapsed, "average", average
     );
 }

@@ -17,10 +17,10 @@ use tracing::{debug, warn};
 /// evaluate the adherence of the query sequence to the clades.
 #[tracing::instrument(name = "Place a sequence", skip(sequence, tree))]
 pub(super) fn place_sequence(
-    header: SequenceHeader,
-    sequence: SequenceBody,
+    header: &SequenceHeader,
+    sequence: &SequenceBody,
     tree: &Tree,
-    max_iterations: Option<i32>,
+    max_iterations: &Option<i32>,
     min_match_coverage: Option<f64>,
 ) -> Result<PlacementStatus, MappedErrors> {
     let max_iterations = max_iterations.unwrap_or(1000);
@@ -61,10 +61,7 @@ pub(super) fn place_sequence(
     let query_kmers_len = query_kmers_map.get_map().keys().len();
 
     if query_kmers_len == 0 {
-        warn!(
-            "Query sequence {:?} may not be related to the phylogeny",
-            header
-        );
+        warn!("Query sequence may not be related to the phylogeny");
     }
 
     // ? -----------------------------------------------------------------------
@@ -90,6 +87,14 @@ sequence is not related to the phylogeny."
             ))
         }
     };
+
+    // ? -----------------------------------------------------------------------
+    // ? Start the children clades with the root
+    //
+    // This object should be updated during the search process. The symbol 🌳
+    // indicate wether this object is updated.
+    //
+    // ? -----------------------------------------------------------------------
 
     let mut children = if let Some(children) = tree.root.to_owned().children {
         children
@@ -136,11 +141,13 @@ sequence is not related to the phylogeny."
                 // clade of the classification. Sucker kmers set should be used
                 // to test against the sibling kmers set.
                 //
-                let child_kmers_map =
-                    match root_kmers.get_kmers_with_node(clade.id) {
-                        None => 0,
-                        Some(kmers) => kmers.len(),
-                    };
+                let child_kmers_map = match root_kmers
+                    .to_owned()
+                    .get_kmers_with_node(clade.to_owned().id)
+                {
+                    None => 0,
+                    Some(kmers) => kmers.len(),
+                };
 
                 //
                 // The sibling set represents the `rest` part of the
@@ -196,10 +203,10 @@ sequence is not related to the phylogeny."
         // sibling clades.
         //
         let filtered_proposals: Vec<AdherenceTest> = clade_proposals
-            .par_iter()
+            .iter()
             .filter_map(|adherence| {
                 if adherence.one > adherence.rest {
-                    Some(adherence.clone())
+                    Some(adherence.to_owned())
                 } else {
                     None
                 }
@@ -221,7 +228,7 @@ sequence is not related to the phylogeny."
         //
         if filtered_proposals.len() == 1 {
             let adherence: AdherenceTest = match filtered_proposals.first() {
-                Some(adherence) => adherence.clone(),
+                Some(adherence) => adherence.to_owned(),
                 None => {
                     panic!("The filtered proposals list is empty. This is unexpected.");
                 }
@@ -236,6 +243,9 @@ sequence is not related to the phylogeny."
                 }
             };
 
+            //
+            // 🌳 children update
+            //
             children = match clade.to_owned().children {
                 Some(children) => children,
                 None => return Ok(IdentityFound(adherence)),
@@ -251,7 +261,9 @@ sequence is not related to the phylogeny."
             let fold_proposals = filtered_proposals.iter().fold(
                 HashMap::<i32, Vec<AdherenceTest>>::new(),
                 |mut acc, a| {
-                    acc.entry(a.one - a.rest).or_insert(vec![]).push(a.clone());
+                    acc.entry(a.one - a.rest)
+                        .or_insert(vec![])
+                        .push(a.to_owned());
                     acc
                 },
             );
@@ -271,9 +283,12 @@ sequence is not related to the phylogeny."
                     }
                 };
 
+                //
+                // 🌳 children update
+                //
                 children = match clade.to_owned().children {
                     Some(children) => children,
-                    None => return Ok(IdentityFound(adherence.clone())),
+                    None => return Ok(IdentityFound(adherence.to_owned())),
                 };
 
                 continue;
@@ -331,10 +346,10 @@ mod tests {
         // let invalid_query = "ASDFASDFASDFASDFASDFADSF";
 
         match place_sequence(
-            query_sequence.header().to_owned(),
-            query_sequence.sequence().to_owned(),
+            &query_sequence.header().to_owned(),
+            &query_sequence.sequence().to_owned(),
             &tree,
-            None,
+            &None,
             None,
         ) {
             Err(err) => panic!("Error: {err}"),
