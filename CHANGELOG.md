@@ -1,3 +1,9 @@
+## v0.2.5 (2024-06-12)
+
+### Fix
+
+- fix tracing appender version
+
 ## v0.2.4 (2024-06-12)
 
 ### Fix
