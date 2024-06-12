@@ -331,7 +331,7 @@ impl KmersMap {
 
 #[cfg(test)]
 mod tests {
-    use std::hash::{DefaultHasher, Hash};
+    use std::hash::DefaultHasher;
 
     use super::*;
 
