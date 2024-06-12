@@ -2,13 +2,15 @@ mod place_sequence;
 use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
+use crate::domain::dtos::placement_response::PlacementStatus;
 use crate::domain::dtos::{
     file_or_stdin::FileOrStdin, output_format::OutputFormat,
     placement_response::PlacementResponse, tree::Tree,
 };
 
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc::channel;
 use std::{
     fs::{create_dir, remove_file},
     path::PathBuf,
@@ -79,8 +81,71 @@ pub fn place_sequences(
     // ? -----------------------------------------------------------------------
 
     let (writer, file) = write_or_append_to_file(out_dir_path.as_path());
+    let (sender, receiver) = channel();
+    let _ = query_sequence.sequence_content_by_channel(sender);
 
-    match query_sequence.sequence_content() {
+    receiver
+        .into_iter()
+        .par_bridge()
+        .map(|sequence| {
+            debug!("Processing {:?}", sequence.header_content());
+
+            let time = std::time::Instant::now();
+
+            match place_sequence(
+                &sequence.header().to_owned(),
+                &sequence.sequence().to_owned(),
+                &tree,
+                &max_iterations,
+                None,
+            ) {
+                Err(err) => panic!("Error placing sequence: {err}"),
+                Ok(placement) => {
+                    debug!("Placed sequence: {:?}", placement);
+
+                    let output = PlacementResponse::new(
+                        sequence.header_content().to_string(),
+                        placement.to_string(),
+                        match placement {
+                            PlacementStatus::Unclassifiable => None,
+                            other => Some(other),
+                        },
+                    );
+
+                    let output_content = match output_format {
+                        OutputFormat::Yaml => {
+                            let content = serde_yaml::to_string(&output)
+                                .expect("Error serializing YAML response");
+
+                            format!("---\n{content}")
+                        }
+                        OutputFormat::Jsonl => {
+                            let content = serde_json::to_string(&output)
+                                .expect("Error serializing JSON response");
+
+                            format!("{content}\n")
+                        }
+                    };
+
+                    if let Err(err) = writer(
+                        output_content,
+                        file.try_clone().expect(
+                            "Unexpected error detected on write blast result",
+                        ),
+                    ) {
+                        panic!("Error writing to file: {err}")
+                    }
+
+                    PlacementTime {
+                        sequence: sequence.header_content().to_string(),
+                        milliseconds_time: time.elapsed(),
+                    }
+                }
+            }
+        })
+        .collect()
+
+    /* match query_sequence.sequence_content_by_channel(sender) {
         Err(err) => panic!("Error reading sequence content: {err}"),
         Ok(source_sequences) => source_sequences
             .par_iter()
@@ -136,5 +201,5 @@ pub fn place_sequences(
                     }
                 }
             }).collect(),
-    }
+    } */
 }

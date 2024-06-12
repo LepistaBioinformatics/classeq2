@@ -69,9 +69,62 @@ pub struct FileOrStdin<T = String> {
 impl FileOrStdin {
     /// Read content and build a fasta sequence
     ///
+    /// Each fasta sequence should be returned through a channel received by the
+    /// caller. The channel is used to avoid memory overhead when reading large
+    /// files.
+    ///
+    pub fn sequence_content_by_channel(
+        self,
+        chan: std::sync::mpsc::Sender<Sequence>,
+    ) -> Result<(), StdinError> {
+        let reader = self.into_chunked_reader()?;
+        let mut header = String::new();
+        let mut sequence = String::new();
+
+        for line in reader.lines() {
+            let line = line?;
+
+            if line.is_empty() {
+                continue;
+            }
+
+            if line.starts_with('>') {
+                if !header.is_empty() {
+                    chan.send(Sequence::new(header.clone(), sequence.clone()))
+                        .unwrap();
+                    sequence.clear();
+                } else if !sequence.is_empty() {
+                    return Err(StdinError::FromStr(
+                        "unexpected sequence without header".to_owned(),
+                    ));
+                }
+
+                header = line.replace(">", "");
+            } else {
+                sequence.push_str(
+                    SequenceBody::remove_non_iupac_from_sequence(&line)
+                        .as_str(),
+                );
+            }
+        }
+
+        if !header.is_empty() && !sequence.is_empty() {
+            chan.send(Sequence::new(header, sequence)).unwrap();
+        };
+
+        Ok(())
+    }
+
+    /// Read content and build a fasta sequence
+    ///
     /// Content should be a multi fasta file. Each fasta record can contain a
     /// fasta header starting with `>` and a sequence of a single line or
     /// multiline sequence.
+    ///
+    #[deprecated(
+        since = "0.3.0",
+        note = "Use `sequence_content_by_channel` instead."
+    )]
     pub fn sequence_content(self) -> Result<Vec<Sequence>, StdinError> {
         let reader = self.into_chunked_reader()?;
 

@@ -93,7 +93,7 @@ pub fn map_kmers_to_tree(
             let kmers = map.build_kmers_from_string(sequence.clone(), None);
 
             for kmer in kmers {
-                map.insert_or_append(
+                map.insert_or_append_kmer_hash(
                     kmer,
                     HashSet::from_iter(leaf_path.iter().cloned()),
                 );

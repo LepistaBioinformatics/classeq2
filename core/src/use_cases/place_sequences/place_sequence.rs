@@ -75,17 +75,9 @@ pub(super) fn place_sequence(
     debug!("Starting the placement process.");
 
     let root_kmers = match query_kmers_map.get_kmers_with_node(tree.root.id) {
-        Some(kmers) => {
-            query_kmers_map.get_overlapping_kmers(&kmers.into_iter().collect())
-        }
-        None => {
-            return Ok(Unclassifiable(
-                "\
-The query sequence does not match any kmers in the tree indicating that the \
-sequence is not related to the phylogeny."
-                    .to_string(),
-            ))
-        }
+        None => return Ok(Unclassifiable),
+        Some(kmers) => query_kmers_map
+            .get_overlapping_kmers(&kmers.into_iter().map(|i| *i).collect()),
     };
 
     // ? -----------------------------------------------------------------------
@@ -167,7 +159,8 @@ sequence is not related to the phylogeny."
                         root_kmers.get_kmers_with_node(clade.id)
                     })
                     .flatten()
-                    .collect::<HashSet<String>>()
+                    .map(|i| *i)
+                    .collect::<HashSet<u64>>()
                     .len();
 
                 (child_kmers_map, sibling_clades)
