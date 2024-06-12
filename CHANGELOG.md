@@ -1,3 +1,13 @@
+## v0.2.4 (2024-06-12)
+
+### Fix
+
+- fix the sequence parsing and log tracing
+
+### Perf
+
+- upgrade kmersmap to map kmers using hash values instead of string
+
 ## v0.2.3 (2024-06-09)
 
 ### Fix
