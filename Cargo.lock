@@ -221,7 +221,7 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "classeq-cli"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "clap",
  "classeq-core",
@@ -235,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-core"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "clap",
  "mycelium-base",
