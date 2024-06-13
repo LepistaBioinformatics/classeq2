@@ -1,3 +1,9 @@
+## v0.2.6 (2024-06-13)
+
+### Refactor
+
+- remove unused structural methods and tests of kmer-map object
+
 ## v0.2.5 (2024-06-12)
 
 ### Fix
