@@ -26,7 +26,7 @@ pub(super) fn place_sequence(
     let max_iterations = max_iterations.unwrap_or(1000);
     let min_match_coverage = min_match_coverage.unwrap_or(0.7);
 
-    let kmers_map = tree
+    let mut kmers_map = tree
         .kmers_map
         .to_owned()
         .expect("The tree does not have a kmers map.");
@@ -55,7 +55,7 @@ pub(super) fn place_sequence(
 
     debug!("Sub-sampling kmers map from the query kmers.");
 
-    let query_kmers_map = kmers_map
+    let mut query_kmers_map = kmers_map
         .get_overlapping_kmers(&query_kmers.to_owned().into_iter().collect());
 
     let query_kmers_len = query_kmers_map.get_map().keys().len();

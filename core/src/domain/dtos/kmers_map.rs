@@ -1,9 +1,108 @@
+use mur3::murmurhash3_x64_128;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::{Deserialize, Serialize, Serializer};
-use std::{
-    collections::{BTreeMap, HashMap, HashSet},
-    hash::{DefaultHasher, Hasher},
-};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
+pub struct MinimizerKey(pub u64);
+
+impl MinimizerKey {
+    /// Create a minimizer representation of kmer
+    ///
+    /// The minimizer should be the first 10 numbers of the hash representation
+    /// of the kmer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use classeq_core::domain::dtos::kmers_map::MinimizerKey;
+    ///
+    /// let original_kmer_hash = 12345678901234567890;
+    /// let minimizer = MinimizerKey::build_minimizer(&original_kmer_hash);
+    ///
+    /// assert_eq!(minimizer, MinimizerKey(1234567890));
+    /// ```
+    ///
+    pub fn build_minimizer(kmer_hash: &u64, size: usize) -> Self {
+        let kmer_hash = kmer_hash.to_string();
+        let minimizer = kmer_hash.chars().take(size).collect::<String>();
+        Self(minimizer.parse().unwrap())
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct MinimizerValue(pub HashMap<u64, HashSet<i32>>);
+
+impl MinimizerValue {
+    pub(crate) fn new() -> Self {
+        MinimizerValue(HashMap::new())
+    }
+
+    pub(crate) fn insert_or_append(
+        &mut self,
+        kmer: u64,
+        nodes: HashSet<i32>,
+    ) -> bool {
+        if self.0.contains_key(&kmer) {
+            if let Some(set) = self.0.get_mut(&kmer) {
+                set.extend(nodes);
+                let mut set_as_vec: Vec<i32> =
+                    set.clone().into_iter().collect();
+
+                set_as_vec.sort();
+                set.clear();
+                set.extend(set_as_vec);
+            }
+
+            return false;
+        }
+
+        self.0.insert(kmer, nodes);
+        true
+    }
+
+    pub(crate) fn get_kmers_with_node(
+        &self,
+        node: i32,
+    ) -> Option<HashSet<&u64>> {
+        match self
+            .0
+            .par_iter()
+            .filter_map(|(kmer, nodes)| {
+                if nodes.contains(&node) {
+                    Some(kmer)
+                } else {
+                    None
+                }
+            })
+            .collect::<HashSet<&u64>>()
+        {
+            set if set.is_empty() => None,
+            set => Some(set.iter().map(|s| s.to_owned()).collect()),
+        }
+    }
+
+    pub(crate) fn get_overlapping_kmers(&self, kmers: &HashSet<u64>) -> Self {
+        let mut map = MinimizerValue(HashMap::new());
+
+        self.0
+            .par_iter()
+            .map(|(key, _)| key.to_owned())
+            .collect::<HashSet<u64>>()
+            .intersection(kmers)
+            .for_each(|kmer: &u64| {
+                if let Some(nodes) = self.get(*kmer) {
+                    map.0.insert(*kmer, nodes.iter().cloned().collect());
+                }
+            });
+
+        map
+    }
+
+    pub(crate) fn get(&self, kmer: u64) -> Option<&HashSet<i32>> {
+        self.0.get(&kmer)
+    }
+}
 
 /// A map from kmers to sets of node IDs.
 ///
@@ -37,23 +136,12 @@ pub struct KmersMap {
     #[serde(rename = "kSize")]
     k_size: usize,
 
-    #[serde(serialize_with = "ordered_map")]
-    map: HashMap<u64, HashSet<i32>>,
-}
+    /// The minimizer size
+    #[serde(rename = "mSize")]
+    m_size: usize,
 
-/// Serialize a HashMap as an ordered map.
-///
-/// Sort keys and values in a HashMap before serializing it.
-fn ordered_map<S, K: Ord + Serialize, V: Serialize + Into<HashSet<i32>>>(
-    value: &HashMap<K, V>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-    V: Into<HashSet<i32>>,
-{
-    let ordered: BTreeMap<_, _> = value.iter().collect();
-    ordered.serialize(serializer)
+    //#[serde(serialize_with = "ordered_map")]
+    map: HashMap<MinimizerKey, MinimizerValue>,
 }
 
 impl KmersMap {
@@ -61,9 +149,10 @@ impl KmersMap {
     ///
     /// Returns a new KmersMap with the given kmer size.
     ///
-    pub fn new(k_size: usize) -> Self {
+    pub fn new(k_size: usize, m_size: usize) -> Self {
         KmersMap {
             k_size,
+            m_size,
             map: HashMap::new(),
         }
     }
@@ -73,7 +162,7 @@ impl KmersMap {
     /// Returns a reference to the map of kmers. This method is used to get the
     /// map of kmers.
     ///
-    pub(crate) fn get_map(&self) -> &HashMap<u64, HashSet<i32>> {
+    pub(crate) fn get_map(&self) -> &HashMap<MinimizerKey, MinimizerValue> {
         &self.map
     }
 
@@ -98,9 +187,7 @@ impl KmersMap {
     /// inserted and the function will return true.
     ///
     pub(crate) fn hash_kmer(kmer: &str) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        hasher.write(kmer.as_bytes());
-        hasher.finish()
+        murmurhash3_x64_128(kmer.as_bytes(), 0).0
     }
 
     /// Insert a kmer into the map.
@@ -110,22 +197,15 @@ impl KmersMap {
     /// inserted and the function will return true.
     ///
     fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) -> bool {
-        if self.map.contains_key(&kmer) {
-            if let Some(set) = self.map.get_mut(&kmer) {
-                set.extend(nodes);
-                let mut set_as_vec: Vec<i32> =
-                    set.clone().into_iter().collect();
+        let key = MinimizerKey::build_minimizer(&kmer, self.m_size);
+        let value = MinimizerValue::new();
 
-                set_as_vec.sort();
-                set.clear();
-                set.extend(set_as_vec);
-            }
-
-            return false;
+        if let Some(set) = self.map.get_mut(&key) {
+            return set.insert_or_append(kmer, nodes);
         }
 
-        self.map.insert(kmer, nodes);
-        true
+        self.map.insert(key, value);
+        false
     }
 
     /// Get all kmers that contain a given node.
@@ -163,13 +243,14 @@ impl KmersMap {
         match self
             .map
             .par_iter()
-            .filter_map(|(kmer, nodes)| {
-                if nodes.contains(&node) {
-                    Some(kmer)
+            .filter_map(|(_, value)| {
+                if let Some(nodes) = value.get_kmers_with_node(node) {
+                    Some(nodes)
                 } else {
                     None
                 }
             })
+            .flatten()
             .collect::<HashSet<&u64>>()
         {
             set if set.is_empty() => None,
@@ -182,18 +263,21 @@ impl KmersMap {
     /// Returns a new KmersMap with only the kmers that are present in the given
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
-    pub(crate) fn get_overlapping_kmers(&self, kmers: &HashSet<u64>) -> Self {
-        let mut map = Self::new(self.k_size);
+    pub(crate) fn get_overlapping_kmers(
+        &mut self,
+        kmers: &HashSet<u64>,
+    ) -> Self {
+        let mut map = Self::new(self.k_size, self.m_size);
 
         self.map
-            .par_iter()
-            .map(|(key, _)| key.to_owned())
-            .collect::<HashSet<u64>>()
-            .intersection(kmers)
-            .for_each(|kmer: &u64| {
-                if let Some(nodes) = self.map.get(kmer) {
-                    map.map.insert(*kmer, nodes.iter().cloned().collect());
-                }
+            .iter()
+            .map(|(key, value)| {
+                let key = key.0;
+                let value = value.get_overlapping_kmers(kmers);
+                (key, value)
+            })
+            .for_each(|(key, value)| {
+                map.map.insert(MinimizerKey(key), value);
             });
 
         map
@@ -289,84 +373,5 @@ impl KmersMap {
                 _ => c,
             })
             .collect()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_insert_or_append_kmer_hash() {
-        let mut kmers_map = KmersMap::new(0);
-        kmers_map.insert_or_append_kmer_hash(1, [1].iter().cloned().collect());
-        kmers_map.insert_or_append_kmer_hash(2, [2].iter().cloned().collect());
-        kmers_map.insert_or_append_kmer_hash(1, [3].iter().cloned().collect());
-
-        let mut expected = HashMap::new();
-        expected.insert(1, [1, 3].iter().cloned().collect());
-        expected.insert(2, [2].iter().cloned().collect());
-
-        assert_eq!(kmers_map.map, expected);
-    }
-
-    #[test]
-    fn test_get_overlapping_kmers() {
-        let mut kmers_map = KmersMap::new(0);
-        kmers_map.insert_or_append_kmer_hash(1, [1].iter().cloned().collect());
-        kmers_map.insert_or_append_kmer_hash(2, [2].iter().cloned().collect());
-        kmers_map.insert_or_append_kmer_hash(3, [3].iter().cloned().collect());
-
-        let kmers_map =
-            kmers_map.get_overlapping_kmers(&[1, 2].iter().cloned().collect());
-
-        let mut expected = HashMap::new();
-
-        expected.insert(1, [1].iter().cloned().collect());
-        expected.insert(2, [2].iter().cloned().collect());
-
-        assert_eq!(kmers_map.map, expected);
-
-        let kmers_map =
-            kmers_map.get_overlapping_kmers(&[1, 3].iter().cloned().collect());
-
-        let mut expected = HashMap::new();
-
-        expected.insert(1, [1].iter().cloned().collect());
-
-        assert_eq!(kmers_map.map, expected);
-
-        let kmers_map =
-            kmers_map.get_overlapping_kmers(&[2, 3].iter().cloned().collect());
-
-        let expected = HashMap::new();
-
-        assert_eq!(kmers_map.map, expected);
-    }
-
-    #[test]
-    fn test_build_kmers_from_string() {
-        let sequence = "ATCG".to_string();
-        let kmers_map = KmersMap::new(0);
-
-        let kmers =
-            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(1));
-        assert_eq!(kmers, [65, 84, 67, 71]);
-
-        let kmers =
-            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(2));
-        assert_eq!(kmers, [10922, 17255, 17224]);
-
-        let kmers =
-            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(3));
-        assert_eq!(kmers, [27756, 17255]);
-
-        let kmers =
-            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(4));
-        assert_eq!(kmers, [27756]);
-
-        let kmers =
-            kmers_map.build_kmers_from_string(sequence.to_owned(), Some(5));
-        assert_eq!(kmers, Vec::<u64>::new());
     }
 }

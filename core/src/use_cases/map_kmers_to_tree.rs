@@ -19,12 +19,19 @@ use tracing::debug;
 pub fn map_kmers_to_tree(
     tree_path: PathBuf,
     msa_path: PathBuf,
-    k_size: usize,
+    k_size: Option<usize>,
+    m_size: Option<usize>,
     min_branch_support: Option<f64>,
 ) -> Result<Tree, MappedErrors> {
     // ? -----------------------------------------------------------------------
-    // ? Validate the input arguments
+    // ? Initialize and Validate arguments
     // ? -----------------------------------------------------------------------
+
+    let k_size = k_size.unwrap_or(35);
+
+    let m_size = m_size.unwrap_or(4);
+
+    let min_branch_support = min_branch_support.unwrap_or(70.0);
 
     if !tree_path.exists() {
         panic!("The tree file does not exist.");
@@ -39,14 +46,13 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     debug!("Reading the phylogenetic tree");
-    let mut tree =
-        Tree::from_file(&tree_path, min_branch_support.unwrap_or(95.0))?;
+    let mut tree = Tree::from_file(&tree_path, min_branch_support)?;
 
     // ? -----------------------------------------------------------------------
     // ? Initialize mappings
     // ? -----------------------------------------------------------------------
 
-    let mut map = KmersMap::new(k_size);
+    let mut map = KmersMap::new(k_size, m_size);
     let tree_leaves = tree.root.get_leaves(None);
 
     // ? -----------------------------------------------------------------------
@@ -128,7 +134,7 @@ mod tests {
         let tree_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
         let msa_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh_mafft.fasta");
 
-        let tree = map_kmers_to_tree(tree_path, msa_path, 12, None)?;
+        let tree = map_kmers_to_tree(tree_path, msa_path, None, None, None)?;
 
         let content = match serde_yaml::to_string(&tree) {
             Err(err) => panic!("Error: {err}"),

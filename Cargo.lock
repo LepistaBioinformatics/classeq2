@@ -238,6 +238,7 @@ name = "classeq-core"
 version = "0.2.6"
 dependencies = [
  "clap",
+ "mur3",
  "mycelium-base",
  "phylotree",
  "rayon",
@@ -575,6 +576,12 @@ checksum = "87dfd01fe195c66b572b37921ad8803d010623c0aca821bea2302239d155cdae"
 dependencies = [
  "adler",
 ]
+
+[[package]]
+name = "mur3"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97af489e1e21b68de4c390ecca6703318bc1aa16e9733bcb62c089b73c6fbb1b"
 
 [[package]]
 name = "mycelium-base"

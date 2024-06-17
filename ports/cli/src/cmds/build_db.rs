@@ -14,11 +14,17 @@ pub(crate) struct Arguments {
     /// The file should be in FASTA format.
     pub(super) msa_file_path: PathBuf,
 
-    /// Output file path
+    /// The kmer size
     ///
-    /// The file will be saved in JSON format.
-    #[arg(long, short)]
+    /// The size of the kmers to be used in the tree.
+    #[arg(long, short, default_value = "35")]
     pub(super) k_size: Option<usize>,
+
+    /// The minimizer size
+    ///
+    /// The size of the minimizer to be used in the tree.
+    #[arg(long, short, default_value = "4")]
+    pub(super) m_size: Option<usize>,
 
     /// Output file path
     ///
@@ -29,7 +35,7 @@ pub(crate) struct Arguments {
     /// Minimum branch support
     ///
     /// The minimum branch support value to consider a branch in the tree.
-    #[arg(long)]
+    #[arg(long, short, default_value = "70")]
     pub(super) min_branch_support: Option<f64>,
 }
 
@@ -37,7 +43,8 @@ pub(crate) fn build_database_cmd(args: Arguments) {
     match map_kmers_to_tree(
         args.tree_file_path,
         args.msa_file_path,
-        args.k_size.unwrap_or(31),
+        args.k_size,
+        args.m_size,
         args.min_branch_support,
     ) {
         Ok(tree) => {

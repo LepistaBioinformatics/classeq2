@@ -9,6 +9,7 @@
         "iupac",
         "kmer",
         "kmers",
+        "murmurhash",
         "newick",
         "Phylo",
         "phylotre",
