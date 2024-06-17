@@ -15,7 +15,7 @@ categories.workspace = true
 
 [dependencies]
 
-classeq-core = { path = "../../core", version = "0.2.6" }
+classeq-core = { path = "../../core", version = "0.2.7" }
 
 clap.workspace = true
 serde.workspace = true

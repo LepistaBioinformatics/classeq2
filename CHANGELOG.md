@@ -1,3 +1,9 @@
+## v0.2.7 (2024-06-16)
+
+### Perf
+
+- replace the hash algorithm by murmur3 and implements the minimizer mapping for group kmers
+
 ## v0.2.6 (2024-06-13)
 
 ### Refactor
