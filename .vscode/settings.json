@@ -15,5 +15,13 @@
         "phylotre",
         "phylotree",
         "Taxid"
-    ]
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false,
+    "rust-analyzer.linkedProjects": [
+        "ports/api/Cargo.toml",
+        "ports/cli/Cargo.toml",
+    ],
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    }
 }

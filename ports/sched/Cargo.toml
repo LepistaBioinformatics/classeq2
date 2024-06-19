@@ -1,0 +1,15 @@
+[package]
+
+name = "classeq-sched"
+description = "A simple scheduler for the Classeq project"
+readme = "README.md"
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]

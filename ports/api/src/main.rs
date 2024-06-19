@@ -1,0 +1,86 @@
+mod endpoints;
+mod models;
+
+use endpoints::fs;
+
+use actix_web::{web, App, HttpServer};
+use actix_web_opentelemetry::RequestTracing;
+use models::config::ApiConfig;
+use std::{path::PathBuf, sync::Mutex};
+use tracing::{info, subscriber::set_global_default};
+use tracing_actix_web::TracingLogger;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_log::LogTracer;
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
+
+const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // ? -----------------------------------------------------------------------
+    // ? Initialize services configuration
+    //
+    // Configuration loaded here should be injected to children services.
+    //
+    // ? -----------------------------------------------------------------------
+    info!("Initializing services configuration");
+
+    let env_config_path = match std::env::var("SETTINGS_PATH") {
+        Ok(path) => path,
+        Err(err) => panic!("Error on get env `SETTINGS_PATH`: {err}"),
+    };
+
+    let config = match ApiConfig::from_default_config_file(PathBuf::from(
+        env_config_path,
+    )) {
+        Ok(res) => res,
+        Err(err) => panic!("Error on init config: {err}"),
+    };
+
+    let fs_config = config.to_owned().fs;
+    let server_config = config.to_owned().server;
+    let workers = server_config.workers.unwrap_or(1);
+
+    let address = (
+        server_config.to_owned().address,
+        server_config.to_owned().port,
+    );
+
+    // ? -----------------------------------------------------------------------
+    // ? Initialize tracing
+    // ? -----------------------------------------------------------------------
+
+    std::env::set_var("RUST_LOG", "info,actix_web=error");
+
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+
+    let formatting_layer =
+        BunyanFormattingLayer::new(PKG_NAME.into(), std::io::stdout);
+
+    let subscriber = Registry::default()
+        .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formatting_layer);
+
+    LogTracer::init().expect("Failed to set logger");
+    set_global_default(subscriber).expect("Failed to set subscriber");
+
+    // ? -----------------------------------------------------------------------
+    // ? Initialize api
+    // ? -----------------------------------------------------------------------
+
+    HttpServer::new(move || {
+        App::new()
+            .wrap(RequestTracing::new())
+            .wrap(TracingLogger::default())
+            .app_data(web::Data::new(Mutex::new(fs_config.clone())))
+            .route("/wd", web::post().to(fs::init_wd))
+            .route("/wd/{work_dir_id}", web::get().to(fs::list_wd_content))
+            .route("/wd/{work_dir_id}", web::put().to(fs::upload_analysis_file))
+    })
+    .bind(address)?
+    .workers(workers.into())
+    .run()
+    .await
+}

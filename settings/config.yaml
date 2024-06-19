@@ -1,0 +1,11 @@
+api:
+  server:
+    address: "0.0.0.0"
+    port: 8080
+    workers: 1
+  fs:
+    serveDirectory: "/tmp/classeq-api/data"
+    anonymousDirectory: "anonymous-content"
+    inputDirectory: "input"
+    outputDirectory: "output"
+    configFileName: "analysis-config.yaml"

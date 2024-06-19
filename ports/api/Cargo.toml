@@ -1,0 +1,42 @@
+[package]
+
+name = "classeq-api"
+description = "API for Classeq"
+readme = "README.md"
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+
+[dependencies]
+
+actix-files = "0.6.6"
+actix-multipart = "0.6.1"
+actix-web = "4.7"
+actix-web-httpauth = "0.8.0"
+actix-web-opentelemetry = "0.18.0"
+futures = "0.3"
+futures-util = "0.3"
+mycelium-config = "5.0"
+tokio = { version = "1.38", features = ["rt-multi-thread", "fs"] }
+tracing-actix-web = "0.7"
+tracing-bunyan-formatter = "0.3.9"
+tracing-log = "0.2.0"
+walkdir = "2.5.0"
+
+chrono.workspace = true
+mycelium-base.workspace = true
+serde.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+
+
+[[bin]]
+name = "cls-api"
+path = "src/main.rs"
