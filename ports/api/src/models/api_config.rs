@@ -1,7 +1,8 @@
 use myc_config::load_config_from_file;
 use mycelium_base::utils::errors::{creation_err, MappedErrors};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -38,11 +39,25 @@ pub struct ServerConfig {
     pub workers: Option<u16>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TreeConfig {
+    pub id: Uuid,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AvailableTreesConfig {
+    pub trees: Vec<TreeConfig>,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiConfig {
     pub fs: FileSystemConfig,
     pub server: ServerConfig,
+    pub available_trees: AvailableTreesConfig,
 }
 
 #[derive(Clone, Debug, Deserialize)]

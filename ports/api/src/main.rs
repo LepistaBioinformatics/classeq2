@@ -5,7 +5,7 @@ use endpoints::fs;
 
 use actix_web::{web, App, HttpServer};
 use actix_web_opentelemetry::RequestTracing;
-use models::config::ApiConfig;
+use models::api_config::ApiConfig;
 use std::{path::PathBuf, sync::Mutex};
 use tracing::{info, subscriber::set_global_default};
 use tracing_actix_web::TracingLogger;
@@ -23,6 +23,7 @@ async fn main() -> std::io::Result<()> {
     // Configuration loaded here should be injected to children services.
     //
     // ? -----------------------------------------------------------------------
+
     info!("Initializing services configuration");
 
     let env_config_path = match std::env::var("SETTINGS_PATH") {
@@ -37,8 +38,9 @@ async fn main() -> std::io::Result<()> {
         Err(err) => panic!("Error on init config: {err}"),
     };
 
-    let fs_config = config.to_owned().fs;
     let server_config = config.to_owned().server;
+    let trees_config = config.to_owned().available_trees;
+    let fs_config = config.to_owned().fs;
     let workers = server_config.workers.unwrap_or(1);
 
     let address = (
@@ -75,9 +77,18 @@ async fn main() -> std::io::Result<()> {
             .wrap(RequestTracing::new())
             .wrap(TracingLogger::default())
             .app_data(web::Data::new(Mutex::new(fs_config.clone())))
+            .app_data(web::Data::new(Mutex::new(trees_config.clone())))
             .route("/wd", web::post().to(fs::init_wd))
             .route("/wd/{work_dir_id}", web::get().to(fs::list_wd_content))
             .route("/wd/{work_dir_id}", web::put().to(fs::upload_analysis_file))
+            .route(
+                "/wd/{work_dir_id}/config",
+                web::post().to(fs::configure_blutils_analysis),
+            )
+            .route(
+                "/trees",
+                web::get().to(endpoints::subjects::list_available_trees),
+            )
     })
     .bind(address)?
     .workers(workers.into())

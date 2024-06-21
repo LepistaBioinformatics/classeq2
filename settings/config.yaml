@@ -8,4 +8,10 @@ api:
     anonymousDirectory: "anonymous-content"
     inputDirectory: "input"
     outputDirectory: "output"
-    configFileName: "analysis-config.yaml"
+    configFileName: "config.yaml"
+  availableTrees:
+    trees:
+      - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
+        name: "Tree 1"
+      - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefa
+        name: "Tree 2"

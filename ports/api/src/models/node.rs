@@ -5,6 +5,7 @@ use std::{os::unix::fs::MetadataExt, path::PathBuf};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Node {
+    pub id: u32,
     pub name: String,
     pub is_file: bool,
     pub is_dir: bool,
@@ -43,6 +44,7 @@ impl Node {
         };
 
         Node {
+            id: metadata.ino() as u32,
             name,
             is_file,
             is_dir,
