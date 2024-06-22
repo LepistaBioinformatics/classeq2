@@ -14,7 +14,7 @@ pub(crate) struct BluAnalysisConfig {
 
     pub(crate) query_file_id: u32,
 
-    pub(crate) tree_id: Uuid,
+    pub(crate) model_id: Uuid,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) overwrite: Option<bool>,

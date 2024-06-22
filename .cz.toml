@@ -5,6 +5,7 @@ version_files = [
     "core/Cargo.toml",
     "ports/cli/Cargo.toml",
     "ports/api/Cargo.toml",
+    "ports/lib/Cargo.toml",
 ]
 name = "cz_conventional_commits"
 tag_format = "v$version"

@@ -1,0 +1,16 @@
+[package]
+
+name = "classeq-ports-lib"
+description = "A base library to share elements between Classeq ports"
+readme = "README.md"
+
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+serde.workspace = true

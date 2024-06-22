@@ -644,6 +644,7 @@ dependencies = [
  "actix-web-opentelemetry",
  "chrono",
  "classeq-core",
+ "classeq-ports-lib",
  "futures",
  "futures-util",
  "mycelium-base",
@@ -690,6 +691,13 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "classeq-ports-lib"
+version = "0.2.7"
+dependencies = [
+ "serde 1.0.198",
 ]
 
 [[package]]

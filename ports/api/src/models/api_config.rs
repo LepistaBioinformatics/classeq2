@@ -1,30 +1,9 @@
+use classeq_ports_lib::FileSystemConfig;
 use myc_config::load_config_from_file;
 use mycelium_base::utils::errors::{creation_err, MappedErrors};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use uuid::Uuid;
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FileSystemConfig {
-    /// Default anonymous directory
-    ///
-    /// Anonymous directory path should be used when users are not identified.
-    pub anonymous_directory: String,
-
-    /// The directory to be used for storing the database.
-    pub serve_directory: String,
-
-    /// The directory to be used for storing source data from users.
-    pub input_directory: String,
-
-    /// The directory to be used for storing output data from users.
-    pub output_directory: String,
-
-    /// The name of the configuration file generated to store analysis
-    /// configurations.
-    pub config_file_name: String,
-}
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -41,15 +20,15 @@ pub struct ServerConfig {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TreeConfig {
+pub struct ModelConfig {
     pub id: Uuid,
     pub name: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AvailableTreesConfig {
-    pub trees: Vec<TreeConfig>,
+pub struct AvailableModelsConfig {
+    pub models: Vec<ModelConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -57,7 +36,7 @@ pub struct AvailableTreesConfig {
 pub struct ApiConfig {
     pub fs: FileSystemConfig,
     pub server: ServerConfig,
-    pub available_trees: AvailableTreesConfig,
+    pub available_models: AvailableModelsConfig,
 }
 
 #[derive(Clone, Debug, Deserialize)]

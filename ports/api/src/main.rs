@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     let server_config = config.to_owned().server;
-    let trees_config = config.to_owned().available_trees;
+    let trees_config = config.to_owned().available_models;
     let fs_config = config.to_owned().fs;
     let workers = server_config.workers.unwrap_or(1);
 
@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
                 web::post().to(fs::configure_blutils_analysis),
             )
             .route(
-                "/trees",
+                "/models",
                 web::get().to(endpoints::subjects::list_available_trees),
             )
     })

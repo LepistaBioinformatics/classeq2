@@ -5,12 +5,12 @@ api:
     workers: 1
   fs:
     serveDirectory: "/tmp/classeq-api/data"
-    anonymousDirectory: "anonymous-content"
+    publicDirectory: "public"
     inputDirectory: "input"
     outputDirectory: "output"
     configFileName: "config.yaml"
-  availableTrees:
-    trees:
+  availableModels:
+    models:
       - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
         name: "Tree 1"
       - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefa

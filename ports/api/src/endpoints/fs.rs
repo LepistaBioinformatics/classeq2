@@ -1,11 +1,11 @@
 use crate::models::{
-    analyses_config::BluAnalysisConfig,
-    api_config::{AvailableTreesConfig, FileSystemConfig},
+    analyses_config::BluAnalysisConfig, api_config::AvailableModelsConfig,
     node::Node,
 };
 
 use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse};
+use classeq_ports_lib::FileSystemConfig;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, sync::Mutex};
@@ -45,13 +45,13 @@ fn check_directory_existence(
     };
 
     let base_dir = PathBuf::from(&data.serve_directory)
-        .join(data.anonymous_directory.clone())
+        .join(data.public_directory.clone())
         .join(work_dir_id.to_owned());
 
     if !base_dir.exists() {
         return Err(HttpResponse::NotFound().json(DirResponse {
             status: 404,
-            msg: Some("Work directory not initialized".to_string()),
+            msg: Some("Work directory not exists".to_string()),
         }));
     }
 
@@ -77,7 +77,7 @@ pub(crate) async fn init_wd(
     //
     // Implement a way to build directory from the user's identity
     // extracted from the token.
-    let target_prefix = data.anonymous_directory.clone();
+    let target_prefix = data.public_directory.clone();
     let directory_id = Uuid::new_v4().to_string();
     let target_dir = path.join(target_prefix).join(directory_id.to_owned());
 
@@ -106,7 +106,9 @@ pub(crate) async fn list_wd_content(
         .filter_map(|entry| entry.ok())
         .filter(|entry| {
             entry.path().exists() &&
-                (entry.path().is_dir() || entry.path().is_file())
+                (entry.path().is_dir() ||
+                    entry.path().is_file() ||
+                    entry.path().is_symlink())
         })
         .map(|entry| {
             Node::new(
@@ -167,25 +169,27 @@ pub(crate) async fn upload_analysis_file(
 
         let target_file = target_dir.join(file_name);
 
-        if target_file.exists() && !query.force.unwrap_or(false) {
-            return HttpResponse::Conflict().json(DirResponse {
-                status: 409,
-                msg: Some(format!(
-                    "\
-File already exists ({f}). If you want to overwrite it, use the `force` query \
-parameter.",
-                    f = target_file
-                        .file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap_or("unnamed")
-                )),
-            });
-        } else {
-            if let Err(err) = std::fs::remove_file(&target_file) {
-                error!("{:?}", err);
-                return HttpResponse::InternalServerError().finish();
-            };
+        if target_file.exists() {
+            if !query.force.unwrap_or(false) {
+                return HttpResponse::Conflict().json(DirResponse {
+                    status: 409,
+                    msg: Some(format!(
+                        "\
+    File already exists ({f}). If you want to overwrite it, use the `force` query \
+    parameter.",
+                        f = target_file
+                            .file_name()
+                            .unwrap()
+                            .to_str()
+                            .unwrap_or("unnamed")
+                    )),
+                });
+            } else {
+                if let Err(err) = std::fs::remove_file(&target_file) {
+                    error!("{:?}", err);
+                    return HttpResponse::InternalServerError().finish();
+                };
+            }
         }
 
         let mut file = match tokio::fs::File::create(target_file).await {
@@ -214,14 +218,17 @@ parameter.",
         }
     }
 
-    HttpResponse::Created().body("File saved successfully")
+    HttpResponse::Created().json(DirResponse {
+        status: 201,
+        msg: Some("File saved successfully".to_string()),
+    })
 }
 
 #[instrument(name = "Configure Blutils Analysis")]
 pub(crate) async fn configure_blutils_analysis(
     work_dir_id: web::Path<String>,
     fs_config: web::Data<Mutex<FileSystemConfig>>,
-    trees_config: web::Data<Mutex<AvailableTreesConfig>>,
+    trees_config: web::Data<Mutex<AvailableModelsConfig>>,
     request: HttpRequest,
     body: web::Json<BluAnalysisConfig>,
 ) -> HttpResponse {
@@ -264,5 +271,8 @@ pub(crate) async fn configure_blutils_analysis(
         return HttpResponse::InternalServerError().finish();
     };
 
-    HttpResponse::Ok().finish()
+    HttpResponse::Created().json(DirResponse {
+        status: 201,
+        msg: Some("Analysis configuration saved successfully".to_string()),
+    })
 }
