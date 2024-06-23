@@ -1,6 +1,5 @@
 use crate::models::{
-    analyses_config::BluAnalysisConfig, api_config::AvailableModelsConfig,
-    node::Node,
+    analyses_config::BluAnalysisConfig, api_config::ModelsConfig, node::Node,
 };
 
 use actix_multipart::Multipart;
@@ -228,7 +227,7 @@ pub(crate) async fn upload_analysis_file(
 pub(crate) async fn configure_blutils_analysis(
     work_dir_id: web::Path<String>,
     fs_config: web::Data<Mutex<FileSystemConfig>>,
-    trees_config: web::Data<Mutex<AvailableModelsConfig>>,
+    trees_config: web::Data<Mutex<ModelsConfig>>,
     request: HttpRequest,
     body: web::Json<BluAnalysisConfig>,
 ) -> HttpResponse {

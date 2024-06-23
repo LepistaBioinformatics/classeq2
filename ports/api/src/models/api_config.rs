@@ -27,8 +27,12 @@ pub struct ModelConfig {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AvailableModelsConfig {
-    pub models: Vec<ModelConfig>,
+pub struct ModelsConfig(pub Vec<ModelConfig>);
+
+impl ModelsConfig {
+    pub fn get_models(&self) -> Vec<ModelConfig> {
+        self.0.clone()
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -36,7 +40,7 @@ pub struct AvailableModelsConfig {
 pub struct ApiConfig {
     pub fs: FileSystemConfig,
     pub server: ServerConfig,
-    pub available_models: AvailableModelsConfig,
+    pub models: ModelsConfig,
 }
 
 #[derive(Clone, Debug, Deserialize)]

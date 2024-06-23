@@ -4,7 +4,7 @@
 
 [workspace]
 
-members = ["core", "ports/api", "ports/cli", "ports/lib"]
+members = ["core", "ports/api", "ports/cli", "ports/lib", "ports/watcher"]
 
 resolver = "2"
 
