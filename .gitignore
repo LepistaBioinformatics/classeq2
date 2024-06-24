@@ -1,2 +1,3 @@
 /target
 cls*.log*
+.docker-conf

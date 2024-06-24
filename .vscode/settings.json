@@ -17,7 +17,8 @@
         "Phylo",
         "phylotre",
         "phylotree",
-        "Taxid"
+        "Taxid",
+        "walkdir"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false,
     "rust-analyzer.linkedProjects": [
@@ -26,5 +27,19 @@
     ],
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+    "[yaml]": {
+        "editor.autoIndent": "advanced"
+    },
+    "[dockercompose]": {
+        "editor.defaultFormatter": "ms-azuretools.vscode-docker",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        }
     }
 }

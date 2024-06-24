@@ -1,3 +1,4 @@
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{os::unix::fs::MetadataExt, path::PathBuf};
@@ -17,9 +18,19 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(file: PathBuf, prefix: String) -> Self {
+    pub fn new(file: PathBuf, prefix: String) -> Result<Self> {
         let metadata = file.metadata().unwrap();
-        let name = match file.strip_prefix(&prefix) {
+
+        let file_str = (match file.to_str() {
+            Some(res) => res,
+            None => return Err(anyhow::anyhow!("Invalid file path")),
+        })
+        .split(&prefix)
+        .collect::<Vec<&str>>()[0];
+
+        let strip_prefix = format!("{}/{}/", file_str, prefix);
+
+        let name = match file.strip_prefix(&strip_prefix) {
             Ok(res) => res.to_str().unwrap().to_string(),
             Err(_) => file.to_str().unwrap().to_string(),
         };
@@ -43,7 +54,7 @@ impl Node {
             Err(_) => None,
         };
 
-        Node {
+        Ok(Node {
             id: metadata.ino() as u32,
             name,
             is_file,
@@ -53,6 +64,6 @@ impl Node {
             updated_at,
             accessed_at,
             size: metadata.size(),
-        }
+        })
     }
 }

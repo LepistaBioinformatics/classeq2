@@ -16,6 +16,7 @@ categories.workspace = true
 
 clap.workspace = true
 mycelium-base.workspace = true
+rayon.workspace = true
 serde.workspace = true
 serde_yaml.workspace = true
 serde_json.workspace = true
@@ -25,5 +26,4 @@ uuid.workspace = true
 
 mur3 = "0.1"
 phylotree = "0.1.2"
-rayon = "1.10"
 thiserror = "1.0"

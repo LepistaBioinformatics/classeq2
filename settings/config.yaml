@@ -10,6 +10,9 @@ fs:
   inputDirectory: "input"
   outputDirectory: "output"
   configFileName: "config.yaml"
+  successFileName: "success.yaml"
+  runningFileName: "running.yaml"
+  errorFileName: "error.yaml"
 
 # ? ----------------------------------------------------------------------------
 # ? API server related settings

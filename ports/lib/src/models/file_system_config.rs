@@ -20,4 +20,15 @@ pub struct FileSystemConfig {
     /// The name of the configuration file generated to store analysis
     /// configurations.
     pub config_file_name: String,
+
+    /// The name of the lock file generated to indicate the analysis was
+    /// successful.
+    pub success_file_name: String,
+
+    /// The name of the lock file generated to indicate the analysis is running.
+    pub running_file_name: String,
+
+    /// The name of the lock file generated to indicate the analysis is in
+    /// error.
+    pub error_file_name: String,
 }

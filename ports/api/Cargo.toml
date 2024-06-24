@@ -30,8 +30,8 @@ tokio = { version = "1.38", features = ["rt-multi-thread", "fs"] }
 tracing-actix-web = "0.7"
 tracing-bunyan-formatter = "0.3.9"
 tracing-log = "0.2.0"
-walkdir = "2.5.0"
 
+anyhow.workspace = true
 chrono.workspace = true
 mycelium-base.workspace = true
 serde.workspace = true
@@ -39,6 +39,7 @@ serde_yaml.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 uuid.workspace = true
+walkdir.workspace = true
 
 
 [[bin]]

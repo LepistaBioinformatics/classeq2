@@ -93,33 +93,35 @@ pub(crate) async fn list_wd_content(
     work_dir_id: web::Path<String>,
     config: web::Data<Mutex<FileSystemConfig>>,
 ) -> HttpResponse {
+    let work_dir_id = work_dir_id.into_inner();
+
     let target_dir =
-        match check_directory_existence(config, work_dir_id.into_inner(), None)
-        {
+        match check_directory_existence(config, work_dir_id.to_owned(), None) {
             Err(res) => return res,
             Ok(path) => path,
         };
 
-    let directory_content: Vec<Node> = WalkDir::new(&target_dir)
-        .into_iter()
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| {
-            entry.path().exists() &&
-                (entry.path().is_dir() ||
-                    entry.path().is_file() ||
-                    entry.path().is_symlink())
-        })
-        .map(|entry| {
-            Node::new(
-                entry.path().into(),
-                match target_dir.clone().as_os_str().to_str() {
-                    None => entry.path().display().to_string(),
-                    Some(path) => path.to_string(),
-                },
-            )
-        })
-        .filter(|node| vec![""].contains(&node.name.as_str()) == false)
-        .collect();
+    let directory_content: Vec<Node> =
+        WalkDir::new(&target_dir.parent().unwrap_or(&target_dir))
+            .contents_first(true)
+            .sort_by_file_name()
+            .into_iter()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| {
+                entry.path().exists() &&
+                    (entry.path().is_file() || entry.path().is_symlink())
+            })
+            .filter_map(|entry| {
+                match Node::new(entry.path().into(), work_dir_id.to_owned()) {
+                    Ok(node) => Some(node),
+                    Err(err) => {
+                        error!("{:?}", err);
+                        None
+                    }
+                }
+            })
+            .filter(|node| vec![""].contains(&node.name.as_str()) == false)
+            .collect();
 
     HttpResponse::Ok().json(directory_content)
 }
