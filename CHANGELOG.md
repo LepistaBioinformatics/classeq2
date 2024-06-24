@@ -1,3 +1,16 @@
+## v0.3.0 (2024-06-23)
+
+### Feat
+
+- wip - do implement the directory watcher with a infinite scheduler
+- move shared elements between ports to a dedicated lib
+- wip - do implement the analysis configuration initializer
+- implements the basic workdir implementation
+
+### Refactor
+
+- rename sched to watcher to mirror the exact function of the port
+
 ## v0.2.7 (2024-06-16)
 
 ### Perf
