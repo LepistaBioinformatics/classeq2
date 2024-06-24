@@ -1,5 +1,4 @@
 use classeq_ports_lib::FileSystemConfig;
-use myc_config::load_config_from_file;
 use mycelium_base::utils::errors::{creation_err, MappedErrors};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -43,27 +42,18 @@ pub struct ApiConfig {
     pub models: ModelsConfig,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct TmpConfig {
-    api: ApiConfig,
-}
-
 impl ApiConfig {
-    pub fn from_default_config_file(
-        file: PathBuf,
-    ) -> Result<Self, MappedErrors> {
-        if !file.exists() {
-            return creation_err(format!(
-                "Could not find config file: {}",
-                file.to_str().unwrap()
-            ))
-            .as_error();
-        }
+    pub(crate) fn from_file(file: &PathBuf) -> Result<ApiConfig, MappedErrors> {
+        let content = match std::fs::read_to_string(file) {
+            Ok(content) => content,
+            Err(e) => return Err(creation_err(e)),
+        };
 
-        match load_config_from_file::<TmpConfig>(file) {
-            Ok(config) => Ok(config.api),
-            Err(err) => Err(err),
-        }
+        let config: ApiConfig = match serde_yaml::from_str(&content) {
+            Ok(config) => config,
+            Err(e) => return Err(creation_err(e)),
+        };
+
+        Ok(config)
     }
 }

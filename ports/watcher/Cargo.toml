@@ -12,4 +12,33 @@ repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+
 [dependencies]
+
+classeq-core = { path = "../../core", version = "0.2.7" }
+classeq-ports-lib = { path = "../lib", version = "0.2.7" }
+
+clap.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+tracing.workspace = true
+tracing-appender.workspace = true
+tracing-subscriber.workspace = true
+
+anyhow = "1"
+apalis = { version = "0.5.3", features = [
+    "cron",
+    "async-std-comp",
+    "tracing",
+    "retry",
+] }
+apalis-core = { version = "0.5.3", default-features = false }
+async-std = { version = "1.12.0", features = ["attributes"] }
+async-channel = "2"
+ctrlc = "3.2.5"
+
+
+[[bin]]
+name = "cls-watcher"
+path = "src/main.rs"

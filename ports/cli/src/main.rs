@@ -2,25 +2,10 @@ mod cmds;
 
 use self::Opts::*;
 
-use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
+use clap::Subcommand;
+use classeq_ports_lib::{expose_runtime_arguments, CliLauncher, LogFormat};
 use std::{path::PathBuf, str::FromStr};
-use tracing::{debug, warn};
 use tracing_subscriber::{fmt, EnvFilter};
-
-#[derive(Clone, Debug, Serialize, Deserialize, clap::ValueEnum)]
-#[serde(rename_all = "camelCase")]
-enum LogFormat {
-    /// ANSI format
-    ///
-    /// This format is human-readable and colorful.
-    Ansi,
-
-    /// YAML format
-    ///
-    /// This format is machine-readable and can be used for log analysis.
-    Json,
-}
 
 #[derive(Subcommand, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -35,34 +20,8 @@ enum Opts {
     Place(cmds::place_sequences::Arguments),
 }
 
-#[derive(Parser, Debug)]
-#[clap(name = "cls", version, author, about)]
-struct Cli {
-    #[clap(subcommand)]
-    opts: Opts,
-
-    #[clap(long)]
-    log_level: Option<String>,
-
-    #[clap(long)]
-    log_file: Option<String>,
-
-    #[clap(long, default_value = "ansi")]
-    log_format: LogFormat,
-
-    #[clap(short, long, default_value = "1")]
-    threads: Option<usize>,
-}
-
-/// Get the command line arguments.
-#[tracing::instrument(name = "Runtime arguments")]
-fn get_arguments() {
-    let args: Vec<_> = std::env::args().collect();
-    debug!("{:?}", args.join(" "));
-}
-
 fn main() {
-    let args = Cli::parse();
+    let args = CliLauncher::<Opts>::parse();
 
     // ? -----------------------------------------------------------------------
     // ? Configure logger
@@ -107,7 +66,11 @@ fn main() {
     // ? Get command line arguments
     // ? -----------------------------------------------------------------------
 
-    get_arguments();
+    expose_runtime_arguments();
+
+    // ? -----------------------------------------------------------------------
+    // ? Fire up the command
+    // ? -----------------------------------------------------------------------
 
     match args.opts {
         Convert(io_args) => match io_args.convert {

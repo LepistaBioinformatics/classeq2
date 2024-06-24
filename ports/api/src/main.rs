@@ -31,9 +31,7 @@ async fn main() -> std::io::Result<()> {
         Err(err) => panic!("Error on get env `SETTINGS_PATH`: {err}"),
     };
 
-    let config = match ApiConfig::from_default_config_file(PathBuf::from(
-        env_config_path,
-    )) {
+    let config = match ApiConfig::from_file(&PathBuf::from(env_config_path)) {
         Ok(res) => res,
         Err(err) => panic!("Error on init config: {err}"),
     };
