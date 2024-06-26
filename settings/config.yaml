@@ -5,7 +5,7 @@
 #
 # ? ----------------------------------------------------------------------------
 fs:
-  serveDirectory: "/tmp/classeq-api/data"
+  serveDirectory: "tests/data"
   publicDirectory: "public"
   inputDirectory: "input"
   outputDirectory: "output"
@@ -34,9 +34,9 @@ server:
 # ? ----------------------------------------------------------------------------
 models:
   - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
-    name: "Tree 1"
-  - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefa
-    name: "Tree 2"
+    name: Bacillus subtilis group
+    gene: gyrB complete sequence
+    path: test/models/bsub-gyrb-k35.yaml
 
 # ? ----------------------------------------------------------------------------
 # ? Watcher related settings
@@ -47,5 +47,6 @@ models:
 # ? ----------------------------------------------------------------------------
 watcher:
   workerName: "cls-watcher"
+  workers: 3
   interval: 5
   retries: 3

@@ -1060,9 +1060,12 @@ dependencies = [
 name = "classeq-ports-lib"
 version = "0.3.0"
 dependencies = [
+ "apalis",
  "clap",
+ "classeq-core",
  "serde 1.0.198",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -1079,12 +1082,12 @@ dependencies = [
  "classeq-core",
  "classeq-ports-lib",
  "ctrlc",
+ "mycelium-config",
  "serde 1.0.198",
  "serde_yaml",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "walkdir",
 ]
 
 [[package]]

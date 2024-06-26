@@ -1,6 +1,5 @@
-use crate::models::api_config::ModelsConfig;
-
 use actix_web::{web, HttpResponse};
+use classeq_ports_lib::ModelsConfig;
 use std::sync::Mutex;
 use tracing::{error, instrument};
 

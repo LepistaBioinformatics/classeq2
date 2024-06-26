@@ -1,5 +1,5 @@
 use anyhow::Result;
-use classeq_ports_lib::FileSystemConfig;
+use classeq_ports_lib::{FileSystemConfig, ModelsConfig};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -7,6 +7,7 @@ use std::path::PathBuf;
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WatchConfig {
     pub(crate) worker_name: String,
+    pub(crate) workers: u32,
     pub(crate) interval: u64,
     pub(crate) retries: u32,
 }
@@ -16,6 +17,7 @@ pub(crate) struct WatchConfig {
 pub(crate) struct ConfigFile {
     pub(crate) fs: FileSystemConfig,
     pub(crate) watcher: WatchConfig,
+    pub(crate) models: ModelsConfig,
 }
 
 impl ConfigFile {

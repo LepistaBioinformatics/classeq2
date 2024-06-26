@@ -1,8 +1,7 @@
-use classeq_ports_lib::FileSystemConfig;
+use classeq_ports_lib::{FileSystemConfig, ModelsConfig};
 use mycelium_base::utils::errors::{creation_err, MappedErrors};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::path::PathBuf;
-use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -15,23 +14,6 @@ pub struct ServerConfig {
 
     /// The number of workers to use for the server.
     pub workers: Option<u16>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ModelConfig {
-    pub id: Uuid,
-    pub name: String,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ModelsConfig(pub Vec<ModelConfig>);
-
-impl ModelsConfig {
-    pub fn get_models(&self) -> Vec<ModelConfig> {
-        self.0.clone()
-    }
 }
 
 #[derive(Clone, Debug, Deserialize)]

@@ -31,9 +31,17 @@ categories = ["science", "command-line-interface", "command-line-utilities"]
 [workspace.dependencies]
 
 anyhow = "1"
+apalis = { version = "0.5.3", features = [
+    "cron",
+    "async-std-comp",
+    "tracing",
+    "retry",
+] }
+apalis-core = { version = "0.5.3", default-features = false }
 clap = { version = "4", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 mycelium-base = "5.0"
+mycelium-config = "5.0"
 rayon = "1.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

@@ -1,10 +1,8 @@
-use crate::models::{
-    analyses_config::BluAnalysisConfig, api_config::ModelsConfig, node::Node,
-};
+use crate::models::node::Node;
 
 use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse};
-use classeq_ports_lib::FileSystemConfig;
+use classeq_ports_lib::{BluAnalysisConfig, FileSystemConfig, ModelsConfig};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, sync::Mutex};
@@ -77,7 +75,7 @@ pub(crate) async fn init_wd(
     // Implement a way to build directory from the user's identity
     // extracted from the token.
     let target_prefix = data.public_directory.clone();
-    let directory_id = Uuid::new_v4().to_string();
+    let directory_id = Uuid::now_v7().to_string();
     let target_dir = path.join(target_prefix).join(directory_id.to_owned());
 
     if let Err(err) = std::fs::create_dir_all(&target_dir) {
