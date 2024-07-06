@@ -21,10 +21,14 @@ use apalis_core::{
     monitor::Monitor,
 };
 use clap::Parser;
+use classeq_core::{
+    domain::dtos::{file_or_stdin::FileOrStdin, tree::Tree},
+    use_cases::place_sequences,
+};
 use classeq_ports_lib::{BluAnalysisConfig, FileSystemConfig, ModelsConfig};
 use context::WorkerCtx;
-use std::{path::PathBuf, str::FromStr};
-use tracing::{debug, info, warn, Instrument};
+use std::{os::unix::fs::MetadataExt, path::PathBuf, str::FromStr};
+use tracing::{debug, error, info, warn, Instrument};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -35,10 +39,7 @@ pub(crate) struct Arguments {
     pub(super) config_file: PathBuf,
 }
 
-pub(crate) async fn start_watch_directory_cmd(
-    args: Arguments,
-    _: usize,
-) -> Result<()> {
+pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
     // ? -----------------------------------------------------------------------
     // ? Setup the Ctrl-C handler
     // ? -----------------------------------------------------------------------
@@ -50,10 +51,25 @@ pub(crate) async fn start_watch_directory_cmd(
     })?;
 
     // ? -----------------------------------------------------------------------
-    // ? Setup the dir-watcher worker
+    // ? Load the configuration file
     // ? -----------------------------------------------------------------------
 
     let config = ConfigFile::from_file(&args.config_file)?;
+
+    // ? -----------------------------------------------------------------------
+    // ? Create a thread pool configured globally
+    // ? -----------------------------------------------------------------------
+
+    if let Err(err) = rayon::ThreadPoolBuilder::new()
+        .num_threads(config.watcher.max_threads_per_worker.to_owned() as usize)
+        .build_global()
+    {
+        error!("Error creating thread pool: {err}");
+    };
+
+    // ? -----------------------------------------------------------------------
+    // ? Setup the dir-watcher worker
+    // ? -----------------------------------------------------------------------
 
     let schedule = match Schedule::from_str(
         format!("1/{seconds} * * * * *", seconds = config.watcher.interval)
@@ -72,6 +88,7 @@ pub(crate) async fn start_watch_directory_cmd(
         .layer(TraceLayer::new().make_span_with(ReminderSpan::new()))
         .data(config.fs)
         .data(config.models)
+        .data(config.watcher.max_threads_per_worker)
         .stream(CronStream::new(schedule).into_stream())
         .build_fn(dispatch_scan);
 
@@ -133,10 +150,10 @@ async fn scan_directories_in_background(
         .filter_map(|path| {
             let config_file = path.join(fs_config.config_file_name.to_owned());
 
-            if config_file.exists() &&
-                !path.join(fs_config.success_file_name.to_owned()).exists() &&
-                !path.join(fs_config.running_file_name.to_owned()).exists() &&
-                !path.join(fs_config.error_file_name.to_owned()).exists()
+            if config_file.exists()
+                && !path.join(fs_config.success_file_name.to_owned()).exists()
+                && !path.join(fs_config.running_file_name.to_owned()).exists()
+                && !path.join(fs_config.error_file_name.to_owned()).exists()
             {
                 Some(config_file)
             } else {
@@ -145,17 +162,13 @@ async fn scan_directories_in_background(
         })
         .into_iter()
     {
-        let config_content = match serde_yaml::from_str::<BluAnalysisConfig>(
-            &std::fs::read_to_string(&path).unwrap(),
-        ) {
+        let config_content = match BluAnalysisConfig::from_yaml_file(&path) {
             Ok(config_content) => config_content,
             Err(e) => {
                 warn!("Failed to parse the configuration file: {e}");
                 continue;
             }
         };
-
-        println!("{:?}", config_content);
 
         let target_model = if let Some(model) = models_data
             .get_models()
@@ -164,20 +177,13 @@ async fn scan_directories_in_background(
         {
             model
         } else {
-            if let Err(err) = std::fs::write(
-                path.join(fs_config.error_file_name.to_owned()),
-                match serde_yaml::to_string(&ExecutionMsg {
-                    msg: format!(
-                        "Model with ID {id} not found",
-                        id = config_content.model_id
-                    ),
-                }) {
-                    Ok(content) => content,
-                    Err(e) => {
-                        warn!("Failed to serialize the error message: {e}");
-                        continue;
-                    }
-                },
+            if let Err(err) = ExecutionMsg::write_file(
+                &path.join(fs_config.error_file_name.to_owned()),
+                format!(
+                    "Model with ID {id} not found",
+                    id = config_content.model_id
+                )
+                .as_str(),
             ) {
                 warn!("Failed to write the error file: {err}");
             };
@@ -185,6 +191,108 @@ async fn scan_directories_in_background(
             continue;
         };
 
-        println!("{:?}", target_model);
+        let tree = Tree::from_yaml_file(&target_model.get_path())
+            .expect("Failed to read the tree file");
+
+        let query_file_path = match path.parent() {
+            Some(parent) => get_file_by_inode(
+                parent.join(fs_config.input_directory.to_owned()),
+                config_content.query_file_id,
+            ),
+            None => None,
+        };
+
+        let query_file = if let Some(path) = query_file_path.to_owned() {
+            FileOrStdin::from_file(&path.to_str().unwrap())
+        } else {
+            if let Err(err) = ExecutionMsg::write_file(
+                &path
+                    .parent()
+                    .expect("Error getting the parent directory")
+                    .join(fs_config.error_file_name.to_owned()),
+                format!(
+                    "Query file with inode {inode} not found",
+                    inode = config_content.query_file_id
+                )
+                .as_str(),
+            ) {
+                warn!("Failed to write the error file: {err}");
+            };
+
+            continue;
+        };
+
+        let output_file = path
+            .parent()
+            .expect("Failed to get the parent directory")
+            .join(fs_config.output_directory.to_owned().as_str())
+            .join(fs_config.results_file_name.to_owned().as_str());
+
+        if let Err(err) = ExecutionMsg::write_file(
+            &path
+                .parent()
+                .expect("Error getting the parent directory")
+                .join(fs_config.running_file_name.to_owned()),
+            format!(
+                "Processing the query file {query_file:?} with model {model:?}",
+                query_file = query_file_path
+                    .to_owned()
+                    .expect("Error getting the query file")
+                    .file_name()
+                    .expect("Error getting the file name"),
+                model = target_model.name
+            )
+            .as_str(),
+        ) {
+            panic!("Failed to write the error file: {err}");
+        };
+
+        // ? -----------------------------------------------------------------------
+        // ? Place sequences
+        // ? -----------------------------------------------------------------------
+
+        place_sequences(
+            query_file,
+            &tree,
+            &output_file,
+            &None,
+            &None,
+            &true,
+            &config_content.output_format,
+        );
+
+        // ? -----------------------------------------------------------------------
+        // ? Write response
+        // ? -----------------------------------------------------------------------
+
+        if let Err(err) = ExecutionMsg::write_file(
+            &path
+                .parent()
+                .expect("Error getting the parent directory")
+                .join(fs_config.success_file_name.to_owned()),
+            format!(
+                "Query file {query_file:?} processed successfully",
+                query_file = query_file_path
+                    .expect("Error getting the query file")
+                    .file_name()
+                    .expect("Error getting the file name")
+            )
+            .as_str(),
+        ) {
+            panic!("Failed to write the error file: {err}");
+        };
     }
+}
+
+fn get_file_by_inode(directory: PathBuf, inode: u32) -> Option<PathBuf> {
+    directory
+        .read_dir()
+        .into_iter()
+        .flat_map(|entry| entry)
+        .filter_map(|entry| entry.ok())
+        .find(|entry| {
+            let metadata = entry.metadata().expect("Failed to read metadata");
+            metadata.ino() == inode as u64
+        })
+        .map(|entry| entry.path().to_path_buf())
 }

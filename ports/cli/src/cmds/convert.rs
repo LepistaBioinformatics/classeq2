@@ -55,7 +55,7 @@ pub(crate) struct SerializeTreeArguments {
 }
 
 pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) {
-    let tree = match Tree::from_file(
+    let tree = match Tree::init_from_file(
         args.tree_file_path.as_path(),
         args.min_branch_support.unwrap_or(95.0),
     ) {

@@ -177,6 +177,13 @@ impl FileOrStdin {
 
         Ok(std::io::BufReader::new(input))
     }
+
+    pub fn from_file(file: &str) -> Self {
+        Self {
+            source: Source::Arg(file.to_string()),
+            _type: PhantomData,
+        }
+    }
 }
 
 impl<T> FromStr for FileOrStdin<T> {

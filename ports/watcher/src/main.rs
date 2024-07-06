@@ -70,7 +70,6 @@ async fn main() -> Result<()> {
         Opts::Watch(watch_args) => {
             cmds::watch_dir::start_watch_directory_cmd(
                 watch_args,
-                args.threads.unwrap(),
             )
             .await?
         }

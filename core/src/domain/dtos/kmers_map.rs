@@ -78,7 +78,7 @@ impl MinimizerValue {
             .collect::<HashSet<&u64>>()
         {
             set if set.is_empty() => None,
-            set => Some(set.iter().map(|s| s.to_owned()).collect()),
+            set => Some(set.par_iter().map(|s| s.to_owned()).collect()),
         }
     }
 
@@ -243,18 +243,12 @@ impl KmersMap {
         match self
             .map
             .par_iter()
-            .filter_map(|(_, value)| {
-                if let Some(nodes) = value.get_kmers_with_node(node) {
-                    Some(nodes)
-                } else {
-                    None
-                }
-            })
+            .filter_map(|(_, value)| value.get_kmers_with_node(node))
             .flatten()
             .collect::<HashSet<&u64>>()
         {
             set if set.is_empty() => None,
-            set => Some(set.iter().map(|s| s.to_owned()).collect()),
+            set => Some(set.par_iter().map(|s| s.to_owned()).collect()),
         }
     }
 
@@ -370,7 +364,7 @@ impl KmersMap {
                 't' | 'T' => 'A',
                 'c' | 'C' => 'G',
                 'g' | 'G' => 'C',
-                _ => c,
+                _ => panic!("Invalid character in sequence"),
             })
             .collect()
     }

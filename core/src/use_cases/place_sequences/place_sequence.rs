@@ -21,10 +21,19 @@ pub(super) fn place_sequence(
     sequence: &SequenceBody,
     tree: &Tree,
     max_iterations: &Option<i32>,
-    min_match_coverage: Option<f64>,
+    min_match_coverage: &Option<f64>,
 ) -> Result<PlacementStatus, MappedErrors> {
     let max_iterations = max_iterations.unwrap_or(1000);
-    let min_match_coverage = min_match_coverage.unwrap_or(0.7);
+
+    let min_match_coverage = if let Some(value) = min_match_coverage {
+        match value.to_owned() {
+            value if value > 1.0 => 1.0,
+            value if value < 0.0 => 0.0,
+            value => value,
+        }
+    } else {
+        0.7
+    };
 
     let mut kmers_map = tree
         .kmers_map
@@ -58,7 +67,7 @@ pub(super) fn place_sequence(
     let mut query_kmers_map = kmers_map
         .get_overlapping_kmers(&query_kmers.to_owned().into_iter().collect());
 
-    let query_kmers_len = query_kmers_map.get_map().keys().len();
+    let query_kmers_len = query_kmers_map.get_map().values().into_iter().map(|i| i.0.len()).sum::<usize>();
 
     if query_kmers_len == 0 {
         warn!("Query sequence may not be related to the phylogeny");
@@ -343,7 +352,7 @@ mod tests {
             &query_sequence.sequence().to_owned(),
             &tree,
             &None,
-            None,
+            &None,
         ) {
             Err(err) => panic!("Error: {err}"),
             Ok(response) => {

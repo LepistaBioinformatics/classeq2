@@ -35,7 +35,7 @@ pub(crate) struct Arguments {
     /// Minimum branch support
     ///
     /// The minimum branch support value to consider a branch in the tree.
-    #[arg(long, short, default_value = "70")]
+    #[arg(long, default_value = "70")]
     pub(super) min_branch_support: Option<f64>,
 }
 

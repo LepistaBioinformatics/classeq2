@@ -46,7 +46,7 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     debug!("Reading the phylogenetic tree");
-    let mut tree = Tree::from_file(&tree_path, min_branch_support)?;
+    let mut tree = Tree::init_from_file(&tree_path, min_branch_support)?;
 
     // ? -----------------------------------------------------------------------
     // ? Initialize mappings

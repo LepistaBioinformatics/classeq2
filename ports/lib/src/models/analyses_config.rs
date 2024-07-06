@@ -1,6 +1,8 @@
+use anyhow::Result;
 use apalis::prelude::*;
 use classeq_core::domain::dtos::output_format::OutputFormat;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use uuid::Uuid;
 
 impl Message for BluAnalysisConfig {
@@ -27,4 +29,12 @@ pub struct BluAnalysisConfig {
     pub output_format: OutputFormat,
 
     pub work_dir: String,
+}
+
+impl BluAnalysisConfig {
+    pub fn from_yaml_file(file: &PathBuf) -> Result<Self> {
+        let content = std::fs::read_to_string(file)?;
+        let config: BluAnalysisConfig = serde_yaml::from_str(&content)?;
+        Ok(config)
+    }
 }

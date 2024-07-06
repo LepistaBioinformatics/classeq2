@@ -33,19 +33,10 @@ pub fn place_sequences(
     tree: &Tree,
     out_file: &PathBuf,
     max_iterations: &Option<i32>,
+    min_match_coverage: &Option<f64>,
     overwrite: &bool,
     output_format: &OutputFormat,
-    threads: &usize,
 ) -> Vec<PlacementTime> {
-    // ? -----------------------------------------------------------------------
-    // ? Create a thread pool configured globally
-    // ? -----------------------------------------------------------------------
-
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(threads.to_owned())
-        .build_global()
-        .expect("Error creating thread pool");
-
     // ? -----------------------------------------------------------------------
     // ? Build the output paths
     // ? -----------------------------------------------------------------------
@@ -97,7 +88,7 @@ pub fn place_sequences(
                 &sequence.sequence().to_owned(),
                 &tree,
                 &max_iterations,
-                None,
+                &min_match_coverage,
             ) {
                 Err(err) => panic!("Error placing sequence: {err}"),
                 Ok(placement) => {

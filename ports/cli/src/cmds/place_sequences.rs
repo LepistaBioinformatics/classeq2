@@ -6,7 +6,7 @@ use classeq_core::{
     use_cases::place_sequences,
 };
 use std::{fs::read_to_string, path::PathBuf, time::Duration};
-use tracing::info;
+use tracing::{error, info};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -37,7 +37,13 @@ pub(crate) struct Arguments {
     ///
     /// The maximum number of iterations to traverse the tree.
     #[arg(short, long)]
-    pub(super) max_iterations: Option<i32>,
+    pub(super) iterations: Option<i32>,
+
+    /// Minimum match coverage
+    ///
+    /// The minimum match coverage between the query and the database sequences.
+    #[arg(short, long)]
+    pub(super) match_coverage: Option<f64>,
 
     /// Force overwrite
     ///
@@ -49,6 +55,17 @@ pub(crate) struct Arguments {
 pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
     use std::time::Instant;
     let now = Instant::now();
+
+    // ? -----------------------------------------------------------------------
+    // ? Create a thread pool configured globally
+    // ? -----------------------------------------------------------------------
+
+    if let Err(err) = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads.to_owned())
+        .build_global()
+    {
+        error!("Error creating thread pool: {err}");
+    };
 
     let per_seq_time = {
         let database_file = match read_to_string(&args.database_file_path) {
@@ -71,10 +88,10 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             args.query,
             &tree,
             &args.output_file_path,
-            &args.max_iterations,
+            &args.iterations,
+            &args.match_coverage,
             &args.force_overwrite,
             &args.out_format,
-            &threads,
         )
     };
 
@@ -84,8 +101,8 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         .to_owned()
         .into_iter()
         .map(|i| i.milliseconds_time)
-        .sum::<Duration>() /
-        per_seq_time.len() as u32;
+        .sum::<Duration>()
+        / per_seq_time.len() as u32;
 
     info!(
         "Execution times:\n{0: <10} | {1: <20?}\n{2: <10} | {3: <20?}",

@@ -129,11 +129,21 @@ impl Tree {
         }
     }
 
+    pub fn from_yaml_file(file_path: &Path) -> Result<Tree, MappedErrors> {
+        let file_content =
+            read_to_string(file_path).expect("Could not read file");
+
+        let tree: Tree =
+            serde_yaml::from_str(&file_content).expect("Could not parse tree");
+
+        Ok(tree)
+    }
+
     /// Create a new Tree from a .newick file.
     ///
     /// The phylotre::tree::Tree is parsed from the file and converted to a Tree
     /// object with a root Clade.
-    pub fn from_file(
+    pub fn init_from_file(
         tree_path: &Path,
         min_branch_support: f64,
     ) -> Result<Tree, MappedErrors> {
@@ -321,7 +331,7 @@ mod tests {
     fn test_tree_from_file() {
         let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
 
-        let tree = Tree::from_file(&path, 80.0);
+        let tree = Tree::init_from_file(&path, 80.0);
 
         assert!(tree.is_ok());
 

@@ -10,6 +10,7 @@ fs:
   inputDirectory: "input"
   outputDirectory: "output"
   configFileName: "config.yaml"
+  resultsFileName: "result.yaml"
   successFileName: "success.yaml"
   runningFileName: "running.yaml"
   errorFileName: "error.yaml"
@@ -36,7 +37,7 @@ models:
   - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
     name: Bacillus subtilis group
     gene: gyrB complete sequence
-    path: test/models/bsub-gyrb-k35.yaml
+    path: /home/sgelias/thirdparty-projects/classeq-v2/classeq-rs/tests/models/bsub-gyrb-k35.yaml
 
 # ? ----------------------------------------------------------------------------
 # ? Watcher related settings
@@ -47,6 +48,7 @@ models:
 # ? ----------------------------------------------------------------------------
 watcher:
   workerName: "cls-watcher"
+  maxThreadsPerWorker: 12
   workers: 3
   interval: 5
   retries: 3

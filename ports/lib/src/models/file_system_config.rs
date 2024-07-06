@@ -21,6 +21,10 @@ pub struct FileSystemConfig {
     /// configurations.
     pub config_file_name: String,
 
+    /// The name of the lock file generated to indicate the analysis is
+    /// pending.
+    pub results_file_name: String,
+
     /// The name of the lock file generated to indicate the analysis was
     /// successful.
     pub success_file_name: String,

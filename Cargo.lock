@@ -1030,6 +1030,7 @@ dependencies = [
  "clap",
  "classeq-core",
  "classeq-ports-lib",
+ "rayon",
  "serde 1.0.198",
  "serde_json",
  "serde_yaml",
@@ -1060,10 +1061,12 @@ dependencies = [
 name = "classeq-ports-lib"
 version = "0.3.0"
 dependencies = [
+ "anyhow",
  "apalis",
  "clap",
  "classeq-core",
  "serde 1.0.198",
+ "serde_yaml",
  "tracing",
  "uuid",
 ]
@@ -1083,6 +1086,7 @@ dependencies = [
  "classeq-ports-lib",
  "ctrlc",
  "mycelium-config",
+ "rayon",
  "serde 1.0.198",
  "serde_yaml",
  "tracing",

@@ -24,6 +24,7 @@ apalis-core.workspace = true
 clap.workspace = true
 chrono.workspace = true
 mycelium-config.workspace = true
+rayon.workspace = true
 serde.workspace = true
 serde_yaml.workspace = true
 tracing.workspace = true

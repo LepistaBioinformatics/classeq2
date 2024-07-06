@@ -10,6 +10,7 @@ pub(crate) struct WatchConfig {
     pub(crate) workers: u32,
     pub(crate) interval: u64,
     pub(crate) retries: u32,
+    pub(crate) max_threads_per_worker: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
