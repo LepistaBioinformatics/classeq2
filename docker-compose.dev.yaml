@@ -1,23 +1,37 @@
 version: "3.2"
 
+networks:
+  cls_net:
+    driver: bridge
+
+x-common-config: &common-config
+  volumes:
+    - ./data:/var/classeq/data
+  networks:
+    - cls_net
+
 services:
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: 'classeq-rabbitmq'
+  api:
+    # Inject all shared configs
+    <<: *common-config
+
+    # Service specific configs
+    image: classeq-api:latest
+    container_name: classeq-api
     ports:
-      - 5672:5672
-      - 15672:15672
-    volumes:
-      - ./.amq-conf/rabbitmq/data/:/var/lib/rabbitmq/
-      - ./.amq-conf/rabbitmq/log/:/var/log/rabbitmq
-    networks:
-      - rabbitmq_cls_net
+      - 8080:8080
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      test: [ "CMD", "nc", "-z", "localhost", "8080" ]
       interval: 10s
       timeout: 10s
       retries: 5
 
-networks:
-  rabbitmq_cls_net:
-    driver: bridge
+  watcher:
+    # Inject all shared configs
+    <<: *common-config
+
+    # Service specific configs
+    image: classeq-watcher:latest
+    container_name: classeq-watcher
+    depends_on:
+      - api

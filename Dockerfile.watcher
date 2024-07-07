@@ -1,0 +1,12 @@
+FROM rust:latest
+
+RUN cargo install classeq-watcher
+
+ARG SETTINGS_PATH=/etc/classeq/config.yaml
+ENV SETTINGS_PATH=${SETTINGS_PATH}
+
+COPY settings/config.prod.yaml ${SETTINGS_PATH}
+COPY tests/models/bsub-gyrb-k35.yaml /etc/classeq/models/bsub-gyrb-k35.yaml
+
+SHELL [ "/bin/bash", "-c"]
+ENTRYPOINT cls-watcher --log-format json watch --config-file ${SETTINGS_PATH}

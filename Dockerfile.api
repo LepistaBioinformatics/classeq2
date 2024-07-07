@@ -1,0 +1,10 @@
+FROM rust:latest
+
+RUN cargo install classeq-api
+
+ARG SETTINGS_PATH=/etc/classeq/config.yaml
+ENV SETTINGS_PATH=${SETTINGS_PATH}
+
+COPY settings/config.prod.yaml ${SETTINGS_PATH}
+
+ENTRYPOINT ["cls-api"]

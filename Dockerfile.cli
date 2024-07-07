@@ -1,0 +1,7 @@
+FROM rust:latest
+
+WORKDIR /data
+
+RUN cargo install classeq-cli
+
+ENTRYPOINT ["cls"]
