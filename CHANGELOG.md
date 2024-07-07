@@ -1,3 +1,19 @@
+## v0.4.0 (2024-07-07)
+
+### Feat
+
+- wip - update the implementation of the place-sequences method
+- reconfigure the shared information between api and watcher
+- wip - do implement the dir watcher and job scheduler
+
+### Fix
+
+- fix error handling in place-sequences use-cases to avoid panic
+
+### Refactor
+
+- refactor the api to allow get files by inode
+
 ## v0.3.0 (2024-06-23)
 
 ### Feat
