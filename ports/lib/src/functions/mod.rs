@@ -1,8 +1,5 @@
-use tracing::debug;
+mod export_runtime_arguments;
+mod get_file_by_inode;
 
-/// Get the command line arguments.
-#[tracing::instrument(name = "Runtime arguments")]
-pub fn expose_runtime_arguments() {
-    let args: Vec<_> = std::env::args().collect();
-    debug!("{:?}", args.join(" "));
-}
+pub use export_runtime_arguments::*;
+pub use get_file_by_inode::*;

@@ -78,6 +78,10 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(Mutex::new(trees_config.clone())))
             .route("/wd", web::post().to(fs::init_wd))
             .route("/wd/{work_dir_id}", web::get().to(fs::list_wd_content))
+            .route(
+                "/wd/{work_dir_id}/{file_id}",
+                web::get().to(fs::get_file_content_by_id),
+            )
             .route("/wd/{work_dir_id}", web::put().to(fs::upload_analysis_file))
             .route(
                 "/wd/{work_dir_id}/config",

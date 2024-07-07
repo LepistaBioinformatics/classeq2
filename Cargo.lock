@@ -1069,6 +1069,7 @@ dependencies = [
  "serde_yaml",
  "tracing",
  "uuid",
+ "walkdir",
 ]
 
 [[package]]

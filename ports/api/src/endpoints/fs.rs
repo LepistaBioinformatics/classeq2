@@ -1,8 +1,11 @@
 use crate::models::node::Node;
 
+use actix_files::NamedFile;
 use actix_multipart::Multipart;
-use actix_web::{web, HttpRequest, HttpResponse};
-use classeq_ports_lib::{BluAnalysisConfig, FileSystemConfig, ModelsConfig};
+use actix_web::{web, HttpRequest, HttpResponse, Result};
+use classeq_ports_lib::{
+    get_file_by_inode, BluAnalysisConfig, FileSystemConfig, ModelsConfig,
+};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, sync::Mutex};
@@ -106,8 +109,8 @@ pub(crate) async fn list_wd_content(
             .into_iter()
             .filter_map(|entry| entry.ok())
             .filter(|entry| {
-                entry.path().exists() &&
-                    (entry.path().is_file() || entry.path().is_symlink())
+                entry.path().exists()
+                    && (entry.path().is_file() || entry.path().is_symlink())
             })
             .filter_map(|entry| {
                 match Node::new(entry.path().into(), work_dir_id.to_owned()) {
@@ -122,6 +125,42 @@ pub(crate) async fn list_wd_content(
             .collect();
 
     HttpResponse::Ok().json(directory_content)
+}
+
+#[instrument(name = "Get file content", skip(config))]
+pub(crate) async fn get_file_content_by_id(
+    info: web::Path<(String, i32)>,
+    config: web::Data<Mutex<FileSystemConfig>>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let (work_dir_id, file_id) = info.to_owned();
+
+    let target_dir = match check_directory_existence(
+        config,
+        work_dir_id.to_owned(),
+        Some(true),
+    ) {
+        Err(res) => return res,
+        Ok(path) => path,
+    };
+
+    let parent = match target_dir.parent() {
+        Some(parent) => parent,
+        None => {
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+
+    match get_file_by_inode(parent.to_owned(), file_id as u32) {
+        None => HttpResponse::NoContent().finish(),
+        Some(file) => match NamedFile::open(file) {
+            Ok(file) => file.into_response(&req),
+            Err(err) => {
+                error!("{:?}", err);
+                HttpResponse::InternalServerError().finish()
+            }
+        },
+    }
 }
 
 #[derive(Deserialize)]
