@@ -63,7 +63,7 @@ pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
     // ? -----------------------------------------------------------------------
 
     if let Err(err) = rayon::ThreadPoolBuilder::new()
-        .num_threads(config.watcher.max_threads_per_worker.to_owned() as usize)
+        .num_threads(config.watcher.max_threads.to_owned() as usize)
         .build_global()
     {
         error!("Error creating thread pool: {err}");
@@ -90,7 +90,7 @@ pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
         .layer(TraceLayer::new().make_span_with(ReminderSpan::new()))
         .data(config.fs)
         .data(config.models)
-        .data(config.watcher.max_threads_per_worker)
+        .data(config.watcher.max_threads)
         .stream(CronStream::new(schedule).into_stream())
         .build_fn(scan_dispatcher);
 

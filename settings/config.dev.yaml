@@ -1,0 +1,54 @@
+# ? ----------------------------------------------------------------------------
+# ? FileSystem related settings
+#
+# Shared configuration file for the API server and the watcher service
+#
+# ? ----------------------------------------------------------------------------
+fs:
+  serveDirectory: "tests/data"
+  publicDirectory: "public"
+  inputDirectory: "input"
+  outputDirectory: "output"
+  configFileName: "config.yaml"
+  resultsFileName: "result.yaml"
+  successFileName: "success.yaml"
+  runningFileName: "running.yaml"
+  errorFileName: "error.yaml"
+
+# ? ----------------------------------------------------------------------------
+# ? API server related settings
+#
+# The following settings are used to configure the API server
+#
+# ? ----------------------------------------------------------------------------
+server:
+  address: "0.0.0.0"
+  port: 8080
+  workers: 1
+
+# ? ----------------------------------------------------------------------------
+# ? Models related settings
+#
+# The following settings are used to configure the API server related to
+# models provisioning
+#
+# ? ----------------------------------------------------------------------------
+models:
+  - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
+    name: Bacillus subtilis group
+    gene: gyrB complete sequence
+    path: tests/models/bsub-gyrb-k35.yaml
+
+# ? ----------------------------------------------------------------------------
+# ? Watcher related settings
+#
+# The following settings are used to configure the scheduling behavior of
+# the watcher
+#
+# ? ----------------------------------------------------------------------------
+watcher:
+  workerName: "cls-watcher"
+  maxThreads: 12
+  workers: 3
+  interval: 5
+  retries: 3

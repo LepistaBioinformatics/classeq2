@@ -3,7 +3,7 @@ mod models;
 
 use endpoints::fs;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web_opentelemetry::RequestTracing;
 use models::api_config::ApiConfig;
 use std::{path::PathBuf, sync::Mutex};
@@ -14,6 +14,10 @@ use tracing_log::LogTracer;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+
+async fn health_check() -> HttpResponse {
+    HttpResponse::Ok().body("healthy")
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -91,6 +95,7 @@ async fn main() -> std::io::Result<()> {
                 "/models",
                 web::get().to(endpoints::subjects::list_available_models),
             )
+            .default_service(web::get().to(health_check))
     })
     .bind(address)?
     .workers(workers.into())
