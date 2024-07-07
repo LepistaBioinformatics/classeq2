@@ -1,4 +1,5 @@
 mod place_sequence;
+use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
@@ -36,16 +37,20 @@ pub fn place_sequences(
     min_match_coverage: &Option<f64>,
     overwrite: &bool,
     output_format: &OutputFormat,
-) -> Vec<PlacementTime> {
+) -> Result<Vec<PlacementTime>, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Build the output paths
     // ? -----------------------------------------------------------------------
 
     let mut out_file_path = out_file.to_owned();
+    let mut err_file_path = out_file.to_owned();
+
     out_file_path.set_extension(match output_format {
         OutputFormat::Yaml => "yaml",
         OutputFormat::Jsonl => "jsonl",
     });
+
+    err_file_path.set_extension("error");
 
     let out_dir = out_file_path.parent().unwrap();
 
@@ -55,14 +60,19 @@ pub fn place_sequences(
 
     if out_file_path.exists() {
         if !overwrite {
-            panic!(
+            return use_case_err(format!(
                 "Could not overwrite existing file {:?} when overwrite option is `false`.", 
                 out_file_path
-            );
+            )).as_error();
         }
 
         match remove_file(out_file_path.clone()) {
-            Err(err) => panic!("Could not remove file given {}", err),
+            Err(err) => {
+                return use_case_err(format!(
+                    "Could not remove file given {err}"
+                ))
+                .as_error()
+            }
             Ok(_) => warn!("Output file overwritten!"),
         };
     };
@@ -71,11 +81,16 @@ pub fn place_sequences(
     // ? Run the placement
     // ? -----------------------------------------------------------------------
 
-    let (writer, file) = write_or_append_to_file(out_file_path.as_path());
+    let (result_writer, result_file) =
+        write_or_append_to_file(out_file_path.as_path());
+
+    let (error_writer, error_file) =
+        write_or_append_to_file(err_file_path.as_path());
+
     let (sender, receiver) = channel();
     let _ = query_sequence.sequence_content_by_channel(sender);
 
-    receiver
+    let responses = receiver
         .into_iter()
         .par_bridge()
         .map(|sequence| {
@@ -90,7 +105,16 @@ pub fn place_sequences(
                 &max_iterations,
                 &min_match_coverage,
             ) {
-                Err(err) => panic!("Error placing sequence: {err}"),
+                Err(err) => {
+                    if let Err(err) = error_writer(
+                        err.to_string(),
+                        error_file.try_clone().expect(
+                            "Unexpected error detected on write blast result",
+                        ),
+                    ) {
+                        panic!("Error writing to file: {err}")
+                    };
+                }
                 Ok(placement) => {
                     debug!("Placed sequence: {:?}", placement);
 
@@ -118,21 +142,23 @@ pub fn place_sequences(
                         }
                     };
 
-                    if let Err(err) = writer(
+                    if let Err(err) = result_writer(
                         output_content,
-                        file.try_clone().expect(
+                        result_file.try_clone().expect(
                             "Unexpected error detected on write blast result",
                         ),
                     ) {
                         panic!("Error writing to file: {err}")
-                    }
-
-                    PlacementTime {
-                        sequence: sequence.header_content().to_string(),
-                        milliseconds_time: time.elapsed(),
-                    }
+                    };
                 }
             }
+
+            PlacementTime {
+                sequence: sequence.header_content().to_string(),
+                milliseconds_time: time.elapsed(),
+            }
         })
-        .collect()
+        .collect();
+
+    Ok(responses)
 }

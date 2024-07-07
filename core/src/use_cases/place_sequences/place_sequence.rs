@@ -5,7 +5,10 @@ use crate::domain::dtos::{
     tree::Tree,
 };
 
-use mycelium_base::{dtos::UntaggedParent, utils::errors::MappedErrors};
+use mycelium_base::{
+    dtos::UntaggedParent,
+    utils::errors::{use_case_err, MappedErrors},
+};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use std::collections::{HashMap, HashSet};
 use tracing::{debug, warn};
@@ -50,7 +53,8 @@ pub(super) fn place_sequence(
         kmers_map.build_kmers_from_string(sequence.seq().to_string(), None);
 
     if query_kmers.len() < 2 {
-        panic!("The sequence does not contain enough kmers.");
+        return use_case_err("The sequence does not contain enough kmers.")
+            .as_error();
     }
 
     // ? -----------------------------------------------------------------------
@@ -67,7 +71,12 @@ pub(super) fn place_sequence(
     let mut query_kmers_map = kmers_map
         .get_overlapping_kmers(&query_kmers.to_owned().into_iter().collect());
 
-    let query_kmers_len = query_kmers_map.get_map().values().into_iter().map(|i| i.0.len()).sum::<usize>();
+    let query_kmers_len = query_kmers_map
+        .get_map()
+        .values()
+        .into_iter()
+        .map(|i| i.0.len())
+        .sum::<usize>();
 
     if query_kmers_len == 0 {
         warn!("Query sequence may not be related to the phylogeny");
@@ -100,7 +109,10 @@ pub(super) fn place_sequence(
     let mut children = if let Some(children) = tree.root.to_owned().children {
         children
     } else {
-        panic!("The root node does not have children. This is unexpected.");
+        return use_case_err(
+            "The root node does not have children. This is unexpected.",
+        )
+        .as_error();
     };
 
     let mut iteration = 0;
@@ -113,7 +125,10 @@ pub(super) fn place_sequence(
 
         iteration += 1;
         if iteration > max_iterations {
-            panic!("The maximum number of iterations has been reached.");
+            return use_case_err(
+                "The maximum number of iterations has been reached.",
+            )
+            .as_error();
         }
 
         // ? -------------------------------------------------------------------
@@ -232,16 +247,17 @@ pub(super) fn place_sequence(
             let adherence: AdherenceTest = match filtered_proposals.first() {
                 Some(adherence) => adherence.to_owned(),
                 None => {
-                    panic!("The filtered proposals list is empty. This is unexpected.");
+                    return use_case_err("The filtered proposals list is empty. This is unexpected.").as_error();
                 }
             };
 
             clade = match adherence.clade.to_owned() {
                 UntaggedParent::Record(clade) => clade,
                 UntaggedParent::Id(_) => {
-                    panic!(
-                        "The adherence test does not contain a clade record."
-                    );
+                    return use_case_err(
+                        "The adherence test does not contain a clade record.",
+                    )
+                    .as_error();
                 }
             };
 
@@ -279,9 +295,9 @@ pub(super) fn place_sequence(
                 clade = match adherence.clade.to_owned() {
                     UntaggedParent::Record(clade) => clade,
                     UntaggedParent::Id(_) => {
-                        panic!(
+                        return use_case_err(
                             "The adherence test does not contain a clade record."
-                        );
+                        ).as_error();
                     }
                 };
 

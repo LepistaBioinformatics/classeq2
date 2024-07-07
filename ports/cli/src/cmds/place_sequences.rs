@@ -84,7 +84,7 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             Ok(buffer) => buffer,
         };
 
-        place_sequences(
+        match place_sequences(
             args.query,
             &tree,
             &args.output_file_path,
@@ -92,7 +92,13 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             &args.match_coverage,
             &args.force_overwrite,
             &args.out_format,
-        )
+        ) {
+            Ok(buffer) => buffer,
+            Err(err) => {
+                eprintln!("{}", err);
+                std::process::exit(1);
+            }
+        }
     };
 
     let elapsed = now.elapsed();

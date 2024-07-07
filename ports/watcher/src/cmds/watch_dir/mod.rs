@@ -25,9 +25,11 @@ use classeq_core::{
     domain::dtos::{file_or_stdin::FileOrStdin, tree::Tree},
     use_cases::place_sequences,
 };
-use classeq_ports_lib::{BluAnalysisConfig, FileSystemConfig, ModelsConfig};
+use classeq_ports_lib::{
+    get_file_by_inode, BluAnalysisConfig, FileSystemConfig, ModelsConfig,
+};
 use context::WorkerCtx;
-use std::{os::unix::fs::MetadataExt, path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 use tracing::{debug, error, info, warn, Instrument};
 
 #[derive(Parser, Debug)]
@@ -90,7 +92,7 @@ pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
         .data(config.models)
         .data(config.watcher.max_threads_per_worker)
         .stream(CronStream::new(schedule).into_stream())
-        .build_fn(dispatch_scan);
+        .build_fn(scan_dispatcher);
 
     // ? -----------------------------------------------------------------------
     // ? Run the worker
@@ -114,7 +116,7 @@ pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
 /// This function dispatches the scan task to the worker, allowing the scan to
 /// be executed in the background.
 ///
-async fn dispatch_scan(
+async fn scan_dispatcher(
     _: Reminder,
     worker: WorkerCtx,
     fs_data: Data<FileSystemConfig>,
@@ -123,15 +125,14 @@ async fn dispatch_scan(
     worker.spawn(
         scan_directories_in_background(fs_data, models_data).in_current_span(),
     );
+
     true
 }
 
+/// Scans the directories and dispatches the tasks
 ///
-/// TODO: do finish implementation
-///
-/// Scans the directories in the background
-///
-/// This function scans the directories in the background.
+/// This function scans the directories and dispatches the tasks to the worker
+/// for processing.
 ///
 async fn scan_directories_in_background(
     fs_config: Data<FileSystemConfig>,
@@ -139,6 +140,11 @@ async fn scan_directories_in_background(
 ) {
     //
     // Scan public directory
+    //
+    // Here only the public directories are scanned. The public directories are
+    // directories that contain the analysis configuration files, but not
+    // include the success, running, and error files, indicating pending
+    // analysis.
     //
     for path in PathBuf::from(&fs_config.serve_directory)
         .join(fs_config.public_directory.to_owned())
@@ -162,7 +168,16 @@ async fn scan_directories_in_background(
         })
         .into_iter()
     {
-        let config_content = match BluAnalysisConfig::from_yaml_file(&path) {
+        // ? -------------------------------------------------------------------
+        // ? Load the analysis configuration file
+        //
+        // Directories returned during the scan are expected to contain an
+        // analysis configuration file. Analysis configuration file contain the
+        // model ID and the query file ID to perform the analysis.
+        //
+        // ? -------------------------------------------------------------------
+
+        let blutils_config = match BluAnalysisConfig::from_yaml_file(&path) {
             Ok(config_content) => config_content,
             Err(e) => {
                 warn!("Failed to parse the configuration file: {e}");
@@ -170,10 +185,18 @@ async fn scan_directories_in_background(
             }
         };
 
-        let target_model = if let Some(model) = models_data
+        // ? -------------------------------------------------------------------
+        // ? Load the target model
+        //
+        // The target model confain information from the model to be used during
+        // prediciotns.
+        //
+        // ? -------------------------------------------------------------------
+
+        let analysis_model = if let Some(model) = models_data
             .get_models()
             .into_iter()
-            .find(|model| model.id == config_content.model_id)
+            .find(|model| model.id == blutils_config.model_id)
         {
             model
         } else {
@@ -181,7 +204,7 @@ async fn scan_directories_in_background(
                 &path.join(fs_config.error_file_name.to_owned()),
                 format!(
                     "Model with ID {id} not found",
-                    id = config_content.model_id
+                    id = blutils_config.model_id
                 )
                 .as_str(),
             ) {
@@ -191,13 +214,28 @@ async fn scan_directories_in_background(
             continue;
         };
 
-        let tree = Tree::from_yaml_file(&target_model.get_path())
+        // ? -------------------------------------------------------------------
+        // ? Load the model artifacts
+        //
+        // The model artifact is a Tree struct containning the model used for
+        // predictions.
+        //
+        // ? -------------------------------------------------------------------
+
+        let tree_model = Tree::from_yaml_file(&analysis_model.get_path())
             .expect("Failed to read the tree file");
+
+        // ? -------------------------------------------------------------------
+        // ? Load the Query file
+        //
+        // The query file is a file containing the sequences to be processed.
+        //
+        // ? -------------------------------------------------------------------
 
         let query_file_path = match path.parent() {
             Some(parent) => get_file_by_inode(
                 parent.join(fs_config.input_directory.to_owned()),
-                config_content.query_file_id,
+                blutils_config.query_file_id,
             ),
             None => None,
         };
@@ -212,7 +250,7 @@ async fn scan_directories_in_background(
                     .join(fs_config.error_file_name.to_owned()),
                 format!(
                     "Query file with inode {inode} not found",
-                    inode = config_content.query_file_id
+                    inode = blutils_config.query_file_id
                 )
                 .as_str(),
             ) {
@@ -221,6 +259,10 @@ async fn scan_directories_in_background(
 
             continue;
         };
+
+        // ? -------------------------------------------------------------------
+        // ? Build the output file path
+        // ? -------------------------------------------------------------------
 
         let output_file = path
             .parent()
@@ -234,36 +276,55 @@ async fn scan_directories_in_background(
                 .expect("Error getting the parent directory")
                 .join(fs_config.running_file_name.to_owned()),
             format!(
-                "Processing the query file {query_file:?} with model {model:?}",
+                "Processing the query file {query_file:?} with model {tree_model:?}",
                 query_file = query_file_path
                     .to_owned()
                     .expect("Error getting the query file")
                     .file_name()
                     .expect("Error getting the file name"),
-                model = target_model.name
             )
             .as_str(),
         ) {
             panic!("Failed to write the error file: {err}");
         };
 
-        // ? -----------------------------------------------------------------------
+        // ? -------------------------------------------------------------------
         // ? Place sequences
-        // ? -----------------------------------------------------------------------
+        // ? -------------------------------------------------------------------
 
-        place_sequences(
+        if let Err(err) = place_sequences(
             query_file,
-            &tree,
+            &tree_model,
             &output_file,
             &None,
             &None,
             &true,
-            &config_content.output_format,
-        );
+            &blutils_config.output_format,
+        ) {
+            if let Err(err) = ExecutionMsg::write_file(
+                &path
+                    .parent()
+                    .expect("Error getting the parent directory")
+                    .join(fs_config.error_file_name.to_owned()),
+                format!(
+                    "Failed to process the query file {query_file:?} with model {tree_model:?}: {err}",
+                    query_file = query_file_path
+                        .expect("Error getting the query file")
+                        .file_name()
+                        .expect("Error getting the file name"),
+                    tree_model = analysis_model.id
+                )
+                .as_str(),
+            ) {
+                panic!("Failed to write the error file: {err}");
+            };
 
-        // ? -----------------------------------------------------------------------
+            continue;
+        }
+
+        // ? -------------------------------------------------------------------
         // ? Write response
-        // ? -----------------------------------------------------------------------
+        // ? -------------------------------------------------------------------
 
         if let Err(err) = ExecutionMsg::write_file(
             &path
@@ -282,17 +343,4 @@ async fn scan_directories_in_background(
             panic!("Failed to write the error file: {err}");
         };
     }
-}
-
-fn get_file_by_inode(directory: PathBuf, inode: u32) -> Option<PathBuf> {
-    directory
-        .read_dir()
-        .into_iter()
-        .flat_map(|entry| entry)
-        .filter_map(|entry| entry.ok())
-        .find(|entry| {
-            let metadata = entry.metadata().expect("Failed to read metadata");
-            metadata.ino() == inode as u64
-        })
-        .map(|entry| entry.path().to_path_buf())
 }
