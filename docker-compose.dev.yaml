@@ -1,12 +1,10 @@
-version: "3.2"
-
 networks:
   cls_net:
     driver: bridge
 
 x-common-config: &common-config
   volumes:
-    - ./data:/var/classeq/data
+    - ./tests/data:/var/classeq/data
   networks:
     - cls_net
 
@@ -20,6 +18,11 @@ services:
     container_name: classeq-api
     ports:
       - 8080:8080
+    deploy:
+      resources:
+        limits:
+          cpus: 2.0
+          memory: 800MB
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "8080" ]
       interval: 10s
@@ -35,3 +38,8 @@ services:
     container_name: classeq-watcher
     depends_on:
       - api
+    deploy:
+      resources:
+        limits:
+          cpus: 6.0
+          memory: 10GB
