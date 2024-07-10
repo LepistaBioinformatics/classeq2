@@ -1,3 +1,13 @@
+## v0.4.2 (2024-07-09)
+
+### Fix
+
+- add a random sleeper to allow multiple workers to run in parallel
+
+### Perf
+
+- review the cpu and memory limits of watcher and api services in docker-compose
+
 ## v0.4.1 (2024-07-07)
 
 ## v0.4.0 (2024-07-07)
