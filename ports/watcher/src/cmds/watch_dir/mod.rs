@@ -20,6 +20,7 @@ use apalis_core::{
     builder::{WorkerBuilder, WorkerFactoryFn},
     monitor::Monitor,
 };
+use async_std::task::sleep;
 use clap::Parser;
 use classeq_core::{
     domain::dtos::{file_or_stdin::FileOrStdin, tree::Tree},
@@ -29,7 +30,8 @@ use classeq_ports_lib::{
     get_file_by_inode, BluAnalysisConfig, FileSystemConfig, ModelsConfig,
 };
 use context::WorkerCtx;
-use std::{path::PathBuf, str::FromStr};
+use rand::{thread_rng, Rng};
+use std::{path::PathBuf, str::FromStr, time::Duration};
 use tracing::{debug, error, info, warn, Instrument};
 
 #[derive(Parser, Debug)]
@@ -90,7 +92,7 @@ pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
         .layer(TraceLayer::new().make_span_with(ReminderSpan::new()))
         .data(config.fs)
         .data(config.models)
-        .data(config.watcher.max_threads)
+        .data(config.watcher.interval as i32)
         .stream(CronStream::new(schedule).into_stream())
         .build_fn(scan_dispatcher);
 
@@ -121,7 +123,12 @@ async fn scan_dispatcher(
     worker: WorkerCtx,
     fs_data: Data<FileSystemConfig>,
     models_data: Data<ModelsConfig>,
+    interval: Data<i32>,
 ) -> bool {
+    let max_delay = interval.to_owned().abs();
+    let rand_delay = thread_rng().gen_range(1..=max_delay);
+    sleep(Duration::from_secs(rand_delay as u64)).await;
+
     worker.spawn(
         scan_directories_in_background(fs_data, models_data).in_current_span(),
     );
@@ -232,56 +239,73 @@ async fn scan_directories_in_background(
         //
         // ? -------------------------------------------------------------------
 
-        let query_file_path = match path.parent() {
-            Some(parent) => get_file_by_inode(
-                parent.join(fs_config.input_directory.to_owned()),
-                blutils_config.query_file_id,
-            ),
-            None => None,
+        let (query_file_path, parent) = match path.parent() {
+            Some(parent) => {
+                let inode_file = get_file_by_inode(
+                    parent.join(fs_config.input_directory.to_owned()),
+                    blutils_config.query_file_id,
+                );
+
+                match inode_file {
+                    Some(file) => (file, parent),
+                    None => {
+                        if let Err(err) = ExecutionMsg::write_file(
+                            &parent
+                                .to_owned()
+                                .join(fs_config.error_file_name.to_owned()),
+                            format!(
+                                "Query file with inode {inode} not found",
+                                inode = blutils_config.query_file_id
+                            )
+                            .as_str(),
+                        ) {
+                            panic!("Failed to write the error file: {err}");
+                        };
+
+                        continue;
+                    }
+                }
+            }
+            None => {
+                if let Err(err) = ExecutionMsg::write_file(
+                    &path
+                        .parent()
+                        .expect("Error getting the parent")
+                        .to_owned()
+                        .join(fs_config.error_file_name.to_owned()),
+                    format!(
+                        "Query file with inode {inode} not found",
+                        inode = blutils_config.query_file_id
+                    )
+                    .as_str(),
+                ) {
+                    panic!("Failed to write the error file: {err}");
+                };
+
+                continue;
+            }
         };
 
-        let query_file = if let Some(path) = query_file_path.to_owned() {
-            FileOrStdin::from_file(&path.to_str().unwrap())
-        } else {
-            if let Err(err) = ExecutionMsg::write_file(
-                &path
-                    .parent()
-                    .expect("Error getting the parent directory")
-                    .join(fs_config.error_file_name.to_owned()),
-                format!(
-                    "Query file with inode {inode} not found",
-                    inode = blutils_config.query_file_id
-                )
-                .as_str(),
-            ) {
-                warn!("Failed to write the error file: {err}");
-            };
-
-            continue;
-        };
+        let query_file =
+            FileOrStdin::from_file(&query_file_path.to_str().unwrap());
 
         // ? -------------------------------------------------------------------
         // ? Build the output file path
         // ? -------------------------------------------------------------------
 
-        let output_file = path
-            .parent()
-            .expect("Failed to get the parent directory")
+        let output_file = parent
+            .to_owned()
             .join(fs_config.output_directory.to_owned().as_str())
             .join(fs_config.results_file_name.to_owned().as_str());
 
         if let Err(err) = ExecutionMsg::write_file(
-            &path
-                .parent()
-                .expect("Error getting the parent directory")
+            &parent
+                .to_owned()
                 .join(fs_config.running_file_name.to_owned()),
             format!(
-                "Processing the query file {query_file:?} with model {tree_model:?}",
-                query_file = query_file_path
-                    .to_owned()
-                    .expect("Error getting the query file")
-                    .file_name()
-                    .expect("Error getting the file name"),
+                "Processing the query file {query_file:?} with model {model_id:?}",
+                query_file = query_file_path.file_name().to_owned(),
+                model_id = analysis_model.id
             )
             .as_str(),
         ) {
@@ -302,17 +326,13 @@ async fn scan_directories_in_background(
             &blutils_config.output_format,
         ) {
             if let Err(err) = ExecutionMsg::write_file(
-                &path
-                    .parent()
-                    .expect("Error getting the parent directory")
+                &parent
+                    .to_owned()
                     .join(fs_config.error_file_name.to_owned()),
                 format!(
-                    "Failed to process the query file {query_file:?} with model {tree_model:?}: {err}",
-                    query_file = query_file_path
-                        .expect("Error getting the query file")
-                        .file_name()
-                        .expect("Error getting the file name"),
-                    tree_model = analysis_model.id
+                    "Failed to process the query file {query_file:?} with model {model_id:?}: {err}",
+                    query_file = query_file_path.file_name().to_owned(),
+                    model_id = analysis_model.id
                 )
                 .as_str(),
             ) {
@@ -327,16 +347,10 @@ async fn scan_directories_in_background(
         // ? -------------------------------------------------------------------
 
         if let Err(err) = ExecutionMsg::write_file(
-            &path
-                .parent()
-                .expect("Error getting the parent directory")
-                .join(fs_config.success_file_name.to_owned()),
+            &parent.join(fs_config.success_file_name.to_owned()),
             format!(
                 "Query file {query_file:?} processed successfully",
-                query_file = query_file_path
-                    .expect("Error getting the query file")
-                    .file_name()
-                    .expect("Error getting the file name")
+                query_file = query_file_path.file_name()
             )
             .as_str(),
         ) {

@@ -585,6 +585,7 @@ dependencies = [
  "blocking",
  "futures-lite 2.3.0",
  "once_cell",
+ "tokio",
 ]
 
 [[package]]
@@ -1087,6 +1088,7 @@ dependencies = [
  "classeq-ports-lib",
  "ctrlc",
  "mycelium-config",
+ "rand",
  "rayon",
  "serde 1.0.198",
  "serde_yaml",

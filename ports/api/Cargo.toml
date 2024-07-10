@@ -26,7 +26,6 @@ actix-web-opentelemetry = "0.18.0"
 futures = "0.3"
 futures-util = "0.3"
 mycelium-config = "5.0"
-tokio = { version = "1.38", features = ["rt-multi-thread", "fs"] }
 tracing-actix-web = "0.7"
 tracing-bunyan-formatter = "0.3.9"
 tracing-log = "0.2.0"
@@ -38,6 +37,7 @@ serde.workspace = true
 serde_yaml.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+tokio.workspace = true
 uuid.workspace = true
 walkdir.workspace = true
 

@@ -52,3 +52,4 @@ watcher:
   workers: 3
   interval: 15
   retries: 3
+  delay: 5

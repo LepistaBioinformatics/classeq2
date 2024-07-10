@@ -5,8 +5,14 @@ RUN cargo install classeq-watcher
 ARG SETTINGS_PATH=/etc/classeq/config.yaml
 ENV SETTINGS_PATH=${SETTINGS_PATH}
 
+ARG LOG_LEVEL=debug
+ENV LOG_LEVEL=${LOG_LEVEL}
+
+ARG LOG_FORMAT=json
+ENV LOG_FORMAT=${LOG_FORMAT}
+
 COPY settings/config.prod.yaml ${SETTINGS_PATH}
 COPY tests/models/bsub-gyrb-k35.yaml /etc/classeq/models/bsub-gyrb-k35.yaml
 
 SHELL [ "/bin/bash", "-c"]
-ENTRYPOINT cls-watcher --log-format json watch --config-file ${SETTINGS_PATH}
+ENTRYPOINT cls-watcher --log-format ${LOG_FORMAT} --log-level ${LOG_LEVEL} watch --config-file ${SETTINGS_PATH}

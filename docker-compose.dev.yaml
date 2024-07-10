@@ -3,6 +3,8 @@ networks:
     driver: bridge
 
 x-common-config: &common-config
+  environment:
+    - LOG_LEVEL=info
   volumes:
     - ./tests/data:/var/classeq/data
   networks:
@@ -35,11 +37,12 @@ services:
 
     # Service specific configs
     image: classeq-watcher:latest
-    container_name: classeq-watcher
     depends_on:
       - api
     deploy:
+      mode: replicated
+      replicas: 3
       resources:
         limits:
-          cpus: 6.0
-          memory: 10GB
+          cpus: 4.0
+          memory: 6GB
