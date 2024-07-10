@@ -997,7 +997,7 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "classeq-api"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "actix-files",
  "actix-multipart",
@@ -1026,7 +1026,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-cli"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "clap",
  "classeq-core",
@@ -1042,7 +1042,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-core"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "clap",
  "mur3",
@@ -1060,7 +1060,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-ports-lib"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "anyhow",
  "apalis",
@@ -1075,7 +1075,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-watcher"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "anyhow",
  "apalis",
