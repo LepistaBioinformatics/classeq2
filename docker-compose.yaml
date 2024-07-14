@@ -46,3 +46,7 @@ services:
         limits:
           cpus: 4.0
           memory: 6GB
+        resources:
+          reservations:
+            cpus: 2.0
+            memory: 4GB

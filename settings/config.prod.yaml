@@ -34,6 +34,8 @@ server:
 #
 # ? ----------------------------------------------------------------------------
 models:
+  # This is the model used during the classeq validation. Replace this section
+  # by the models you want to use.
   - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
     name: Bacillus subtilis group
     gene: gyrB complete sequence
@@ -52,4 +54,3 @@ watcher:
   workers: 3
   interval: 15
   retries: 3
-  delay: 5
