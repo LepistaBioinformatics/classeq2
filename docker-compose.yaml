@@ -1,3 +1,5 @@
+version: "3"
+
 networks:
   cls_net:
     driver: bridge
@@ -16,7 +18,7 @@ services:
     <<: *common-config
 
     # Service specific configs
-    image: classeq-api:latest
+    image: sgelias/classeq-api:latest
     container_name: classeq-api
     ports:
       - 8080:8080
@@ -36,7 +38,7 @@ services:
     <<: *common-config
 
     # Service specific configs
-    image: classeq-watcher:latest
+    image: sgelias/classeq-watcher:latest
     depends_on:
       - api
     deploy:
@@ -44,9 +46,8 @@ services:
       replicas: 3
       resources:
         limits:
-          cpus: 4.0
-          memory: 6GB
-        resources:
-          reservations:
-            cpus: 2.0
-            memory: 4GB
+          cpus: 12.0
+          memory: 12GB
+        reservations:
+          cpus: 1.0
+          memory: 1GB

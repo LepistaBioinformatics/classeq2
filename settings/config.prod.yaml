@@ -51,6 +51,8 @@ models:
 watcher:
   workerName: cls-watcher
   maxThreads: 12
-  workers: 3
   interval: 15
   retries: 3
+
+  # The 
+  workers: 1
