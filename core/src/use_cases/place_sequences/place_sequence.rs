@@ -9,8 +9,11 @@ use mycelium_base::{
     dtos::UntaggedParent,
     utils::errors::{use_case_err, MappedErrors},
 };
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use std::collections::{HashMap, HashSet};
+use rayon::iter::{
+    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge,
+    ParallelIterator,
+};
+use std::collections::HashMap;
 use tracing::{debug, warn};
 
 /// Place a sequence in the tree.
@@ -18,7 +21,10 @@ use tracing::{debug, warn};
 /// This function tries to place a sequence in the tree using the overlapping
 /// kmers. The function uses a recursive strategy to traverse the tree and
 /// evaluate the adherence of the query sequence to the clades.
-#[tracing::instrument(name = "Place a sequence", skip(sequence, tree))]
+#[tracing::instrument(
+    name = "Place single sequence",
+    skip(sequence, tree, max_iterations, min_match_coverage)
+)]
 pub(super) fn place_sequence(
     header: &SequenceHeader,
     sequence: &SequenceBody,
@@ -50,7 +56,7 @@ pub(super) fn place_sequence(
     debug!("Building kmers from the query sequence.");
 
     let query_kmers =
-        kmers_map.build_kmers_from_string(sequence.seq().to_string(), None);
+        kmers_map.build_kmer_from_string(sequence.seq().to_string(), None);
 
     if query_kmers.len() < 2 {
         return use_case_err("The sequence does not contain enough kmers.")
@@ -68,13 +74,18 @@ pub(super) fn place_sequence(
 
     debug!("Sub-sampling kmers map from the query kmers.");
 
-    let mut query_kmers_map = kmers_map
-        .get_overlapping_kmers(&query_kmers.to_owned().into_iter().collect());
+    let mut query_kmers_map = kmers_map.get_overlapping_hashes(
+        &query_kmers
+            .to_owned()
+            .into_par_iter()
+            .map(|(_, hash)| hash)
+            .collect(),
+    );
 
     let query_kmers_len = query_kmers_map
         .get_map()
         .values()
-        .into_iter()
+        .par_bridge()
         .map(|i| i.0.len())
         .sum::<usize>();
 
@@ -95,7 +106,7 @@ pub(super) fn place_sequence(
     let root_kmers = match query_kmers_map.get_kmers_with_node(tree.root.id) {
         None => return Ok(Unclassifiable),
         Some(kmers) => query_kmers_map
-            .get_overlapping_kmers(&kmers.into_iter().map(|i| *i).collect()),
+            .get_overlapping_hashes(&kmers.into_iter().map(|i| *i).collect()),
     };
 
     // ? -----------------------------------------------------------------------
@@ -120,7 +131,7 @@ pub(super) fn place_sequence(
 
     loop {
         // ? -------------------------------------------------------------------
-        // ? Increment and evaluate the iteration cycle
+        // ? Start the placement process
         // ? -------------------------------------------------------------------
 
         iteration += 1;
@@ -131,93 +142,89 @@ pub(super) fn place_sequence(
             .as_error();
         }
 
-        // ? -------------------------------------------------------------------
-        // ? Start the placement process
-        // ? -------------------------------------------------------------------
+        //
+        // Kmers contained in the child node representing the target
+        // clade of the classification. Sucker kmers set should be used
+        // to test against the sibling kmers set.
+        //
+        let one_kmers = match root_kmers
+            .to_owned()
+            .get_kmers_with_node(clade.to_owned().id)
+        {
+            None => 0,
+            Some(kmers) => kmers.len(),
+        };
+
+        //
+        // This rule is used to determine if the child node has enough kmers
+        // to be considered for the adherence test. If the child node does
+        // not have enough kmers, the search process should perform a young
+        // return with MaxResolutionReached status.
+        //
+        let expected_min_clade_coverage =
+            query_kmers_len as f64 * min_match_coverage;
+
+        if one_kmers < expected_min_clade_coverage as usize {
+            debug!(
+                "Not enough kmers detected to place node {clade_id}",
+                clade_id = clade.id
+            );
+
+            return Ok(MaxResolutionReached(clade.id));
+        }
+
+        //
+        // Aggregate children kmer lengths. This action is necessary to
+        // determine the adherence of the query sequence to the sibling
+        // clades.
+        //
+        let children_lenghts = children
+            .par_iter()
+            .filter_map(|record| {
+                if record.is_leaf() {
+                    return None;
+                }
+
+                if record.id == clade.id {
+                    return None;
+                }
+
+                match root_kmers.get_kmers_with_node(record.id) {
+                    Some(kmers) => Some((record.id, kmers.len())),
+                    None => None,
+                }
+            })
+            .collect::<Vec<(i32, usize)>>();
 
         //
         // The proposed clades list contains the adherence tests for each child
         // node. The vector should be used to determine the best clade to place
         // the query sequence at the current level of the tree.
         //
-        let mut clade_proposals = Vec::<AdherenceTest>::new();
+        let clade_proposals: Vec<AdherenceTest> = children
+            .par_iter()
+            .filter_map(|child| {
+                if child.is_leaf() {
+                    None
+                } else {
+                    let rest_kmer = children_lenghts
+                        .par_iter()
+                        .filter(|(id, _)| *id != child.id)
+                        .map(|(_, len)| len)
+                        .sum::<usize>();
 
-        for child in children.iter() {
-            if child.is_leaf() {
-                continue;
-            }
-
-            //
-            // These container executes the one-vs-rest strategy to test the
-            // query adherence to the current clade.
-            //
-            let (one, rest) = {
-                //
-                // Kmers contained in the child node representing the target
-                // clade of the classification. Sucker kmers set should be used
-                // to test against the sibling kmers set.
-                //
-                let child_kmers_map = match root_kmers
-                    .to_owned()
-                    .get_kmers_with_node(clade.to_owned().id)
-                {
-                    None => 0,
-                    Some(kmers) => kmers.len(),
-                };
-
-                //
-                // The sibling set represents the `rest` part of the
-                // `one-vs-rest` strategy. The sibling kmers set should be used
-                // to test against the sucker kmers set.
-                //
-                let sibling_clades: usize = children
-                    .par_iter()
-                    .filter_map(|c| {
-                        if c.id != child.id && !c.is_leaf() {
-                            Some(c)
-                        } else {
-                            None
-                        }
+                    Some(AdherenceTest {
+                        clade: UntaggedParent::Record(child.to_owned()),
+                        one: one_kmers as i32,
+                        rest: rest_kmer as i32,
                     })
-                    .filter_map(|clade| {
-                        root_kmers.get_kmers_with_node(clade.id)
-                    })
-                    .flatten()
-                    .map(|i| *i)
-                    .collect::<HashSet<u64>>()
-                    .len();
-
-                (child_kmers_map, sibling_clades)
-            };
-
-            //
-            // This rule is used to determine if the child node has enough kmers
-            // to be considered for the adherence test. If the child node does
-            // not have enough kmers, the search process should perform a young
-            // return with MaxResolutionReached status.
-            //
-            let expected_min_clade_coverage =
-                query_kmers_len as f64 * min_match_coverage;
-
-            if one < expected_min_clade_coverage as usize {
-                debug!(
-                    "Not enough kmers in node {child_id}.",
-                    child_id = child.id
-                );
-
-                return Ok(MaxResolutionReached(clade.id));
-            }
-
-            clade_proposals.push(AdherenceTest {
-                clade: UntaggedParent::Record(child.to_owned()),
-                one: one as i32,
-                rest: rest as i32,
-            });
-        }
+                }
+            })
+            .collect::<Vec<AdherenceTest>>();
 
         //
-        // Here are filtered the clades that have a higher adherence than the
-        // sibling clades.
+        // Here are filtered clades with higher adherence than the sibling
+        // clades.
         //
         let filtered_proposals: Vec<AdherenceTest> = clade_proposals
             .iter()
@@ -252,7 +259,7 @@ pub(super) fn place_sequence(
             };
 
             clade = match adherence.clade.to_owned() {
-                UntaggedParent::Record(clade) => clade,
+                UntaggedParent::Record(record) => record,
                 UntaggedParent::Id(_) => {
                     return use_case_err(
                         "The adherence test does not contain a clade record.",
@@ -293,7 +300,7 @@ pub(super) fn place_sequence(
                 let adherence = max_diff_value.first().unwrap();
 
                 clade = match adherence.clade.to_owned() {
-                    UntaggedParent::Record(clade) => clade,
+                    UntaggedParent::Record(record) => record,
                     UntaggedParent::Id(_) => {
                         return use_case_err(
                             "The adherence test does not contain a clade record."

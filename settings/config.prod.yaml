@@ -54,5 +54,6 @@ watcher:
   interval: 15
   retries: 3
 
-  # The 
+  # The number of background services to run in background. Set to 1 when it
+  # works into a docker compose environment
   workers: 1

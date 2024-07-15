@@ -6,7 +6,7 @@ use classeq_core::{
     use_cases::place_sequences,
 };
 use std::{fs::read_to_string, path::PathBuf, time::Duration};
-use tracing::{error, info};
+use tracing::info;
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -64,7 +64,7 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         .num_threads(threads.to_owned())
         .build_global()
     {
-        error!("Error creating thread pool: {err}");
+        panic!("Error creating thread pool: {err}");
     };
 
     let per_seq_time = {
@@ -94,10 +94,7 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             &args.out_format,
         ) {
             Ok(buffer) => buffer,
-            Err(err) => {
-                eprintln!("{}", err);
-                std::process::exit(1);
-            }
+            Err(err) => panic!("{err}"),
         }
     };
 

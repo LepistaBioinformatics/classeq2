@@ -96,11 +96,12 @@ pub fn map_kmers_to_tree(
                 Some((_, path)) => path,
             };
 
-            let kmers = map.build_kmers_from_string(sequence.clone(), None);
-
-            for kmer in kmers {
+            for (kmer, hash) in
+                map.build_kmer_from_string(sequence.clone(), None)
+            {
                 map.insert_or_append_kmer_hash(
                     kmer,
+                    hash,
                     HashSet::from_iter(leaf_path.iter().cloned()),
                 );
             }

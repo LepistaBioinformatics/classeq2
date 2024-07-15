@@ -7,26 +7,9 @@ use std::collections::{HashMap, HashSet};
 pub struct MinimizerKey(pub u64);
 
 impl MinimizerKey {
-    /// Create a minimizer representation of kmer
-    ///
-    /// The minimizer should be the first 10 numbers of the hash representation
-    /// of the kmer.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use classeq_core::domain::dtos::kmers_map::MinimizerKey;
-    ///
-    /// let original_kmer_hash = 12345678901234567890;
-    /// let minimizer = MinimizerKey::build_minimizer(&original_kmer_hash);
-    ///
-    /// assert_eq!(minimizer, MinimizerKey(1234567890));
-    /// ```
-    ///
-    pub fn build_minimizer(kmer_hash: &u64, size: usize) -> Self {
-        let kmer_hash = kmer_hash.to_string();
-        let minimizer = kmer_hash.chars().take(size).collect::<String>();
-        Self(minimizer.parse().unwrap())
+    fn build_minimizer_from_string(kmer: &str, size: usize) -> Self {
+        let minimizer = kmer.chars().take(size).collect::<String>();
+        Self(KmersMap::hash_kmer(&minimizer))
     }
 }
 
@@ -34,15 +17,11 @@ impl MinimizerKey {
 pub struct MinimizerValue(pub HashMap<u64, HashSet<i32>>);
 
 impl MinimizerValue {
-    pub(crate) fn new() -> Self {
+    fn new() -> Self {
         MinimizerValue(HashMap::new())
     }
 
-    pub(crate) fn insert_or_append(
-        &mut self,
-        kmer: u64,
-        nodes: HashSet<i32>,
-    ) -> bool {
+    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) -> bool {
         if self.0.contains_key(&kmer) {
             if let Some(set) = self.0.get_mut(&kmer) {
                 set.extend(nodes);
@@ -61,10 +40,7 @@ impl MinimizerValue {
         true
     }
 
-    pub(crate) fn get_kmers_with_node(
-        &self,
-        node: i32,
-    ) -> Option<HashSet<&u64>> {
+    fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<&u64>> {
         match self
             .0
             .par_iter()
@@ -82,7 +58,7 @@ impl MinimizerValue {
         }
     }
 
-    pub(crate) fn get_overlapping_kmers(&self, kmers: &HashSet<u64>) -> Self {
+    fn get_overlapping_kmers(&self, kmers: &HashSet<u64>) -> Self {
         let mut map = MinimizerValue(HashMap::new());
 
         self.0
@@ -99,38 +75,11 @@ impl MinimizerValue {
         map
     }
 
-    pub(crate) fn get(&self, kmer: u64) -> Option<&HashSet<i32>> {
+    fn get(&self, kmer: u64) -> Option<&HashSet<i32>> {
         self.0.get(&kmer)
     }
 }
 
-/// A map from kmers to sets of node IDs.
-///
-/// Structure when deserialized from JSON:
-///
-/// ```json
-/// {
-///     "kSize": 8,
-///     "map": {
-///         "ATCGATCG": [1, 2, 3],
-///         "ATGCATGC": [4, 5, 6]
-///     }
-/// }
-/// ```
-///
-/// ```yaml
-/// kSize: 8
-/// map:
-///     ATCGATCG:
-///     - 1
-///     - 2
-///     - 3
-///     ATGCATGC:
-///     - 4
-///     - 5
-///     - 6
-/// ```
-///
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KmersMap {
     #[serde(rename = "kSize")]
@@ -140,7 +89,6 @@ pub struct KmersMap {
     #[serde(rename = "mSize")]
     m_size: usize,
 
-    //#[serde(serialize_with = "ordered_map")]
     map: HashMap<MinimizerKey, MinimizerValue>,
 }
 
@@ -174,38 +122,29 @@ impl KmersMap {
     ///
     pub(crate) fn insert_or_append_kmer_hash(
         &mut self,
-        kmer: u64,
+        kmer: String,
+        hash: u64,
         nodes: HashSet<i32>,
     ) -> bool {
-        self.insert_or_append(kmer, nodes)
-    }
-
-    /// Insert a kmer into the map.
-    ///
-    /// If the kmer is already present, the node will be added to the existing
-    /// set and the function will return false. Otherwise, the kmer will be
-    /// inserted and the function will return true.
-    ///
-    pub(crate) fn hash_kmer(kmer: &str) -> u64 {
-        murmurhash3_x64_128(kmer.as_bytes(), 0).0
-    }
-
-    /// Insert a kmer into the map.
-    ///
-    /// If the kmer is already present, the node will be added to the existing
-    /// set and the function will return false. Otherwise, the kmer will be
-    /// inserted and the function will return true.
-    ///
-    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) -> bool {
-        let key = MinimizerKey::build_minimizer(&kmer, self.m_size);
+        let key = MinimizerKey::build_minimizer_from_string(&kmer, self.m_size);
         let value = MinimizerValue::new();
 
         if let Some(set) = self.map.get_mut(&key) {
-            return set.insert_or_append(kmer, nodes);
+            return set.insert_or_append(hash, nodes);
         }
 
         self.map.insert(key, value);
         false
+    }
+
+    /// Insert a kmer into the map.
+    ///
+    /// If the kmer is already present, the node will be added to the existing
+    /// set and the function will return false. Otherwise, the kmer will be
+    /// inserted and the function will return true.
+    ///
+    fn hash_kmer(kmer: &str) -> u64 {
+        murmurhash3_x64_128(kmer.as_bytes(), 0).0
     }
 
     /// Get all kmers that contain a given node.
@@ -257,22 +196,30 @@ impl KmersMap {
     /// Returns a new KmersMap with only the kmers that are present in the given
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
-    pub(crate) fn get_overlapping_kmers(
+    pub(crate) fn get_overlapping_hashes(
         &mut self,
         kmers: &HashSet<u64>,
     ) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
-
-        self.map
-            .iter()
-            .map(|(key, value)| {
+        map.map = self
+            .map
+            .par_iter()
+            .filter_map(|(key, value)| {
                 let key = key.0;
                 let value = value.get_overlapping_kmers(kmers);
+
+                if value.0.is_empty() {
+                    None
+                } else {
+                    Some((key, value))
+                }
+            })
+            .map(|(key, value)| {
+                let key = MinimizerKey(key);
+                let value = value;
                 (key, value)
             })
-            .for_each(|(key, value)| {
-                map.map.insert(MinimizerKey(key), value);
-            });
+            .collect();
 
         map
     }
@@ -306,11 +253,11 @@ impl KmersMap {
     /// assert_eq!(kmers, Vec::<String>::new());
     /// ```
     ///
-    pub fn build_kmers_from_string(
+    pub fn build_kmer_from_string(
         &self,
         sequence: String,
         k_size: Option<usize>,
-    ) -> Vec<u64> {
+    ) -> Vec<(String, u64)> {
         let mut kmers = Vec::new();
         let size = k_size.unwrap_or(self.k_size);
 
@@ -336,15 +283,21 @@ impl KmersMap {
     /// Returns a vector of kmers from a given sequence. This method is used to
     /// build kmers from a given sequence.
     ///
-    fn build_kmers_from_sequence(sequence: String, size: usize) -> Vec<u64> {
+    fn build_kmers_from_sequence(
+        sequence: String,
+        size: usize,
+    ) -> Vec<(String, u64)> {
         let mut kmers = Vec::new();
         let binding = sequence.to_uppercase();
         let sequence = binding.as_bytes();
 
         for i in 0..sequence.len() - size + 1 {
-            let kmer =
-                String::from_utf8(sequence[i..i + size].to_vec()).unwrap();
-            kmers.push(KmersMap::hash_kmer(&kmer));
+            let kmer = match String::from_utf8(sequence[i..i + size].to_vec()) {
+                Ok(kmer) => kmer,
+                Err(_) => panic!("Invalid character in sequence"),
+            };
+
+            kmers.push((kmer.to_owned(), KmersMap::hash_kmer(&kmer)));
         }
 
         kmers
