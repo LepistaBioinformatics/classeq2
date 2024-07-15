@@ -1,3 +1,9 @@
+## v0.4.4 (2024-07-14)
+
+### Perf
+
+- upgrade the main sequence-placement use-case to speedup the placement process
+
 ## v0.4.3 (2024-07-14)
 
 ## v0.4.2 (2024-07-09)
