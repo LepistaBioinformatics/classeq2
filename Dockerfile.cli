@@ -1,7 +1,55 @@
-FROM rust:latest
+# ? ----------------------------------------------------------------------------
+# ? Build stage for the Classeq CLI
+# 
+# Extends the Ubuntu 20.04 (focal) image with cargo and python dependencies.
+# ?  ---------------------------------------------------------------------------
+FROM python:3.11-slim AS builder
 
-WORKDIR /data
+WORKDIR /home/classeq
 
+
+# ? ----------------------------------------------------------------------------
+# ? Install build depencencies
+# 
+# Configure build environment and install basic basic softwares.
+# ? ----------------------------------------------------------------------------
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Sao_Paulo
+RUN apt-get update \
+    && apt-get install -y \
+    curl \
+    python3-pip \
+    && apt-get clean \
+    && pip install \
+    h5py \
+    six \
+    ete3
+
+
+# ? ----------------------------------------------------------------------------
+# ? Install Rust and Classeq
+#
+# Install Rust and Cargo, the Rust package manager.
+# ? ----------------------------------------------------------------------------
+ENV RUSTUP_HOME=/opt/rust CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:$PATH
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN printf '#!/bin/sh\nexport CARGO_HOME=/opt/cargo\nexec /bin/sh "$@"\n' >/usr/local/bin/sh
+RUN chmod +x /usr/local/bin/sh
 RUN cargo install classeq-cli
+
+
+# ? ----------------------------------------------------------------------------
+# ? Run stage
+# 
+# Copy the built binary to a new image.
+# 
+# ?  ---------------------------------------------------------------------------
+FROM python:3.11-slim
+
+COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
+COPY --from=builder /opt/cargo/bin/cls /usr/bin/cls
+
+COPY ./scripts/root_tree.py /usr/bin/root_tree.py
+RUN chmod +x /usr/bin/root_tree.py
 
 ENTRYPOINT ["cls"]
