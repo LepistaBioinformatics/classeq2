@@ -1,3 +1,4 @@
 /target
 cls*.log*
 .amq-conf
+.venv
