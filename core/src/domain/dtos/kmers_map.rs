@@ -21,23 +21,11 @@ impl MinimizerValue {
         MinimizerValue(HashMap::new())
     }
 
-    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) -> bool {
-        if self.0.contains_key(&kmer) {
-            if let Some(set) = self.0.get_mut(&kmer) {
-                set.extend(nodes);
-                let mut set_as_vec: Vec<i32> =
-                    set.clone().into_iter().collect();
-
-                set_as_vec.sort();
-                set.clear();
-                set.extend(set_as_vec);
-            }
-
-            return false;
-        }
-
-        self.0.insert(kmer, nodes);
-        true
+    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) {
+        self.0
+            .entry(kmer)
+            .or_insert_with(HashSet::new)
+            .extend(nodes);
     }
 
     fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<&u64>> {
@@ -125,8 +113,13 @@ impl KmersMap {
         kmer: String,
         hash: u64,
         nodes: HashSet<i32>,
-    ) -> bool {
-        let key = MinimizerKey::build_minimizer_from_string(&kmer, self.m_size);
+    ) {
+        let key = if self.m_size == 0 {
+            MinimizerKey(0)
+        } else {
+            MinimizerKey::build_minimizer_from_string(&kmer, self.m_size)
+        };
+
         let value = MinimizerValue::new();
 
         if let Some(set) = self.map.get_mut(&key) {
@@ -134,7 +127,6 @@ impl KmersMap {
         }
 
         self.map.insert(key, value);
-        false
     }
 
     /// Insert a kmer into the map.
@@ -300,6 +292,19 @@ impl KmersMap {
             kmers.push((kmer.to_owned(), KmersMap::hash_kmer(&kmer)));
         }
 
+        /* let _kmers = sequence
+        .windows(size)
+        .par_bridge()
+        .map(|kmer| {
+            let kmer = match String::from_utf8(kmer.to_vec()) {
+                Ok(kmer) => kmer,
+                Err(_) => panic!("Invalid character in sequence"),
+            };
+
+            (kmer.to_owned(), KmersMap::hash_kmer(&kmer))
+        })
+        .collect::<Vec<(String, u64)>>(); */
+
         kmers
     }
 
@@ -320,5 +325,18 @@ impl KmersMap {
                 _ => panic!("Invalid character in sequence"),
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_build_kmers_from_sequence() {
+        let sequence = "ATCG".to_string();
+        let kmers = KmersMap::build_kmers_from_sequence(sequence.to_owned(), 2);
+
+        println!("{:?}", kmers);
     }
 }

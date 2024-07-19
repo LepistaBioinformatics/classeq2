@@ -1045,6 +1045,7 @@ name = "classeq-core"
 version = "0.4.4"
 dependencies = [
  "clap",
+ "dashmap",
  "mur3",
  "mycelium-base",
  "phylotree",
@@ -1311,6 +1312,22 @@ dependencies = [
  "darling_core",
  "quote",
  "syn 2.0.59",
+]
+
+[[package]]
+name = "dashmap"
+version = "6.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "804c8821570c3f8b70230c2ba75ffa5c0f9a4189b9a432b6656c536712acae28"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+ "hashbrown",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
+ "rayon",
+ "serde 1.0.198",
 ]
 
 [[package]]

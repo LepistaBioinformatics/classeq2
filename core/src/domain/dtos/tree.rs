@@ -21,6 +21,14 @@ pub struct Tree {
     /// from the file name where the tree is parsed from.
     pub name: String,
 
+    /// The minimum branch support value.
+    ///
+    /// The minimum branch support value is the minimum support value for a
+    /// branch to be included in the tree. Branches with support values below
+    /// this value are removed from the tree and children are reconnected to the
+    /// parent node.
+    pub min_branch_support: f64,
+
     /// The in-memory size of the tree (in Mb).
     ///
     /// This is usual to predict the memory usage of the tree index.
@@ -49,10 +57,16 @@ impl Tree {
     /// The function creates a new Tree object with an id, name, and root Clade.
     /// The id is a unique identifier for the tree. The name is a human-readable
     /// name for the tree. The root is the root Clade of the tree.
-    pub fn new(id: Uuid, name: String, root: Clade) -> Tree {
+    pub fn new(
+        id: Uuid,
+        name: String,
+        min_branch_support: f64,
+        root: Clade,
+    ) -> Tree {
         Tree {
             id,
             name,
+            min_branch_support,
             in_memory_size: None,
             root,
             annotations: None,
@@ -79,12 +93,12 @@ impl Tree {
 
         self.in_memory_size = Some(format!(
             "{:.6} Mb",
-            ((id_size +
-                name_size +
-                root_size +
-                annotations_size +
-                kmers_map_size) as f64 *
-                0.000001) as f64
+            ((id_size
+                + name_size
+                + root_size
+                + annotations_size
+                + kmers_map_size) as f64
+                * 0.000001) as f64
         ));
     }
 
@@ -195,6 +209,7 @@ impl Tree {
         let new_tree = Tree::new(
             Uuid::new_v3(&Uuid::NAMESPACE_DNS, &*root_name.as_bytes()),
             root_name,
+            min_branch_support,
             sanitized_root,
         );
 
@@ -217,8 +232,8 @@ impl Tree {
                     Self::sanitize(child, min_branch_support)?;
 
                 if let Some(support) = sanitized_child.support {
-                    if support >= min_branch_support ||
-                        sanitized_child.is_leaf()
+                    if support >= min_branch_support
+                        || sanitized_child.is_leaf()
                     {
                         children.push(sanitized_child);
                     } else {

@@ -81,10 +81,12 @@ fn main() {
                 cmds::convert::get_kmers_cmd(kmers_args);
             }
         },
-        BuildDb(db_args) => cmds::build_db::build_database_cmd(db_args),
+        BuildDb(db_args) => {
+            cmds::build_db::build_database_cmd(db_args, args.threads)
+        }
         Place(place_args) => cmds::place_sequences::place_sequences_cmd(
             place_args,
-            args.threads.unwrap(),
+            args.threads.unwrap_or(1),
         ),
     }
 }

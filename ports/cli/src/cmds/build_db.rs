@@ -39,7 +39,18 @@ pub(crate) struct Arguments {
     pub(super) min_branch_support: Option<f64>,
 }
 
-pub(crate) fn build_database_cmd(args: Arguments) {
+pub(crate) fn build_database_cmd(args: Arguments, threads: Option<usize>) {
+    // ? -----------------------------------------------------------------------
+    // ? Create a thread pool configured globally
+    // ? -----------------------------------------------------------------------
+
+    if let Err(err) = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads.unwrap_or(1))
+        .build_global()
+    {
+        panic!("Error creating thread pool: {err}");
+    };
+
     match map_kmers_to_tree(
         args.tree_file_path,
         args.msa_file_path,

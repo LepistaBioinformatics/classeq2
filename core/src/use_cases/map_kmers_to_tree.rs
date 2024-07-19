@@ -3,7 +3,14 @@ use crate::domain::dtos::{
 };
 
 use mycelium_base::utils::errors::MappedErrors;
-use std::{collections::HashSet, io::BufRead, path::PathBuf};
+use rayon::iter::{ParallelBridge, ParallelIterator};
+use std::sync::mpsc::channel;
+use std::{
+    collections::HashSet,
+    io::{BufRead, Write},
+    path::PathBuf,
+    thread,
+};
 use tracing::debug;
 
 /// Map kmers to nodes in a phylogenetic tree
@@ -72,6 +79,10 @@ pub fn map_kmers_to_tree(
         Ok(file) => std::io::BufReader::new(file),
     };
 
+    let (sequence_sender, sequence_receiver) = channel();
+    let (kmer_sender, kmer_receiver) = channel();
+
+    let mut i = 0;
     for line in reader.lines() {
         let line = line.unwrap();
 
@@ -87,6 +98,41 @@ pub fn map_kmers_to_tree(
 
             header.push_str(&line.replace(">", ""));
 
+            i += 1;
+            print!("Build kmer for sequence {i}\r");
+            std::io::stdout().flush().unwrap();
+
+            let own_sender = sequence_sender.to_owned();
+            let cloned_header = header.clone();
+            let kmers = map.build_kmer_from_string(sequence.clone(), None);
+
+            let _ = thread::spawn(move || {
+                match own_sender.send((cloned_header.clone(), kmers.clone())) {
+                    Err(err) => panic!("Error: {err}"),
+                    Ok(_) => (),
+                }
+            });
+
+            sequence.clear();
+        } else {
+            sequence.push_str(
+                SequenceBody::remove_non_iupac_from_sequence(&line).as_str(),
+            );
+        }
+    }
+
+    // Drop to allow the receiver to finish
+    drop(sequence_sender);
+
+    println!();
+    sequence_receiver
+        .into_iter()
+        .enumerate()
+        .par_bridge()
+        .for_each(|(i, (header, kmers))| {
+            print!("Mapping kmers to nodes {index}\r", index = i + 1);
+            std::io::stdout().flush().unwrap();
+
             let leaf_path = match tree_leaves.iter().find(|(clade, _)| {
                 clade.name.as_ref().unwrap().to_owned() == header
             }) {
@@ -96,22 +142,27 @@ pub fn map_kmers_to_tree(
                 Some((_, path)) => path,
             };
 
-            for (kmer, hash) in
-                map.build_kmer_from_string(sequence.clone(), None)
-            {
-                map.insert_or_append_kmer_hash(
-                    kmer,
-                    hash,
-                    HashSet::from_iter(leaf_path.iter().cloned()),
-                );
+            for (kmer, hash) in kmers {
+                match kmer_sender.send((leaf_path, kmer, hash)) {
+                    Err(err) => panic!("Error: {err}"),
+                    Ok(_) => (),
+                };
             }
+        });
 
-            sequence.clear();
-        } else {
-            sequence.push_str(
-                SequenceBody::remove_non_iupac_from_sequence(&line).as_str(),
-            );
-        }
+    // Close the sender to allow the receiver to finish
+    drop(kmer_sender);
+
+    println!();
+    for (i, (leaf_path, kmer, hash)) in kmer_receiver.into_iter().enumerate() {
+        print!("Indexing kmer {index}\r", index = i + 1);
+        std::io::stdout().flush().unwrap();
+
+        map.insert_or_append_kmer_hash(
+            kmer,
+            hash,
+            HashSet::from_iter(leaf_path.iter().cloned()),
+        );
     }
 
     // ? -----------------------------------------------------------------------
