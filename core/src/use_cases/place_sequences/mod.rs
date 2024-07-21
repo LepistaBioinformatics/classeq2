@@ -4,7 +4,6 @@ use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
 use crate::domain::dtos::placement_response::PlacementStatus;
-use crate::domain::dtos::rest_comp_strategy::RestComparisonStrategy;
 use crate::domain::dtos::{
     file_or_stdin::FileOrStdin, output_format::OutputFormat,
     placement_response::PlacementResponse, tree::Tree,
@@ -18,7 +17,8 @@ use std::{
     path::PathBuf,
     time::Duration,
 };
-use tracing::{debug, warn};
+use tracing::{debug, info_span, warn};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlacementTime {
@@ -27,8 +27,11 @@ pub struct PlacementTime {
 }
 
 #[tracing::instrument(
-    name = "Placing multiple sequences",
-    skip(query_sequence, tree)
+    name = "PlacingMultipleSequences",
+    skip(query_sequence, tree),
+    fields(
+        run_id = Uuid::new_v4().to_string().replace("-", "")
+    )
 )]
 pub fn place_sequences(
     query_sequence: FileOrStdin,
@@ -38,7 +41,6 @@ pub fn place_sequences(
     min_match_coverage: &Option<f64>,
     overwrite: &bool,
     output_format: &OutputFormat,
-    rest_comparison_strategy: &RestComparisonStrategy,
 ) -> Result<Vec<PlacementTime>, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Build the output paths
@@ -96,17 +98,24 @@ pub fn place_sequences(
         .into_iter()
         .par_bridge()
         .map(|sequence| {
-            debug!("Processing {query:?}", query = sequence.header_content());
+            let header = sequence.header_content();
+            let span = info_span!(
+                "PlacingSequence",
+                query = header,
+                id = Uuid::new_v3(&Uuid::NAMESPACE_DNS, header.as_bytes())
+                    .to_string()
+                    .replace("-", "")
+            );
+
+            let _placement_span_guard = span.enter();
 
             let time = std::time::Instant::now();
 
             match place_sequence(
-                &sequence.header().to_owned(),
                 &sequence.sequence().to_owned(),
                 &tree,
                 &max_iterations,
                 &min_match_coverage,
-                &rest_comparison_strategy,
             ) {
                 Err(err) => {
                     if let Err(err) = error_writer(

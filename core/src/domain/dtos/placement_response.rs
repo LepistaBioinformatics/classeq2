@@ -24,7 +24,7 @@ pub enum PlacementStatus {
     /// An internal status used to indicate the search loop to go to the next
     /// clade
     ///
-    NextIteration(i32),
+    //NextIteration(i32),
 
     /// The search was inconclusive, with more than one clade having the same
     /// maximum resolution
@@ -40,7 +40,7 @@ impl ToString for PlacementStatus {
             MaxResolutionReached(_, msg) => {
                 format!("MaxResolutionReached: {msg}")
             }
-            NextIteration(_) => "NextIteration".to_string(),
+            //NextIteration(_) => "NextIteration".to_string(),
             Inconclusive(_, msg) => format!("Inconclusive: {msg}"),
         }
     }

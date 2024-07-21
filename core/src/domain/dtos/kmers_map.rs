@@ -228,6 +228,46 @@ impl KmersMap {
         map
     }
 
+    pub(crate) fn get_overlapping_kmers(
+        &mut self,
+        hashed_kmers: Vec<(String, u64)>,
+    ) -> Self {
+        let mut map = Self::new(self.k_size, self.m_size);
+
+        let minimizers: HashSet<MinimizerKey> = hashed_kmers
+            .par_iter()
+            .map(|(kmer, _)| {
+                MinimizerKey::build_minimizer_from_string(kmer, self.m_size)
+            })
+            .collect();
+
+        let hashes: HashSet<u64> = hashed_kmers
+            .par_iter()
+            .map(|(_, hash)| hash.to_owned())
+            .collect();
+
+        map.map = self
+            .map
+            .par_iter()
+            .filter_map(|(key, value)| {
+                if !minimizers.contains(key) {
+                    return None;
+                }
+
+                let value = value.get_overlapping_kmers(&hashes);
+
+                if value.0.is_empty() {
+                    None
+                } else {
+                    Some((key, value))
+                }
+            })
+            .map(|(key, value)| (key.to_owned(), value))
+            .collect();
+
+        map
+    }
+
     /// Build kmers from a string
     ///
     /// Returns a vector of kmers from a given string. This method is used to

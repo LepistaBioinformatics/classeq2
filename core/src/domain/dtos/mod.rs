@@ -5,6 +5,6 @@ pub mod file_or_stdin;
 pub mod kmers_map;
 pub mod output_format;
 pub mod placement_response;
-pub mod rest_comp_strategy;
 pub mod sequence;
+pub mod telemetry_code;
 pub mod tree;

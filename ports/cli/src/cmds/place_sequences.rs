@@ -1,8 +1,7 @@
 use clap::Parser;
 use classeq_core::{
     domain::dtos::{
-        file_or_stdin::FileOrStdin, output_format::OutputFormat,
-        rest_comp_strategy::RestComparisonStrategy, tree::Tree,
+        file_or_stdin::FileOrStdin, output_format::OutputFormat, tree::Tree,
     },
     use_cases::place_sequences,
 };
@@ -33,15 +32,6 @@ pub(crate) struct Arguments {
     /// The format in which the tree will be serialized.
     #[arg(long, default_value = "yaml")]
     pub(super) out_format: OutputFormat,
-
-    /// The strategy to compare the one-vs-rest kmer pairs
-    ///
-    /// The average strategy will compare the average of the rest kmer counts
-    /// with the one kmer count. The max strategy will compare the maximum rest
-    /// kmer count with the one kmer count.
-    ///
-    #[arg(short, long, default_value = "avg")]
-    pub(crate) rest_comparison_strategy: RestComparisonStrategy,
 
     /// Maximum number of iterations
     ///
@@ -102,7 +92,6 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             &args.match_coverage,
             &args.force_overwrite,
             &args.out_format,
-            &args.rest_comparison_strategy,
         ) {
             Ok(buffer) => buffer,
             Err(err) => panic!("{err}"),
