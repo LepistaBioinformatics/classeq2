@@ -324,6 +324,7 @@ async fn scan_directories_in_background(
             &None,
             &true,
             &blutils_config.output_format,
+            &blutils_config.rest_comparison_strategy,
         ) {
             if let Err(err) = ExecutionMsg::write_file(
                 &parent

@@ -1,6 +1,8 @@
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
+    clade::Clade,
     placement_response::PlacementStatus::{self, *},
+    rest_comp_strategy::RestComparisonStrategy,
     sequence::{SequenceBody, SequenceHeader},
     tree::Tree,
 };
@@ -14,7 +16,8 @@ use rayon::iter::{
     ParallelIterator,
 };
 use std::collections::HashMap;
-use tracing::{debug, warn};
+use tracing::{debug, trace, warn, Span};
+use uuid::Uuid;
 
 /// Place a sequence in the tree.
 ///
@@ -23,7 +26,19 @@ use tracing::{debug, warn};
 /// evaluate the adherence of the query sequence to the clades.
 #[tracing::instrument(
     name = "Place single sequence",
-    skip(sequence, tree, max_iterations, min_match_coverage)
+    skip_all,
+    fields(
+        id = Uuid::new_v3(
+            &Uuid::NAMESPACE_DNS, header.header().as_bytes()
+        ).to_string().replace("-", ""),
+        query.name = header.header(),
+        query.kmers.count = tracing::field::Empty,
+        query.kmers.tree_matches = tracing::field::Empty,
+        query.kmers.build_time = tracing::field::Empty,
+        subject.kmers.query_matches = tracing::field::Empty,
+        subject.kmers.build_time = tracing::field::Empty,
+        subject.kmers.children = tracing::field::Empty,
+    )
 )]
 pub(super) fn place_sequence(
     header: &SequenceHeader,
@@ -31,6 +46,7 @@ pub(super) fn place_sequence(
     tree: &Tree,
     max_iterations: &Option<i32>,
     min_match_coverage: &Option<f64>,
+    rest_comparison_strategy: &RestComparisonStrategy,
 ) -> Result<PlacementStatus, MappedErrors> {
     let max_iterations = max_iterations.unwrap_or(1000);
 
@@ -53,15 +69,24 @@ pub(super) fn place_sequence(
     // ? Build and validate query kmers
     // ? -----------------------------------------------------------------------
 
-    debug!("Building kmers from the query sequence.");
-
+    let time = std::time::Instant::now();
     let query_kmers =
         kmers_map.build_kmer_from_string(sequence.seq().to_string(), None);
+
+    Span::current()
+        .record("query.kmers.count", &Some(query_kmers.len() as i32));
+
+    Span::current().record(
+        "query.kmers.build_time",
+        &Some(format!("{:?}", time.elapsed())),
+    );
 
     if query_kmers.len() < 2 {
         return use_case_err("The sequence does not contain enough kmers.")
             .as_error();
     }
+
+    debug!("Query kmers built successfully");
 
     // ? -----------------------------------------------------------------------
     // ? Sub-sampling kmers_map from the query_kmers
@@ -71,8 +96,6 @@ pub(super) fn place_sequence(
     // processed.
     //
     // ? -----------------------------------------------------------------------
-
-    debug!("Sub-sampling kmers map from the query kmers.");
 
     let mut query_kmers_map = kmers_map.get_overlapping_hashes(
         &query_kmers
@@ -89,9 +112,14 @@ pub(super) fn place_sequence(
         .map(|i| i.0.len())
         .sum::<usize>();
 
+    Span::current()
+        .record("query.kmers.tree_matches", &Some(query_kmers_len as i32));
+
     if query_kmers_len == 0 {
         warn!("Query sequence may not be related to the phylogeny");
     }
+
+    debug!("Query kmers map built successfully");
 
     // ? -----------------------------------------------------------------------
     // ? Try to place the sequence
@@ -101,7 +129,7 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
-    debug!("Starting the placement process.");
+    let time = std::time::Instant::now();
 
     let root_kmers = match query_kmers_map.get_kmers_with_node(tree.root.id) {
         None => return Ok(Unclassifiable),
@@ -109,10 +137,30 @@ pub(super) fn place_sequence(
             .get_overlapping_hashes(&kmers.into_iter().map(|i| *i).collect()),
     };
 
+    Span::current().record(
+        "subject.kmers.query_matches",
+        &Some(
+            root_kmers
+                .get_map()
+                .into_iter()
+                .map(|(_, v)| v.0.len() as i32)
+                .sum::<i32>(),
+        ),
+    );
+
+    Span::current().record(
+        "subject.kmers.build_time",
+        &Some(format!("{:?}", time.elapsed())),
+    );
+
+    debug!("Root kmers map built successfully");
+
     // ? -----------------------------------------------------------------------
     // ? Start the children clades with the root
     //
-    // This object should be updated during the search process. The symbol 🌳
+    // Symbol: 🌿
+    //
+    // This object should be updated during the search process. The symbol 🌿
     // indicate wether this object is updated.
     //
     // ? -----------------------------------------------------------------------
@@ -127,7 +175,36 @@ pub(super) fn place_sequence(
     };
 
     let mut iteration = 0;
-    let mut clade = tree.root.to_owned();
+
+    // ? -----------------------------------------------------------------------
+    // ? Set the initial parent
+    //
+    // Symbol: 🍁
+    //
+    // The clade object is used to store the current clade as a parent being
+    // evaluated. The symbol 🍁 indicate wether this object is updated.
+    //
+    let mut parent = tree.root.to_owned();
+
+    Span::current()
+        .record("subject.kmers.children", &Some(children.len() as i32));
+
+    debug!("Starting tree introspection");
+
+    //
+    // This rule is used to determine if the child node has enough kmers
+    // to be considered for the adherence test. If the child node does
+    // not have enough kmers, the search process should perform a young
+    // return with MaxResolutionReached status.
+    //
+    let expected_min_clade_coverage =
+        query_kmers_len as f64 * min_match_coverage;
+
+    debug!(
+        "Expected min clade coverage (base {base}): {expected}",
+        base = min_match_coverage,
+        expected = expected_min_clade_coverage
+    );
 
     loop {
         // ? -------------------------------------------------------------------
@@ -143,93 +220,98 @@ pub(super) fn place_sequence(
         }
 
         //
-        // Kmers contained in the child node representing the target
-        // clade of the classification. Sucker kmers set should be used
-        // to test against the sibling kmers set.
-        //
-        let one_kmers = match root_kmers
-            .to_owned()
-            .get_kmers_with_node(clade.to_owned().id)
-        {
-            None => 0,
-            Some(kmers) => kmers.len(),
-        };
-
-        //
-        // This rule is used to determine if the child node has enough kmers
-        // to be considered for the adherence test. If the child node does
-        // not have enough kmers, the search process should perform a young
-        // return with MaxResolutionReached status.
-        //
-        let expected_min_clade_coverage =
-            query_kmers_len as f64 * min_match_coverage;
-
-        if one_kmers < expected_min_clade_coverage as usize {
-            debug!(
-                "Not enough kmers detected to place node {clade_id}",
-                clade_id = clade.id
-            );
-
-            return Ok(MaxResolutionReached(clade.id));
-        }
-
-        //
         // Aggregate children kmer lengths. This action is necessary to
         // determine the adherence of the query sequence to the sibling
         // clades.
         //
-        let children_lenghts = children
+        let mut children_lenghts = children
             .par_iter()
             .filter_map(|record| {
                 if record.is_leaf() {
                     return None;
                 }
 
-                if record.id == clade.id {
-                    return None;
-                }
-
                 match root_kmers.get_kmers_with_node(record.id) {
-                    Some(kmers) => Some((record.id, kmers.len())),
+                    Some(kmers) => Some((record.id, kmers.len(), record)),
                     None => None,
                 }
             })
-            .collect::<Vec<(i32, usize)>>();
+            .collect::<Vec<(i32, usize, &Clade)>>();
 
-        //
-        // The proposed clades list contains the adherence tests for each child
-        // node. The vector should be used to determine the best clade to place
-        // the query sequence at the current level of the tree.
-        //
-        let clade_proposals: Vec<AdherenceTest> = children
-            .par_iter()
-            .filter_map(|child| {
-                if child.is_leaf() {
-                    None
-                } else {
-                    let rest_kmer = children_lenghts
-                        .par_iter()
-                        .filter(|(id, _)| *id != child.id)
-                        .map(|(_, len)| len)
-                        .sum::<usize>();
+        children_lenghts.sort_by(|a, b| b.1.cmp(&a.1));
 
-                    Some(AdherenceTest {
-                        clade: UntaggedParent::Record(child.to_owned()),
-                        one: one_kmers as i32,
-                        rest: rest_kmer as i32,
-                    })
+        trace!(
+            "Level clades: {lenghts}",
+            lenghts = children_lenghts
+                .to_owned()
+                .iter()
+                .map(|(id, len, _)| { format!("{} ({})", id, len) })
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
+
+        let clade_proposals: Vec<AdherenceTest> = children_lenghts
+            .to_owned()
+            .into_iter()
+            .par_bridge()
+            .filter_map(|(child_id, len, clade)| {
+                if len < expected_min_clade_coverage as usize {
+                    trace!(
+                        "Clade {clade_id} ignored with insuficient similarity {kmers_len}",
+                        clade_id = child_id,
+                        kmers_len = len
+                    );
+
+                    return None;
+                };
+
+                let rest: Vec<i32> = children_lenghts
+                    .par_iter()
+                    .filter(|(id, _, _)| *id != child_id)
+                    .map(|(_, len, _)| *len as i32)
+                    .collect();
+
+                if rest.is_empty() {
+                    return Some(
+                        AdherenceTest {
+                            clade: UntaggedParent::Record(clade.to_owned()),
+                            one: len as i32,
+                            rest_len: 0,
+                            rest_avg: 0.0,
+                            rest_max: 0,
+                        },
+                    );
                 }
-            })
-            .collect::<Vec<AdherenceTest>>();
 
-        //
-        // Here are filtered clades with higher adherence than the sibling
-        // clades.
-        //
-        let filtered_proposals: Vec<AdherenceTest> = clade_proposals
-            .iter()
+                let rest_len = rest.len() as i32;
+                let rest_avg = (rest.iter().sum::<i32>() as f64 / rest_len as f64).round();
+                let rest_max = rest.iter().max().unwrap().to_owned();
+
+                trace!(
+                    "Clade {id}: one {one_kmers} vs rest {rest_kmers}",
+                    id = child_id,
+                    one_kmers = len,
+                    rest_kmers = match rest_comparison_strategy {
+                        RestComparisonStrategy::Avg => rest_avg,
+                        RestComparisonStrategy::Max => rest_max as f64,
+                    }
+                );
+
+                Some(AdherenceTest {
+                    clade: UntaggedParent::Record(clade.to_owned()),
+                    one: len as i32,
+                    rest_len,
+                    rest_avg,
+                    rest_max,
+                })
+            })
             .filter_map(|adherence| {
-                if adherence.one > adherence.rest {
+                let rest_value = match rest_comparison_strategy {
+                    RestComparisonStrategy::Avg => adherence.rest_avg,
+                    RestComparisonStrategy::Max => adherence.rest_max as f64,
+                };
+
+                if adherence.one > rest_value as i32 {
                     Some(adherence.to_owned())
                 } else {
                     None
@@ -242,23 +324,31 @@ pub(super) fn place_sequence(
         // sibling clades, the search are considered maxed out, than, the query
         // sequence is placed at the current clade.
         //
-        if filtered_proposals.is_empty() {
-            return Ok(MaxResolutionReached(clade.id));
+        if clade_proposals.is_empty() {
+            return Ok(MaxResolutionReached(
+                parent.id,
+                "LCA Accepted".to_string(),
+            ));
         }
 
         //
         // If only one clade has a higher adherence than the sibling clades, the
         // query sequence is placed at the current clade.
         //
-        if filtered_proposals.len() == 1 {
-            let adherence: AdherenceTest = match filtered_proposals.first() {
+        if clade_proposals.len() == 1 {
+            let adherence: AdherenceTest = match clade_proposals.first() {
                 Some(adherence) => adherence.to_owned(),
                 None => {
-                    return use_case_err("The filtered proposals list is empty. This is unexpected.").as_error();
+                    return use_case_err(
+                        "The filtered proposals list is empty. This is unexpected."
+                    ).as_error();
                 }
             };
 
-            clade = match adherence.clade.to_owned() {
+            //
+            // 🍁 clade update
+            //
+            parent = match adherence.clade.to_owned() {
                 UntaggedParent::Record(record) => record,
                 UntaggedParent::Id(_) => {
                     return use_case_err(
@@ -269,9 +359,9 @@ pub(super) fn place_sequence(
             };
 
             //
-            // 🌳 children update
+            // 🌿 children update
             //
-            children = match clade.to_owned().children {
+            children = match parent.to_owned().children {
                 Some(children) => children,
                 None => return Ok(IdentityFound(adherence)),
             };
@@ -282,11 +372,16 @@ pub(super) fn place_sequence(
         // clades, the search is considered inconclusive. The query sequence is
         // placed at the current clade.
         //
-        if filtered_proposals.len() > 1 {
-            let fold_proposals = filtered_proposals.iter().fold(
+        if clade_proposals.len() > 1 {
+            let fold_proposals = clade_proposals.iter().fold(
                 HashMap::<i32, Vec<AdherenceTest>>::new(),
                 |mut acc, a| {
-                    acc.entry(a.one - a.rest)
+                    let rest_value = match rest_comparison_strategy {
+                        RestComparisonStrategy::Avg => a.rest_avg as i32,
+                        RestComparisonStrategy::Max => a.rest_max,
+                    };
+
+                    acc.entry(a.one - rest_value)
                         .or_insert(vec![])
                         .push(a.to_owned());
                     acc
@@ -299,7 +394,10 @@ pub(super) fn place_sequence(
             if max_diff_value.len() == 1 {
                 let adherence = max_diff_value.first().unwrap();
 
-                clade = match adherence.clade.to_owned() {
+                //
+                // 🍁 clade update
+                //
+                parent = match adherence.clade.to_owned() {
                     UntaggedParent::Record(record) => record,
                     UntaggedParent::Id(_) => {
                         return use_case_err(
@@ -309,9 +407,9 @@ pub(super) fn place_sequence(
                 };
 
                 //
-                // 🌳 children update
+                // 🌿 children update
                 //
-                children = match clade.to_owned().children {
+                children = match parent.to_owned().children {
                     Some(children) => children,
                     None => return Ok(IdentityFound(adherence.to_owned())),
                 };
@@ -320,7 +418,7 @@ pub(super) fn place_sequence(
             }
 
             return Ok(Inconclusive(
-                filtered_proposals
+                clade_proposals
                     .iter()
                     .map(|item| AdherenceTest {
                         clade: match &item.clade {
@@ -329,10 +427,10 @@ pub(super) fn place_sequence(
                             }
                             id => id.to_owned(),
                         },
-                        one: item.one,
-                        rest: item.rest,
+                        ..item.to_owned()
                     })
                     .collect(),
+                "Multiple proposals".to_string(),
             ));
         }
     }
@@ -376,6 +474,7 @@ mod tests {
             &tree,
             &None,
             &None,
+            &RestComparisonStrategy::Avg,
         ) {
             Err(err) => panic!("Error: {err}"),
             Ok(response) => {

@@ -1,6 +1,8 @@
 use anyhow::Result;
 use apalis::prelude::*;
-use classeq_core::domain::dtos::output_format::OutputFormat;
+use classeq_core::domain::dtos::{
+    output_format::OutputFormat, rest_comp_strategy::RestComparisonStrategy,
+};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use uuid::Uuid;
@@ -27,6 +29,8 @@ pub struct BluAnalysisConfig {
     pub overwrite: Option<bool>,
 
     pub output_format: OutputFormat,
+
+    pub rest_comparison_strategy: RestComparisonStrategy,
 
     pub work_dir: String,
 }

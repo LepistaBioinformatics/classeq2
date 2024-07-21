@@ -97,8 +97,8 @@ impl Tree {
                 + name_size
                 + root_size
                 + annotations_size
-                + kmers_map_size) as f64
-                * 0.000001) as f64
+                + kmers_map_size)
+                / 1_000_000) as f64
         ));
     }
 

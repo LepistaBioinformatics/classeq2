@@ -4,11 +4,11 @@ use crate::domain::dtos::{
 
 use mycelium_base::utils::errors::MappedErrors;
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use std::sync::mpsc::channel;
 use std::{
     collections::HashSet,
     io::{BufRead, Write},
     path::PathBuf,
+    sync::mpsc::channel,
     thread,
 };
 use tracing::debug;
@@ -121,10 +121,13 @@ pub fn map_kmers_to_tree(
         }
     }
 
+    // Push the last line preventing losing the print value from the kmers map
+    // loop which prints the sequence index
+    println!();
+
     // Drop to allow the receiver to finish
     drop(sequence_sender);
 
-    println!();
     sequence_receiver
         .into_iter()
         .enumerate()
@@ -134,7 +137,7 @@ pub fn map_kmers_to_tree(
             std::io::stdout().flush().unwrap();
 
             let leaf_path = match tree_leaves.iter().find(|(clade, _)| {
-                clade.name.as_ref().unwrap().to_owned() == header
+                clade.name.as_ref().expect("The clade name is empty").to_owned() == header
             }) {
                 None => {
                     panic!("The sequence header does not match any tree leaf: {header}")
@@ -143,17 +146,17 @@ pub fn map_kmers_to_tree(
             };
 
             for (kmer, hash) in kmers {
-                match kmer_sender.send((leaf_path, kmer, hash)) {
-                    Err(err) => panic!("Error: {err}"),
-                    Ok(_) => (),
-                };
+                kmer_sender
+                    .send((leaf_path.clone(), kmer, hash))
+                    .expect("Error sending kmer to the receiver");
             }
         });
 
-    // Close the sender to allow the receiver to finish
+    // Drop to allow the receiver to finish
     drop(kmer_sender);
 
     println!();
+
     for (i, (leaf_path, kmer, hash)) in kmer_receiver.into_iter().enumerate() {
         print!("Indexing kmer {index}\r", index = i + 1);
         std::io::stdout().flush().unwrap();
@@ -164,6 +167,8 @@ pub fn map_kmers_to_tree(
             HashSet::from_iter(leaf_path.iter().cloned()),
         );
     }
+
+    println!();
 
     // ? -----------------------------------------------------------------------
     // ? Return a positive response

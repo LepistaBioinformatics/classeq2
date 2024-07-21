@@ -21,11 +21,17 @@ impl MinimizerValue {
         MinimizerValue(HashMap::new())
     }
 
-    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) {
-        self.0
-            .entry(kmer)
-            .or_insert_with(HashSet::new)
-            .extend(nodes);
+    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) -> bool {
+        if self.0.contains_key(&kmer) {
+            if let Some(set) = self.0.get_mut(&kmer) {
+                set.extend(nodes);
+            }
+
+            return false;
+        }
+
+        self.0.insert(kmer, nodes);
+        true
     }
 
     fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<&u64>> {
@@ -113,20 +119,25 @@ impl KmersMap {
         kmer: String,
         hash: u64,
         nodes: HashSet<i32>,
-    ) {
+    ) -> bool {
         let key = if self.m_size == 0 {
+            // If the minimizer size is 0, use zero as the key
             MinimizerKey(0)
         } else {
+            // Otherwise, build the minimizer from the kmer
             MinimizerKey::build_minimizer_from_string(&kmer, self.m_size)
         };
 
-        let value = MinimizerValue::new();
-
+        // If the key is already present, insert the node into the set
         if let Some(set) = self.map.get_mut(&key) {
             return set.insert_or_append(hash, nodes);
         }
 
+        // Otherwise, create a new key and insert the node into the set
+        let mut value = MinimizerValue::new();
+        value.insert_or_append(hash, nodes);
         self.map.insert(key, value);
+        false
     }
 
     /// Insert a kmer into the map.
@@ -190,15 +201,16 @@ impl KmersMap {
     ///
     pub(crate) fn get_overlapping_hashes(
         &mut self,
-        kmers: &HashSet<u64>,
+        hashes: &HashSet<u64>,
     ) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
+
         map.map = self
             .map
             .par_iter()
             .filter_map(|(key, value)| {
                 let key = key.0;
-                let value = value.get_overlapping_kmers(kmers);
+                let value = value.get_overlapping_kmers(hashes);
 
                 if value.0.is_empty() {
                     None
@@ -291,19 +303,6 @@ impl KmersMap {
 
             kmers.push((kmer.to_owned(), KmersMap::hash_kmer(&kmer)));
         }
-
-        /* let _kmers = sequence
-        .windows(size)
-        .par_bridge()
-        .map(|kmer| {
-            let kmer = match String::from_utf8(kmer.to_vec()) {
-                Ok(kmer) => kmer,
-                Err(_) => panic!("Invalid character in sequence"),
-            };
-
-            (kmer.to_owned(), KmersMap::hash_kmer(&kmer))
-        })
-        .collect::<Vec<(String, u64)>>(); */
 
         kmers
     }

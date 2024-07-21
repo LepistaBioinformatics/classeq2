@@ -4,6 +4,7 @@ use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
 use crate::domain::dtos::placement_response::PlacementStatus;
+use crate::domain::dtos::rest_comp_strategy::RestComparisonStrategy;
 use crate::domain::dtos::{
     file_or_stdin::FileOrStdin, output_format::OutputFormat,
     placement_response::PlacementResponse, tree::Tree,
@@ -37,6 +38,7 @@ pub fn place_sequences(
     min_match_coverage: &Option<f64>,
     overwrite: &bool,
     output_format: &OutputFormat,
+    rest_comparison_strategy: &RestComparisonStrategy,
 ) -> Result<Vec<PlacementTime>, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Build the output paths
@@ -94,7 +96,7 @@ pub fn place_sequences(
         .into_iter()
         .par_bridge()
         .map(|sequence| {
-            debug!("Processing {:?}", sequence.header_content());
+            debug!("Processing {query:?}", query = sequence.header_content());
 
             let time = std::time::Instant::now();
 
@@ -104,6 +106,7 @@ pub fn place_sequences(
                 &tree,
                 &max_iterations,
                 &min_match_coverage,
+                &rest_comparison_strategy,
             ) {
                 Err(err) => {
                     if let Err(err) = error_writer(
