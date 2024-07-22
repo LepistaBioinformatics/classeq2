@@ -6,7 +6,8 @@ use super::shared::write_or_append_to_file::write_or_append_to_file;
 use crate::domain::dtos::placement_response::PlacementStatus;
 use crate::domain::dtos::{
     file_or_stdin::FileOrStdin, output_format::OutputFormat,
-    placement_response::PlacementResponse, tree::Tree,
+    placement_response::PlacementResponse, telemetry_code::TelemetryCode,
+    tree::Tree,
 };
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -109,6 +110,12 @@ pub fn place_sequences(
 
             let _placement_span_guard = span.enter();
 
+            debug!(
+                code = TelemetryCode::PLACE0016.to_string(),
+                "Start placing sequence: {header}",
+                header = header
+            );
+
             let time = std::time::Instant::now();
 
             match place_sequence(
@@ -128,8 +135,6 @@ pub fn place_sequences(
                     };
                 }
                 Ok(placement) => {
-                    debug!("Placed sequence: {:?}", placement);
-
                     let output = PlacementResponse::new(
                         sequence.header_content().to_string(),
                         placement.to_string(),
@@ -164,6 +169,11 @@ pub fn place_sequences(
                     };
                 }
             }
+
+            debug!(
+                code = TelemetryCode::PLACE0017.to_string(),
+                "Sequence placed"
+            );
 
             PlacementTime {
                 sequence: sequence.header_content().to_string(),

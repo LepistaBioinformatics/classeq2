@@ -50,6 +50,12 @@ pub(crate) enum TelemetryCode {
 
     /// The placement process was inconclusive
     PLACE0015,
+
+    /// Single sequence placement start
+    PLACE0016,
+
+    /// Single sequence placement end
+    PLACE0017,
 }
 
 impl Display for TelemetryCode {
