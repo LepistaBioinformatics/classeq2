@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
 
     match args.log_format {
         LogFormat::Ansi => tracing_config.pretty().init(),
-        LogFormat::Json => tracing_config.json().init(),
+        LogFormat::Jsonl => tracing_config.json().init(),
     };
 
     // ? -----------------------------------------------------------------------
@@ -68,10 +68,7 @@ async fn main() -> Result<()> {
 
     match args.opts {
         Opts::Watch(watch_args) => {
-            cmds::watch_dir::start_watch_directory_cmd(
-                watch_args,
-            )
-            .await?
+            cmds::watch_dir::start_watch_directory_cmd(watch_args).await?
         }
     };
 

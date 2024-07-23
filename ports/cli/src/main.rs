@@ -40,9 +40,20 @@ fn main() {
         Some(file) => {
             let log_file = PathBuf::from(file);
 
+            match args.log_format {
+                LogFormat::Jsonl => {
+                    log_file.with_extension("jsonl");
+                }
+                LogFormat::Ansi => {
+                    log_file.with_extension("log");
+                }
+            }
+
             let file_appender = tracing_appender::rolling::never(
-                log_file.parent().unwrap(),
-                log_file.file_name().unwrap(),
+                log_file
+                    .parent()
+                    .expect("Log file parent directory not found"),
+                log_file.file_name().expect("Log file name not found"),
             );
 
             tracing_appender::non_blocking(file_appender)
@@ -63,7 +74,7 @@ fn main() {
 
     match args.log_format {
         LogFormat::Ansi => tracing_config.pretty().init(),
-        LogFormat::Json => tracing_config.json().init(),
+        LogFormat::Jsonl => tracing_config.json().init(),
     };
 
     // ? -----------------------------------------------------------------------
