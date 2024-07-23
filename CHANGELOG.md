@@ -1,3 +1,24 @@
+## v0.5.0 (2024-07-23)
+
+### Feat
+
+- improve the placement process to remove shared kmers between one-vs-rest pairs
+
+### Fix
+
+- fix the log file extension setting during runtime
+- replace the default minimizer size from 2 to 4 given the optimization results
+- fix the log format format specification
+- review telemetry steps and turn one-vs-rest intersection evaluation as an optional element of the cli
+- fix the placement process bug introduced together the performance improvement of commit a19004d03af025f4ef9524d5c483504e04244e1f
+- set the minimizer default size on the cli port to two instead of four
+- update the root tree script to allow set the root type during the root tree script runtime
+
+### Perf
+
+- re-evaluate the indexed kmers search engines to speed-up the placement process
+- upgrade kmers mapping process to speedup the indexation process
+
 ## v0.4.4 (2024-07-14)
 
 ### Perf

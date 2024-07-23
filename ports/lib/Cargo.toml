@@ -14,7 +14,7 @@ categories.workspace = true
 
 [dependencies]
 
-classeq-core = { path = "../../core", version = "0.4.4" }
+classeq-core = { path = "../../core", version = "0.5.0" }
 
 anyhow.workspace = true
 apalis.workspace = true
