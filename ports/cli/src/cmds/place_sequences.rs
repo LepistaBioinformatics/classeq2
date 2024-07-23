@@ -1,3 +1,5 @@
+use crate::dtos::telemetry_code::TelemetryCode;
+
 use clap::Parser;
 use classeq_core::{
     domain::dtos::{
@@ -7,7 +9,7 @@ use classeq_core::{
 };
 use std::time::Instant;
 use std::{fs::read_to_string, path::PathBuf, time::Duration};
-use tracing::{debug, debug_span, info};
+use tracing::{info, info_span};
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -62,14 +64,17 @@ pub(crate) struct Arguments {
 }
 
 pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
-    let span = debug_span!(
+    let span = info_span!(
         "PlacingSequenceCMD",
         run_id = Uuid::new_v4().to_string().replace("-", "")
     );
 
     let _span_guard = span.enter();
 
-    debug!("Start multiple sequences placement");
+    info!(
+        code = TelemetryCode::CLIPLACE0001.to_string(),
+        "Start multiple sequences placement from CLI"
+    );
 
     // ? -----------------------------------------------------------------------
     // ? Create a thread pool configured globally
@@ -140,10 +145,11 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         .unwrap_or_default();
 
     info!(
-        total = elapsed.as_millis().to_string(),
-        average = average.as_millis().to_string(),
-        max = max.as_millis().to_string(),
-        min = min.as_millis().to_string(),
+        code = TelemetryCode::CLIPLACE0002.to_string(),
+        totalSeconds = elapsed.as_secs_f32(),
+        averageSeconds = average.as_secs_f32(),
+        maxSeconds = max.as_secs_f32(),
+        minSeconds = min.as_secs_f32(),
         "Execution times"
     );
 }

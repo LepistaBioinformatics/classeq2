@@ -1,4 +1,7 @@
+mod dtos;
 mod place_sequence;
+mod update_introspection_node;
+
 use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use place_sequence::*;
 
@@ -18,7 +21,7 @@ use std::{
     path::PathBuf,
     time::Duration,
 };
-use tracing::{debug, debug_span, info, warn};
+use tracing::{debug, debug_span, warn};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -48,8 +51,8 @@ pub fn place_sequences(
     // ? Configure the logging span
     // ? -----------------------------------------------------------------------
 
-    info!(
-        code = TelemetryCode::PLACE0001.to_string(),
+    debug!(
+        code = TelemetryCode::UCPLACE0001.to_string(),
         "Start multiple sequences placement"
     );
 
@@ -120,7 +123,7 @@ pub fn place_sequences(
             let _span_guard = span.enter();
 
             debug!(
-                code = TelemetryCode::PLACE0003.to_string(),
+                code = TelemetryCode::UCPLACE0003.to_string(),
                 query = header,
                 query_id =
                     Uuid::new_v3(&Uuid::NAMESPACE_DNS, header.as_bytes())
@@ -186,7 +189,7 @@ pub fn place_sequences(
             }
 
             debug!(
-                code = TelemetryCode::PLACE0004.to_string(),
+                code = TelemetryCode::UCPLACE0004.to_string(),
                 "Sequence placed"
             );
 
@@ -197,8 +200,8 @@ pub fn place_sequences(
         })
         .collect();
 
-    info!(
-        code = TelemetryCode::PLACE0002.to_string(),
+    debug!(
+        code = TelemetryCode::UCPLACE0002.to_string(),
         "End multiple sequences placement"
     );
 

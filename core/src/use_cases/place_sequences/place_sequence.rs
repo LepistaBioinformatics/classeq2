@@ -1,3 +1,7 @@
+use super::{
+    dtos::IntrospectionUpdateResponse,
+    update_introspection_node::update_introspection_node,
+};
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
     clade::Clade,
@@ -13,7 +17,7 @@ use mycelium_base::{
 };
 use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 use std::collections::{HashMap, HashSet};
-use tracing::{debug, debug_span, trace, warn, Span};
+use tracing::{debug_span, trace, warn, Span};
 
 /// Place a sequence in the tree.
 ///
@@ -78,8 +82,8 @@ pub(super) fn place_sequence(
             .as_error();
     }
 
-    debug!(
-        code = TelemetryCode::PLACE0005.to_string(),
+    trace!(
+        code = TelemetryCode::UCPLACE0005.to_string(),
         "Query kmers built successfully"
     );
 
@@ -92,7 +96,7 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
-    let mut query_kmers_map = kmers_map.get_overlapping_kmers(query_kmers);
+    let query_kmers_map = kmers_map.get_overlapping_hashed_kmers(query_kmers);
 
     let query_kmers_len = query_kmers_map
         .get_map()
@@ -108,8 +112,8 @@ pub(super) fn place_sequence(
         warn!("Query sequence may not be related to the phylogeny");
     }
 
-    debug!(
-        code = TelemetryCode::PLACE0006.to_string(),
+    trace!(
+        code = TelemetryCode::UCPLACE0006.to_string(),
         "Query kmers map built successfully"
     );
 
@@ -123,16 +127,25 @@ pub(super) fn place_sequence(
 
     let time = std::time::Instant::now();
 
-    let root_kmers = match query_kmers_map.get_kmers_with_node(tree.root.id) {
+    // ? -----------------------------------------------------------------------
+    // ? Build the root kmers map
+    //
+    // The root kmers map is built using the kmers from the root node. This map
+    // is used to evaluate the adherence of the query sequence to the root node.
+    //
+    // ? -----------------------------------------------------------------------
+
+    let introspection_kmers = match query_kmers_map
+        .get_minimized_hashes_with_node(tree.root.id)
+    {
         None => return Ok(Unclassifiable),
-        Some(kmers) => query_kmers_map
-            .get_overlapping_hashes(&kmers.into_iter().map(|i| *i).collect()),
+        Some(kmers) => query_kmers_map.get_overlapping_minimized_hashes(kmers),
     };
 
     Span::current().record(
         "subject.kmers.queryMatches",
         &Some(
-            root_kmers
+            introspection_kmers
                 .get_map()
                 .into_iter()
                 .map(|(_, v)| v.0.len() as i32)
@@ -145,8 +158,8 @@ pub(super) fn place_sequence(
         &Some(format!("{:?}", time.elapsed())),
     );
 
-    debug!(
-        code = TelemetryCode::PLACE0007.to_string(),
+    trace!(
+        code = TelemetryCode::UCPLACE0007.to_string(),
         "Root kmers map built successfully"
     );
 
@@ -184,8 +197,8 @@ pub(super) fn place_sequence(
     Span::current()
         .record("subject.kmers.children", &Some(children.len() as i32));
 
-    debug!(
-        code = TelemetryCode::PLACE0008.to_string(),
+    trace!(
+        code = TelemetryCode::UCPLACE0008.to_string(),
         "Starting tree introspection"
     );
 
@@ -198,8 +211,8 @@ pub(super) fn place_sequence(
     let expected_min_clade_coverage =
         (query_kmers_len as f64 * min_match_coverage).round();
 
-    debug!(
-        code = TelemetryCode::PLACE0009.to_string(),
+    trace!(
+        code = TelemetryCode::UCPLACE0009.to_string(),
         "Expected min clade coverage (base {base}): {expected}",
         base = min_match_coverage,
         expected = expected_min_clade_coverage
@@ -225,7 +238,7 @@ pub(super) fn place_sequence(
     loop {
         let iteration_span = debug_span!(
             "Introspection",
-            code = TelemetryCode::PLACE0010.to_string(),
+            code = TelemetryCode::UCPLACE0010.to_string(),
             level = iteration,
             clade_id = parent.id
         );
@@ -258,14 +271,14 @@ pub(super) fn place_sequence(
                     return None;
                 }
 
-                match root_kmers.get_kmers_with_node(record.id) {
+                match introspection_kmers.get_hashed_kmers_with_node(record.id) {
                     None => None,
                     Some(kmers) => {
                         let len = kmers.len();
 
                         if len < expected_min_clade_coverage as usize {
                             trace!(
-                                code = TelemetryCode::PLACE0011.to_string(),
+                                code = TelemetryCode::UCPLACE0011.to_string(),
                                 "Clade {clade_id} ignored with insuficient kmers coverage {kmers_len}",
                                 clade_id = record.id,
                                 kmers_len = len
@@ -278,12 +291,12 @@ pub(super) fn place_sequence(
                     },
                 }
             })
-            .collect::<Vec<(i32, HashSet<&u64>, &Clade)>>();
+            .collect::<Vec<(i32, HashSet<u64>, &Clade)>>();
 
         children_kmers.sort_by(|a, b| b.1.len().cmp(&a.1.len()));
 
         trace!(
-            code = TelemetryCode::PLACE0012.to_string(),
+            code = TelemetryCode::UCPLACE0012.to_string(),
             "Level clades (runtime {time}): {lenghts}",
             time = format!("{:?}", children_lenghts_time.elapsed()),
             lenghts = children_kmers
@@ -315,7 +328,7 @@ pub(super) fn place_sequence(
                 if rest.is_empty() {
                     return Some(AdherenceTest {
                         clade: UntaggedParent::Record(clade.to_owned()),
-                        one: kmers.len() as i32,
+                        one_len: kmers.len() as i32,
                         rest_len: 0,
                         rest_avg: 0.0,
                         rest_max: 0,
@@ -326,7 +339,7 @@ pub(super) fn place_sequence(
                     .iter()
                     .map(|i| i.to_owned())
                     .flatten()
-                    .collect::<HashSet<&u64>>();
+                    .collect::<HashSet<u64>>();
 
                 let (one_kmers, rest_kmers) = match remove_intersection {
                     true => (
@@ -343,7 +356,7 @@ pub(super) fn place_sequence(
                 };
 
                 trace!(
-                    code = TelemetryCode::PLACE0013.to_string(),
+                    code = TelemetryCode::UCPLACE0013.to_string(),
                     "Clade {id}: one {one_kmers} vs rest {rest_kmers}",
                     id = child_id,
                     one_kmers = one_kmers.len(),
@@ -352,7 +365,7 @@ pub(super) fn place_sequence(
 
                 Some(AdherenceTest {
                     clade: UntaggedParent::Record(clade.to_owned()),
-                    one: one_kmers.len() as i32,
+                    one_len: one_kmers.len() as i32,
                     rest_len: rest_kmers.len() as i32,
                     rest_avg: 0.0,
                     rest_max: 0,
@@ -361,7 +374,7 @@ pub(super) fn place_sequence(
             .filter_map(|adherence| {
                 let rest_value = adherence.rest_len;
 
-                if adherence.one > rest_value as i32 {
+                if adherence.one_len > rest_value as i32 {
                     Some(adherence.to_owned())
                 } else {
                     None
@@ -370,7 +383,7 @@ pub(super) fn place_sequence(
             .collect();
 
         trace!(
-            code = TelemetryCode::PLACE0014.to_string(),
+            code = TelemetryCode::UCPLACE0014.to_string(),
             "Available proposals (runtime {time}): {proposals}",
             time = format!("{:?}", clde_proposals_time.elapsed()),
             proposals = clade_proposals.len()
@@ -387,7 +400,7 @@ pub(super) fn place_sequence(
         // ? -------------------------------------------------------------------
         if clade_proposals.is_empty() {
             trace!(
-                code = TelemetryCode::PLACE0015.to_string(),
+                code = TelemetryCode::UCPLACE0015.to_string(),
                 "No proposals found. Max resolution reached at clade {clade_id}",
                 clade_id = parent.id
             );
@@ -417,76 +430,20 @@ pub(super) fn place_sequence(
             };
 
             //
-            // 🍁 clade update
+            // 🍁 1st clade update
+            // 🌿 1st children update
             //
-            parent = match adherence.clade.to_owned() {
-                UntaggedParent::Record(record) => record,
-                UntaggedParent::Id(_) => {
-                    return use_case_err(
-                        "The adherence test does not contain a clade record.",
-                    )
-                    .as_error();
-                }
-            };
-
-            //
-            // 🌿 children update
-            //
-            children = match parent.to_owned().children {
-                Some(children) => {
-                    let non_leaf_children = children
-                        .iter()
-                        .filter_map(|record| {
-                            if record.is_leaf() {
-                                return None;
-                            }
-
-                            Some(record.to_owned())
-                        })
-                        .collect::<Vec<Clade>>();
-
-                    //
-                    // ✅ Case no children clades exits, the search loop is
-                    // finished with a conclusive identity.
-                    //
-                    if non_leaf_children.is_empty() {
-                        trace!(
-                            code = TelemetryCode::PLACE0016.to_string(),
-                            "Conclusive identity found at clade {clade_id}",
-                            clade_id = parent.id
-                        );
-
-                        return Ok(IdentityFound(adherence));
-                    }
-
-                    //
-                    // 🟢 Case the clade contain children ones, the search loop
-                    // continues.
-                    //
-                    trace!(
-                        code = TelemetryCode::PLACE0017.to_string(),
-                        "One proposal found. Clade {parent} selected",
-                        parent = parent.id
-                    );
-
-                    non_leaf_children
-                }
+            (parent, children) = match update_introspection_node(&adherence)? {
                 //
-                // ✅ Case no children clades exits, the search loop is
-                // finished with a conclusive identity.
+                // 🟢 Continue the search loop with the new parent and children
                 //
-                None => {
-                    //
-                    // ✅ Case no children clades exits, the search loop is
-                    // finished with a conclusive identity.
-                    //
-                    trace!(
-                        code = TelemetryCode::PLACE0016.to_string(),
-                        "Conclusive identity found at clade {clade_id}",
-                        clade_id = parent.id
-                    );
-
-                    return Ok(IdentityFound(adherence));
+                IntrospectionUpdateResponse::Continue(a, b) => (a, b),
+                //
+                // ✅ Return a status if the search loop is finished with a
+                // conclusive identity.
+                //
+                IntrospectionUpdateResponse::Return(status) => {
+                    return Ok(status);
                 }
             };
 
@@ -504,7 +461,7 @@ pub(super) fn place_sequence(
         // ? -------------------------------------------------------------------
         if clade_proposals.len() > 1 {
             trace!(
-                code = TelemetryCode::PLACE0018.to_string(),
+                code = TelemetryCode::UCPLACE0018.to_string(),
                 "Multiple proposals found. Clade {parent} selected",
                 parent = parent.id
             );
@@ -512,14 +469,7 @@ pub(super) fn place_sequence(
             let fold_proposals = clade_proposals.iter().fold(
                 HashMap::<i32, Vec<AdherenceTest>>::new(),
                 |mut acc, a| {
-                    //let rest_value = match rest_comparison_strategy {
-                    //    RestComparisonStrategy::Avg => a.rest_avg as i32,
-                    //    RestComparisonStrategy::Max => a.rest_max,
-                    //};
-
-                    let rest_value = a.rest_len;
-
-                    acc.entry(a.one - rest_value)
+                    acc.entry(a.one_len - a.rest_len)
                         .or_insert(vec![])
                         .push(a.to_owned());
 
@@ -541,73 +491,24 @@ pub(super) fn place_sequence(
                 };
 
                 //
-                // 🍁 clade update
+                // 🍁 2nd clade update
+                // 🌿 2nd children update
                 //
-                parent = match adherence.clade.to_owned() {
-                    UntaggedParent::Record(record) => record,
-                    UntaggedParent::Id(_) => {
-                        return use_case_err(
-                            "The adherence test does not contain a clade record."
-                        ).as_error();
-                    }
-                };
-
-                //
-                // 🌿 children update
-                //
-                children = match parent.to_owned().children {
-                    Some(children) => {
-                        let non_leaf_children = children
-                            .iter()
-                            .filter_map(|record| {
-                                if record.is_leaf() {
-                                    return None;
-                                }
-
-                                Some(record.to_owned())
-                            })
-                            .collect::<Vec<Clade>>();
-
+                (parent, children) =
+                    match update_introspection_node(&adherence)? {
                         //
-                        // ✅ Case no children clades exits, the search loop is
-                        // finished with a conclusive identity.
+                        // 🟢 Continue the search loop with the new parent and
+                        // children
                         //
-                        if non_leaf_children.is_empty() {
-                            trace!(
-                                code = TelemetryCode::PLACE0016.to_string(),
-                                "Conclusive identity found at clade {clade_id}",
-                                clade_id = parent.id
-                            );
-
-                            return Ok(IdentityFound(adherence.to_owned()));
+                        IntrospectionUpdateResponse::Continue(a, b) => (a, b),
+                        //
+                        // ✅ Return a status if the search loop is finished with
+                        // a conclusive identity.
+                        //
+                        IntrospectionUpdateResponse::Return(status) => {
+                            return Ok(status);
                         }
-
-                        //
-                        // 🟢 Case the clade contain children ones, the search
-                        // loop continues.
-                        //
-                        trace!(
-                            code = TelemetryCode::PLACE0017.to_string(),
-                            "One proposal found. Clade {parent} selected",
-                            parent = parent.id
-                        );
-
-                        non_leaf_children
-                    }
-                    None => {
-                        //
-                        // 🟢 Case the clade contain children ones, the search
-                        // loop continues.
-                        //
-                        trace!(
-                            code = TelemetryCode::PLACE0016.to_string(),
-                            "Conclusive identity found at clade {clade_id}",
-                            clade_id = parent.id
-                        );
-
-                        return Ok(IdentityFound(adherence.to_owned()));
-                    }
-                };
+                    };
 
                 continue;
             }
@@ -617,7 +518,7 @@ pub(super) fn place_sequence(
             // all proposals.
             //
             trace!(
-                code = TelemetryCode::PLACE0019.to_string(),
+                code = TelemetryCode::UCPLACE0019.to_string(),
                 "Inconclusive identity found at clade",
             );
 

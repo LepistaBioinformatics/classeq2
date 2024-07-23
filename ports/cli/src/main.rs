@@ -1,4 +1,5 @@
 mod cmds;
+mod dtos;
 
 use self::Opts::*;
 

@@ -34,29 +34,29 @@ impl MinimizerValue {
         true
     }
 
-    fn get_kmers_with_node(&self, node: i32) -> Option<HashSet<&u64>> {
+    fn get_hashed_kmers_with_node(&self, node: i32) -> Option<HashSet<u64>> {
         match self
             .0
             .par_iter()
             .filter_map(|(kmer, nodes)| {
                 if nodes.contains(&node) {
-                    Some(kmer)
+                    Some(kmer.to_owned())
                 } else {
                     None
                 }
             })
-            .collect::<HashSet<&u64>>()
+            .collect::<HashSet<u64>>()
         {
             set if set.is_empty() => None,
             set => Some(set.par_iter().map(|s| s.to_owned()).collect()),
         }
     }
 
-    fn get_overlapping_kmers(&self, kmers: &HashSet<u64>) -> Self {
+    fn get_overlapping_hashed_kmers(&self, kmers: &HashSet<u64>) -> Self {
         let mut map = MinimizerValue(HashMap::new());
 
         self.0
-            .par_iter()
+            .iter()
             .map(|(key, _)| key.to_owned())
             .collect::<HashSet<u64>>()
             .intersection(kmers)
@@ -178,19 +178,45 @@ impl KmersMap {
     /// assert_eq!(kmers, None);
     /// ```
     ///
-    pub(crate) fn get_kmers_with_node(
+    pub(crate) fn get_hashed_kmers_with_node(
         &self,
         node: i32,
-    ) -> Option<HashSet<&u64>> {
+    ) -> Option<HashSet<u64>> {
         match self
             .map
             .par_iter()
-            .filter_map(|(_, value)| value.get_kmers_with_node(node))
+            .filter_map(|(_, value)| value.get_hashed_kmers_with_node(node))
             .flatten()
-            .collect::<HashSet<&u64>>()
+            .collect::<HashSet<u64>>()
         {
             set if set.is_empty() => None,
             set => Some(set.par_iter().map(|s| s.to_owned()).collect()),
+        }
+    }
+
+    /// Get all kmers that contain a given node.
+    ///
+    /// Returns an empty set if the node is not present in any kmer. This method
+    /// is used to get all kmers that contain a given clade during the
+    /// prediction process.
+    ///
+    pub(crate) fn get_minimized_hashes_with_node(
+        &self,
+        node: i32,
+    ) -> Option<HashMap<&MinimizerKey, HashSet<u64>>> {
+        match self
+            .map
+            .par_iter()
+            .filter_map(|(key, value)| {
+                match value.get_hashed_kmers_with_node(node) {
+                    Some(set) => Some((key, set)),
+                    None => None,
+                }
+            })
+            .collect::<HashMap<&MinimizerKey, HashSet<u64>>>()
+        {
+            set if set.is_empty() => None,
+            set => Some(set),
         }
     }
 
@@ -199,6 +225,9 @@ impl KmersMap {
     /// Returns a new KmersMap with only the kmers that are present in the given
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
+    /// TODO: This method is not used and should be removed.
+    ///
+    #[allow(dead_code)]
     pub(crate) fn get_overlapping_hashes(
         &mut self,
         hashes: &HashSet<u64>,
@@ -210,7 +239,7 @@ impl KmersMap {
             .par_iter()
             .filter_map(|(key, value)| {
                 let key = key.0;
-                let value = value.get_overlapping_kmers(hashes);
+                let value = value.get_overlapping_hashed_kmers(hashes);
 
                 if value.0.is_empty() {
                     None
@@ -228,7 +257,12 @@ impl KmersMap {
         map
     }
 
-    pub(crate) fn get_overlapping_kmers(
+    /// Filter overlapping kmers by a set of kmers.
+    ///
+    /// Returns a new KmersMap with only the kmers that are present in the given
+    /// set. This method is used to filter the kmers map by a set of kmers.
+    ///
+    pub(crate) fn get_overlapping_hashed_kmers(
         &mut self,
         hashed_kmers: Vec<(String, u64)>,
     ) -> Self {
@@ -254,12 +288,45 @@ impl KmersMap {
                     return None;
                 }
 
-                let value = value.get_overlapping_kmers(&hashes);
+                let value = value.get_overlapping_hashed_kmers(&hashes);
 
                 if value.0.is_empty() {
                     None
                 } else {
                     Some((key, value))
+                }
+            })
+            .map(|(key, value)| (key.to_owned(), value))
+            .collect();
+
+        map
+    }
+
+    /// Filter overlapping kmers by a set of kmers.
+    ///
+    /// Returns a new KmersMap with only the kmers that are present in the given
+    /// set. This method is used to filter the kmers map by a set of kmers.
+    ///
+    pub(crate) fn get_overlapping_minimized_hashes(
+        &self,
+        hashed_kmers: HashMap<&MinimizerKey, HashSet<u64>>,
+    ) -> Self {
+        let mut map = Self::new(self.k_size, self.m_size);
+
+        map.map = self
+            .map
+            .par_iter()
+            .filter_map(|(key, value)| {
+                if let Some(hashes) = hashed_kmers.get(key) {
+                    let value = value.get_overlapping_hashed_kmers(&hashes);
+
+                    if value.0.is_empty() {
+                        None
+                    } else {
+                        Some((key.to_owned(), value))
+                    }
+                } else {
+                    None
                 }
             })
             .map(|(key, value)| (key.to_owned(), value))
