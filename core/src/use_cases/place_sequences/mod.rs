@@ -18,7 +18,7 @@ use std::{
     path::PathBuf,
     time::Duration,
 };
-use tracing::{debug, info_span, warn};
+use tracing::{debug, debug_span, info, warn};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -42,7 +42,17 @@ pub fn place_sequences(
     min_match_coverage: &Option<f64>,
     overwrite: &bool,
     output_format: &OutputFormat,
+    remove_intersection: &Option<bool>,
 ) -> Result<Vec<PlacementTime>, MappedErrors> {
+    // ? -----------------------------------------------------------------------
+    // ? Configure the logging span
+    // ? -----------------------------------------------------------------------
+
+    info!(
+        code = TelemetryCode::PLACE0001.to_string(),
+        "Start multiple sequences placement"
+    );
+
     // ? -----------------------------------------------------------------------
     // ? Build the output paths
     // ? -----------------------------------------------------------------------
@@ -100,18 +110,22 @@ pub fn place_sequences(
         .par_bridge()
         .map(|sequence| {
             let header = sequence.header_content();
-            let span = info_span!(
+
+            let span = debug_span!(
                 "PlacingSequence",
-                query = header,
-                id = Uuid::new_v3(&Uuid::NAMESPACE_DNS, header.as_bytes())
-                    .to_string()
-                    .replace("-", "")
+                tree_id = tree.id.to_string().replace("-", ""),
+                header = header.to_string(),
             );
 
-            let _placement_span_guard = span.enter();
+            let _span_guard = span.enter();
 
             debug!(
-                code = TelemetryCode::PLACE0016.to_string(),
+                code = TelemetryCode::PLACE0003.to_string(),
+                query = header,
+                query_id =
+                    Uuid::new_v3(&Uuid::NAMESPACE_DNS, header.as_bytes())
+                        .to_string()
+                        .replace("-", ""),
                 "Start placing sequence: {header}",
                 header = header
             );
@@ -123,6 +137,7 @@ pub fn place_sequences(
                 &tree,
                 &max_iterations,
                 &min_match_coverage,
+                &remove_intersection,
             ) {
                 Err(err) => {
                     if let Err(err) = error_writer(
@@ -171,7 +186,7 @@ pub fn place_sequences(
             }
 
             debug!(
-                code = TelemetryCode::PLACE0017.to_string(),
+                code = TelemetryCode::PLACE0004.to_string(),
                 "Sequence placed"
             );
 
@@ -181,6 +196,11 @@ pub fn place_sequences(
             }
         })
         .collect();
+
+    info!(
+        code = TelemetryCode::PLACE0002.to_string(),
+        "End multiple sequences placement"
+    );
 
     Ok(responses)
 }

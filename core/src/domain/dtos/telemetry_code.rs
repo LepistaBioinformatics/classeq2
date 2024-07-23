@@ -4,58 +4,93 @@ use std::fmt::Display;
 #[derive(Clone, Debug, Serialize)]
 #[serde(untagged, rename_all = "camelCase")]
 pub(crate) enum TelemetryCode {
-    /// The kmers were sucessfully generated from the query sequence
+    // ? -----------------------------------------------------------------------
+    // ? Reserved codes to the place_sequences use case
+    //
+    /// Multiple sequence placement started
+    ///
+    //
     PLACE0001,
-
-    /// The query kmers were sucessfully mapped on the referemce tree
+    /// Multiple sequence placement ended
+    ///
     PLACE0002,
-
-    /// The query kmers were sucessfully identified on the tree indices
+    //
+    /// A single sequence placement started
+    ///
     PLACE0003,
-
-    /// All is done to start the tree introspection
+    //
+    /// A single sequence placement ended
+    ///
     PLACE0004,
+    // ? -----------------------------------------------------------------------
 
-    /// The minimum coverage was successfully calculated
+    // ? -----------------------------------------------------------------------
+    // ? Reserved codes to the place_sequence use case
+    //
+    /// Query kmers built successfully
+    ///
     PLACE0005,
-
-    /// A tree introspection loop is running
+    //
+    /// Query kmers map built successfully
+    ///
     PLACE0006,
-
-    /// A given sequence has no enouth coverage to be placed
+    //
+    /// Root kmers map built successfully
+    ///
     PLACE0007,
-
-    /// A set of clades are right now being placed
+    //
+    /// Starting tree introspection
+    ///
     PLACE0008,
-
-    /// A one-vs-rest pair is being placed
+    //
+    /// Expected min clade coverage calculated
     PLACE0009,
-
-    /// The one-vs-rest pair was successfully placed and a set of clade
-    /// proposals was generated
+    //
+    /// A introspection level was reached into the introspection loop
+    ///
     PLACE0010,
-
-    /// If the clade proposal set is empty, the sequence is not placed
+    //
+    /// A given clade has no enough coverage to be considered
+    ///
     PLACE0011,
-
-    /// If the clade proposal set contains just one clade, the sequence
-    /// continues to the placement process
+    //
+    /// A one-vs-rest clade proposal set was built
+    ///
     PLACE0012,
-
-    /// If multiple clades are proposed, the search process are evaluated
+    //
+    /// A one-vs-rest placement statistics was calculated
+    ///
     PLACE0013,
-
-    /// The tree introspection process is done
+    //
+    /// A set of proposals are right to be be evaluated
+    ///
     PLACE0014,
-
-    /// The placement process was inconclusive
+    //
+    /// If empty clade proposal set was reached the `MaxResolutionReached` state
+    /// is triggered
+    ///
     PLACE0015,
-
-    /// Single sequence placement start
+    //
+    /// If the clade proposal set contains just one clade, and a identity is
+    /// reached
+    ///
     PLACE0016,
-
-    /// Single sequence placement end
+    //
+    /// If the clade proposal set contains just one clade, and the clade
+    /// contains children clades, go to the next level
+    ///
     PLACE0017,
+    //
+    /// Multiple clade proposal set was reached
+    ///
+    PLACE0018,
+    //
+    /// If multiple clade proposal set was reached, and the algorithm was unable
+    /// to filter proposals to a conclusive one, the `Inconclusive` state is
+    /// triggered
+    ///
+    PLACE0019,
+    // ? -----------------------------------------------------------------------
 }
 
 impl Display for TelemetryCode {

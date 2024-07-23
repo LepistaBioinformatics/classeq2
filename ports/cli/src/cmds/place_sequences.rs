@@ -5,8 +5,10 @@ use classeq_core::{
     },
     use_cases::place_sequences,
 };
+use std::time::Instant;
 use std::{fs::read_to_string, path::PathBuf, time::Duration};
-use tracing::info;
+use tracing::{debug, debug_span, info};
+use uuid::Uuid;
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -45,6 +47,13 @@ pub(crate) struct Arguments {
     #[arg(short, long)]
     pub(super) match_coverage: Option<f64>,
 
+    /// Remove intersection
+    ///
+    /// If true, calculate the one-vs-rest difference without the shared kmers.
+    /// Otherwise, calculate the one-vs-rest difference with the shared kmers.
+    #[arg(short, long)]
+    pub(super) remove_intersection: Option<bool>,
+
     /// Force overwrite
     ///
     /// If the output file already exists, it will be overwritten.
@@ -53,8 +62,14 @@ pub(crate) struct Arguments {
 }
 
 pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
-    use std::time::Instant;
-    let now = Instant::now();
+    let span = debug_span!(
+        "PlacingSequenceCMD",
+        run_id = Uuid::new_v4().to_string().replace("-", "")
+    );
+
+    let _span_guard = span.enter();
+
+    debug!("Start multiple sequences placement");
 
     // ? -----------------------------------------------------------------------
     // ? Create a thread pool configured globally
@@ -66,6 +81,8 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
     {
         panic!("Error creating thread pool: {err}");
     };
+
+    let now = Instant::now();
 
     let per_seq_time = {
         let database_file = match read_to_string(&args.database_file_path) {
@@ -92,6 +109,7 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             &args.match_coverage,
             &args.force_overwrite,
             &args.out_format,
+            &args.remove_intersection,
         ) {
             Ok(buffer) => buffer,
             Err(err) => panic!("{err}"),
@@ -107,8 +125,25 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         .sum::<Duration>()
         / per_seq_time.len() as u32;
 
+    let max = per_seq_time
+        .to_owned()
+        .into_iter()
+        .map(|i| i.milliseconds_time)
+        .max()
+        .unwrap_or_default();
+
+    let min = per_seq_time
+        .to_owned()
+        .into_iter()
+        .map(|i| i.milliseconds_time)
+        .min()
+        .unwrap_or_default();
+
     info!(
-        "Execution times:\n{0: <10} | {1: <20?}\n{2: <10} | {3: <20?}",
-        "total", elapsed, "average", average
+        total = elapsed.as_millis().to_string(),
+        average = average.as_millis().to_string(),
+        max = max.as_millis().to_string(),
+        min = min.as_millis().to_string(),
+        "Execution times"
     );
 }
