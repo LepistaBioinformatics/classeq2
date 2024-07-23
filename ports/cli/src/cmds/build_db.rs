@@ -23,7 +23,7 @@ pub(crate) struct Arguments {
     /// The minimizer size
     ///
     /// The size of the minimizer to be used in the tree.
-    #[arg(long, short, default_value = "2")]
+    #[arg(long, short, default_value = "4")]
     pub(super) m_size: Option<usize>,
 
     /// Output file path
