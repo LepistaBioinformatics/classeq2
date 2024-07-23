@@ -38,23 +38,27 @@ fn main() {
         // If a log file is provided, log to the file
         //
         Some(file) => {
-            let log_file = PathBuf::from(file);
+            let mut log_file = PathBuf::from(file);
+
+            let binding = log_file.to_owned();
+            let parent_dir = binding
+                .parent()
+                .expect("Log file parent directory not found");
 
             match args.log_format {
                 LogFormat::Jsonl => {
-                    log_file.with_extension("jsonl");
+                    log_file.set_extension("jsonl");
                 }
                 LogFormat::Ansi => {
-                    log_file.with_extension("log");
+                    log_file.set_extension("log");
                 }
-            }
+            };
 
-            let file_appender = tracing_appender::rolling::never(
-                log_file
-                    .parent()
-                    .expect("Log file parent directory not found"),
-                log_file.file_name().expect("Log file name not found"),
-            );
+            let file_name =
+                log_file.file_name().expect("Log file name not found");
+
+            let file_appender =
+                tracing_appender::rolling::never(parent_dir, file_name);
 
             tracing_appender::non_blocking(file_appender)
         }
