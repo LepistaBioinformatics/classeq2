@@ -1,3 +1,9 @@
+## v0.5.1 (2024-07-24)
+
+### Refactor
+
+- group functional elements of the introspection loop to turn easy the algorithm comprehension
+
 ## v0.5.0 (2024-07-23)
 
 ### Feat
