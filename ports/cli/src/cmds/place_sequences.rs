@@ -1,6 +1,6 @@
 use crate::dtos::telemetry_code::TelemetryCode;
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use classeq_core::{
     domain::dtos::{
         file_or_stdin::FileOrStdin, output_format::OutputFormat, tree::Tree,
@@ -53,7 +53,7 @@ pub(crate) struct Arguments {
     ///
     /// If true, calculate the one-vs-rest difference without the shared kmers.
     /// Otherwise, calculate the one-vs-rest difference with the shared kmers.
-    #[arg(short, long)]
+    #[arg(short, long, action=ArgAction::SetTrue)]
     pub(super) remove_intersection: Option<bool>,
 
     /// Force overwrite
