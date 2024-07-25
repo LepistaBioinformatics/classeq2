@@ -39,7 +39,7 @@ models:
   - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
     name: Bacillus subtilis group
     gene: gyrB complete sequence
-    path: /etc/classeq/models/bsub-gyrb-k35.yaml
+    path: /etc/classeq/models/bsub-gyrb-k35.cls
 
 # ? ----------------------------------------------------------------------------
 # ? Watcher related settings
