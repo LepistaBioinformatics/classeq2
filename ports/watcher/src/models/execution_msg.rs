@@ -1,8 +1,6 @@
 use serde::Serialize;
 use std::path::PathBuf;
 
-use crate::dtos::telemetry_code::TelemetryCode;
-
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ExecutionMsg {
