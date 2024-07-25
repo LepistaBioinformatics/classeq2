@@ -20,6 +20,9 @@ enum Opts {
 
     /// Place sequences on the tree
     Place(cmds::place_sequences::Arguments),
+
+    /// Describe the database
+    DescribeDb(cmds::describe_db::Arguments),
 }
 
 fn main() -> Result<()> {
@@ -112,6 +115,9 @@ fn main() -> Result<()> {
             place_args,
             args.threads.unwrap_or(1),
         )?,
+        DescribeDb(db_args) => {
+            cmds::describe_db::describe_database_cmd(db_args)?;
+        }
     }
 
     Ok(())

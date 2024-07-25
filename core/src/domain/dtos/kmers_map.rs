@@ -104,8 +104,16 @@ impl KmersMap {
     /// Returns a reference to the map of kmers. This method is used to get the
     /// map of kmers.
     ///
-    pub(crate) fn get_map(&self) -> &HashMap<MinimizerKey, MinimizerValue> {
+    pub fn get_map(&self) -> &HashMap<MinimizerKey, MinimizerValue> {
         &self.map
+    }
+
+    pub fn get_kmer_size(&self) -> u64 {
+        self.k_size
+    }
+
+    pub fn get_minimizer_size(&self) -> u64 {
+        self.m_size
     }
 
     /// Insert a kmer into the map.

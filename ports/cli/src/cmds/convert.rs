@@ -1,4 +1,4 @@
-use crate::dtos::output_format::OutputFormat as CliOutputFormat;
+use crate::dtos::output_format::DatabaseOutputFormat;
 
 use anyhow::Result;
 use clap::Parser;
@@ -149,7 +149,7 @@ pub(crate) struct DatabaseArguments {
     ///
     /// The format in which the database will be serialized.
     #[arg(long, short = 'f', default_value = "yaml")]
-    pub(super) out_format: CliOutputFormat,
+    pub(super) out_format: DatabaseOutputFormat,
 }
 
 pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
@@ -162,13 +162,13 @@ pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
     // Serialize the content
     //
     match args.out_format {
-        CliOutputFormat::Zstd => {
+        DatabaseOutputFormat::Zstd => {
             output_file_path.set_extension("cls");
             let writer = File::create(output_file_path)?;
             let writer = zstd::Encoder::new(writer, 0)?.auto_finish();
             serde_yaml::to_writer(writer, &tree_content)?;
         }
-        CliOutputFormat::Yaml => {
+        DatabaseOutputFormat::Yaml => {
             output_file_path.set_extension("cls.yaml");
             let writer = File::create(output_file_path)?;
             serde_yaml::to_writer(writer, &tree_content)?;

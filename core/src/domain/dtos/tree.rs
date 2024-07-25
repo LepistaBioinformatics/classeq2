@@ -74,6 +74,10 @@ impl Tree {
         }
     }
 
+    pub fn get_in_memory_size(&self) -> Option<String> {
+        self.in_memory_size.clone()
+    }
+
     pub fn update_in_memory_size(&mut self) {
         let id_size = size_of_val(&self.id);
 
