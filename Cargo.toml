@@ -52,3 +52,4 @@ tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 tokio = { version = "1.38", features = ["rt-multi-thread", "fs"] }
 uuid = { version = "1.1", features = ["v3", "v4", "v7", "serde", "fast-rng"] }
 walkdir = "2.5.0"
+zstd = "0.13"

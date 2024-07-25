@@ -20,7 +20,7 @@ use rayon::iter::{
     ParallelIterator,
 };
 use std::collections::{HashMap, HashSet};
-use tracing::{debug_span, trace, warn, Span};
+use tracing::{debug_span, info, trace, Span};
 
 /// Place a sequence in the tree.
 ///
@@ -112,7 +112,7 @@ pub(super) fn place_sequence(
         .record("query.kmers.treeMatches", &Some(query_kmers_len as i32));
 
     if query_kmers_len == 0 {
-        warn!("Query sequence may not be related to the phylogeny");
+        info!("Query sequence may not be related to the phylogeny");
     }
 
     trace!(

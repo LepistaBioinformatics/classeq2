@@ -7,21 +7,21 @@ use std::collections::{HashMap, HashSet};
 pub struct MinimizerKey(pub u64);
 
 impl MinimizerKey {
-    fn build_minimizer_from_string(kmer: &str, size: usize) -> Self {
-        let minimizer = kmer.chars().take(size).collect::<String>();
+    fn build_minimizer_from_string(kmer: &str, size: u64) -> Self {
+        let minimizer = kmer.chars().take(size as usize).collect::<String>();
         Self(KmersMap::hash_kmer(&minimizer))
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct MinimizerValue(pub HashMap<u64, HashSet<i32>>);
+pub struct MinimizerValue(pub HashMap<u64, HashSet<u64>>);
 
 impl MinimizerValue {
     fn new() -> Self {
         MinimizerValue(HashMap::new())
     }
 
-    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<i32>) -> bool {
+    fn insert_or_append(&mut self, kmer: u64, nodes: HashSet<u64>) -> bool {
         if self.0.contains_key(&kmer) {
             if let Some(set) = self.0.get_mut(&kmer) {
                 set.extend(nodes);
@@ -34,7 +34,7 @@ impl MinimizerValue {
         true
     }
 
-    fn get_hashed_kmers_with_node(&self, node: i32) -> Option<HashSet<u64>> {
+    fn get_hashed_kmers_with_node(&self, node: u64) -> Option<HashSet<u64>> {
         match self
             .0
             .par_iter()
@@ -69,7 +69,7 @@ impl MinimizerValue {
         map
     }
 
-    fn get(&self, kmer: u64) -> Option<&HashSet<i32>> {
+    fn get(&self, kmer: u64) -> Option<&HashSet<u64>> {
         self.0.get(&kmer)
     }
 }
@@ -77,11 +77,11 @@ impl MinimizerValue {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KmersMap {
     #[serde(rename = "kSize")]
-    k_size: usize,
+    k_size: u64,
 
     /// The minimizer size
     #[serde(rename = "mSize")]
-    m_size: usize,
+    m_size: u64,
 
     map: HashMap<MinimizerKey, MinimizerValue>,
 }
@@ -91,7 +91,7 @@ impl KmersMap {
     ///
     /// Returns a new KmersMap with the given kmer size.
     ///
-    pub fn new(k_size: usize, m_size: usize) -> Self {
+    pub fn new(k_size: u64, m_size: u64) -> Self {
         KmersMap {
             k_size,
             m_size,
@@ -118,7 +118,7 @@ impl KmersMap {
         &mut self,
         kmer: String,
         hash: u64,
-        nodes: HashSet<i32>,
+        nodes: HashSet<u64>,
     ) -> bool {
         let key = if self.m_size == 0 {
             // If the minimizer size is 0, use zero as the key
@@ -180,7 +180,7 @@ impl KmersMap {
     ///
     pub(crate) fn get_hashed_kmers_with_node(
         &self,
-        node: i32,
+        node: u64,
     ) -> Option<HashSet<u64>> {
         match self
             .map
@@ -202,7 +202,7 @@ impl KmersMap {
     ///
     pub(crate) fn get_minimized_hashes_with_node(
         &self,
-        node: i32,
+        node: u64,
     ) -> Option<HashMap<&MinimizerKey, HashSet<u64>>> {
         match self
             .map
@@ -367,12 +367,12 @@ impl KmersMap {
     pub fn build_kmer_from_string(
         &self,
         sequence: String,
-        k_size: Option<usize>,
+        k_size: Option<u64>,
     ) -> Vec<(String, u64)> {
         let mut kmers = Vec::new();
         let size = k_size.unwrap_or(self.k_size);
 
-        if sequence.len() < self.k_size {
+        if sequence.len() < self.k_size as usize {
             return vec![];
         }
 
@@ -396,11 +396,12 @@ impl KmersMap {
     ///
     fn build_kmers_from_sequence(
         sequence: String,
-        size: usize,
+        size: u64,
     ) -> Vec<(String, u64)> {
         let mut kmers = Vec::new();
         let binding = sequence.to_uppercase();
         let sequence = binding.as_bytes();
+        let size = size as usize;
 
         for i in 0..sequence.len() - size + 1 {
             let kmer = match String::from_utf8(sequence[i..i + size].to_vec()) {

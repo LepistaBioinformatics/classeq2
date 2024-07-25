@@ -1,14 +1,14 @@
 use crate::dtos::telemetry_code::TelemetryCode;
 
+use anyhow::Result;
 use clap::{ArgAction, Parser};
 use classeq_core::{
-    domain::dtos::{
-        file_or_stdin::FileOrStdin, output_format::OutputFormat, tree::Tree,
-    },
+    domain::dtos::{file_or_stdin::FileOrStdin, output_format::OutputFormat},
     use_cases::place_sequences,
 };
+use classeq_ports_lib::load_database;
 use std::time::Instant;
-use std::{fs::read_to_string, path::PathBuf, time::Duration};
+use std::{path::PathBuf, time::Duration};
 use tracing::{info, info_span};
 use uuid::Uuid;
 
@@ -63,7 +63,10 @@ pub(crate) struct Arguments {
     pub(super) force_overwrite: bool,
 }
 
-pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
+pub(crate) fn place_sequences_cmd(
+    args: Arguments,
+    threads: usize,
+) -> Result<()> {
     let span = info_span!(
         "PlacingSequenceCMD",
         run_id = Uuid::new_v4().to_string().replace("-", "")
@@ -90,21 +93,7 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
     let now = Instant::now();
 
     let per_seq_time = {
-        let database_file = match read_to_string(&args.database_file_path) {
-            Err(err) => {
-                eprintln!("{}", err);
-                std::process::exit(1);
-            }
-            Ok(content) => content,
-        };
-
-        let tree = match serde_yaml::from_str::<Tree>(database_file.as_str()) {
-            Err(err) => {
-                eprintln!("{}", err);
-                std::process::exit(1);
-            }
-            Ok(buffer) => buffer,
-        };
+        let tree = load_database(args.database_file_path)?;
 
         match place_sequences(
             args.query,
@@ -152,4 +141,6 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         minSeconds = min.as_secs_f32(),
         "Execution times"
     );
+
+    Ok(())
 }

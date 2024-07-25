@@ -19,17 +19,17 @@ pub(crate) struct Arguments {
     ///
     /// The size of the kmers to be used in the tree.
     #[arg(long, short, default_value = "35")]
-    pub(super) k_size: Option<usize>,
+    pub(super) k_size: Option<u64>,
 
     /// The minimizer size
     ///
     /// The size of the minimizer to be used in the tree.
     #[arg(long, short, default_value = "4")]
-    pub(super) m_size: Option<usize>,
+    pub(super) m_size: Option<u64>,
 
     /// Output file path
     ///
-    /// The file will be saved in JSON or YAML format.
+    /// The file will be saved in ZSTD or YAML format.
     #[arg(short, long)]
     pub(super) output_file_path: Option<PathBuf>,
 
@@ -65,9 +65,9 @@ pub(crate) fn build_database_cmd(
 
     let mut output_file_path = args
         .output_file_path
-        .unwrap_or_else(|| PathBuf::from("output.yaml.zstd"));
+        .unwrap_or_else(|| PathBuf::from("classeq-database.cls"));
 
-    output_file_path.set_extension("yaml.zstd");
+    output_file_path.set_extension("cls");
 
     let writer = File::create(output_file_path)?;
     let writer = zstd::Encoder::new(writer, 0)?.auto_finish();

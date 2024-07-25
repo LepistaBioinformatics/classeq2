@@ -26,8 +26,8 @@ use tracing::debug;
 pub fn map_kmers_to_tree(
     tree_path: PathBuf,
     msa_path: PathBuf,
-    k_size: Option<usize>,
-    m_size: Option<usize>,
+    k_size: Option<u64>,
+    m_size: Option<u64>,
     min_branch_support: Option<f64>,
 ) -> Result<Tree, MappedErrors> {
     // ? -----------------------------------------------------------------------

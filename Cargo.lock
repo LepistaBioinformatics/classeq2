@@ -1075,6 +1075,7 @@ dependencies = [
  "tracing",
  "uuid",
  "walkdir",
+ "zstd",
 ]
 
 [[package]]
@@ -1099,6 +1100,7 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

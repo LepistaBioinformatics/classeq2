@@ -16,7 +16,7 @@ pub enum NodeType {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Clade {
-    pub id: i32,
+    pub id: u64,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -52,7 +52,7 @@ impl Clade {
     }
 
     pub(super) fn new_leaf(
-        id: i32,
+        id: u64,
         name: String,
         length: Option<f64>,
     ) -> Clade {
@@ -67,7 +67,7 @@ impl Clade {
     }
 
     pub(super) fn new_internal(
-        id: i32,
+        id: u64,
         name: Option<String>,
         support: Option<f64>,
         length: Option<f64>,
@@ -85,10 +85,10 @@ impl Clade {
 
     pub fn get_leaves(
         &self,
-        parent_ids: Option<Vec<i32>>,
-    ) -> Vec<(Clade, Vec<i32>)> {
+        parent_ids: Option<Vec<u64>>,
+    ) -> Vec<(Clade, Vec<u64>)> {
         // Each entry contains the clade itself and the list of parent clade ids
-        let mut leaves = Vec::<(Clade, Vec<i32>)>::new();
+        let mut leaves = Vec::<(Clade, Vec<u64>)>::new();
 
         // If the parent_ids is None, then the current clade is the root
         let parent_ids = match parent_ids {

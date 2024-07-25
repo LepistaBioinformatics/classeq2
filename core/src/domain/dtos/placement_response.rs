@@ -19,7 +19,7 @@ pub enum PlacementStatus {
     /// The query sequence was successfully placed on the reference tree but
     /// with no absolute match
     ///
-    MaxResolutionReached(i32, String),
+    MaxResolutionReached(u64, String),
 
     /// An internal status used to indicate the search loop to go to the next
     /// clade
@@ -53,7 +53,7 @@ impl Serialize for PlacementStatus {
     {
         match self {
             MaxResolutionReached(id, _) => {
-                serializer.serialize_i32(id.to_owned())
+                serializer.serialize_u64(id.to_owned())
             }
             IdentityFound(adherence_test) => {
                 adherence_test.serialize(serializer)

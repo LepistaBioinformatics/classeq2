@@ -101,6 +101,9 @@ fn main() -> Result<()> {
             cmds::convert::Commands::Kmers(kmers_args) => {
                 cmds::convert::get_kmers_cmd(kmers_args);
             }
+            cmds::convert::Commands::Database(db_args) => {
+                cmds::convert::convert_database_cmd(db_args)?;
+            }
         },
         BuildDb(db_args) => {
             cmds::build_db::build_database_cmd(db_args, args.threads)?;
@@ -108,7 +111,7 @@ fn main() -> Result<()> {
         Place(place_args) => cmds::place_sequences::place_sequences_cmd(
             place_args,
             args.threads.unwrap_or(1),
-        ),
+        )?,
     }
 
     Ok(())

@@ -1,9 +1,12 @@
 mod context;
 
-use crate::models::{
-    config_file::ConfigFile,
-    execution_msg::ExecutionMsg,
-    reminder::{Reminder, ReminderSpan},
+use crate::{
+    dtos::telemetry_code::TelemetryCode,
+    models::{
+        config_file::ConfigFile,
+        execution_msg::ExecutionMsg,
+        reminder::{Reminder, ReminderSpan},
+    },
 };
 
 use anyhow::Result;
@@ -23,16 +26,17 @@ use apalis_core::{
 use async_std::task::sleep;
 use clap::Parser;
 use classeq_core::{
-    domain::dtos::{file_or_stdin::FileOrStdin, tree::Tree},
-    use_cases::place_sequences,
+    domain::dtos::file_or_stdin::FileOrStdin, use_cases::place_sequences,
 };
 use classeq_ports_lib::{
-    get_file_by_inode, BluAnalysisConfig, FileSystemConfig, ModelsConfig,
+    get_file_by_inode, load_database, BluAnalysisConfig, FileSystemConfig,
+    ModelsConfig,
 };
 use context::WorkerCtx;
 use rand::{thread_rng, Rng};
 use std::{path::PathBuf, str::FromStr, time::Duration};
-use tracing::{debug, error, info, warn, Instrument};
+use tracing::{debug, error, info, info_span, warn, Instrument};
+use uuid::Uuid;
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -145,6 +149,13 @@ async fn scan_directories_in_background(
     fs_config: Data<FileSystemConfig>,
     models_data: Data<ModelsConfig>,
 ) {
+    let span = info_span!(
+        "PlacingSequenceWatcher",
+        run_id = Uuid::new_v4().to_string().replace("-", "")
+    );
+
+    let _span_guard = span.enter();
+
     //
     // Scan public directory
     //
@@ -175,6 +186,12 @@ async fn scan_directories_in_background(
         })
         .into_iter()
     {
+        info!(
+            code = TelemetryCode::WTHLACE0001.to_string(),
+            "Processing the directory {path:?}",
+            path = path
+        );
+
         // ? -------------------------------------------------------------------
         // ? Load the analysis configuration file
         //
@@ -184,36 +201,50 @@ async fn scan_directories_in_background(
         //
         // ? -------------------------------------------------------------------
 
-        let blutils_config = match BluAnalysisConfig::from_yaml_file(&path) {
+        let cls_config = match BluAnalysisConfig::from_yaml_file(&path) {
             Ok(config_content) => config_content,
-            Err(e) => {
-                warn!("Failed to parse the configuration file: {e}");
+            Err(err) => {
+                let msg =
+                    format!("Failed to parse the configuration file: {err}");
+
+                warn!(code = TelemetryCode::WTHPLACE0003.to_string(), "{msg}");
+
+                if let Err(e) = ExecutionMsg::write_file(
+                    &path.join(fs_config.error_file_name.to_owned()),
+                    msg.as_str(),
+                ) {
+                    error!("Failed to parse the configuration file: {e}");
+                }
+
                 continue;
             }
         };
 
         // ? -------------------------------------------------------------------
-        // ? Load the target model
+        // ? Load the target database
         //
         // The target model confain information from the model to be used during
         // prediciotns.
         //
         // ? -------------------------------------------------------------------
 
-        let analysis_model = if let Some(model) = models_data
+        let database_config = if let Some(model) = models_data
             .get_models()
             .into_iter()
-            .find(|model| model.id == blutils_config.model_id)
+            .find(|model| model.id == cls_config.model_id)
         {
             model
         } else {
+            let msg = format!(
+                "Model with ID {id} not found",
+                id = cls_config.model_id
+            );
+
+            warn!(code = TelemetryCode::WTHPLACE0004.to_string(), "{msg}");
+
             if let Err(err) = ExecutionMsg::write_file(
                 &path.join(fs_config.error_file_name.to_owned()),
-                format!(
-                    "Model with ID {id} not found",
-                    id = blutils_config.model_id
-                )
-                .as_str(),
+                msg.as_str(),
             ) {
                 warn!("Failed to write the error file: {err}");
             };
@@ -229,8 +260,26 @@ async fn scan_directories_in_background(
         //
         // ? -------------------------------------------------------------------
 
-        let tree_model = Tree::from_yaml_file(&analysis_model.get_path())
-            .expect("Failed to read the tree file");
+        let tree_model = match load_database(database_config.get_path()) {
+            Ok(tree) => tree,
+            Err(e) => {
+                let msg = format!(
+                    "Failed to load the model with ID {id}: {e}",
+                    id = database_config.id
+                );
+
+                warn!(code = TelemetryCode::WTHPLACE0005.to_string(), "{msg}");
+
+                if let Err(err) = ExecutionMsg::write_file(
+                    &path.join(fs_config.error_file_name.to_owned()),
+                    msg.as_str(),
+                ) {
+                    warn!("Failed to write the error file: {err}");
+                };
+
+                continue;
+            }
+        };
 
         // ? -------------------------------------------------------------------
         // ? Load the Query file
@@ -243,23 +292,29 @@ async fn scan_directories_in_background(
             Some(parent) => {
                 let inode_file = get_file_by_inode(
                     parent.join(fs_config.input_directory.to_owned()),
-                    blutils_config.query_file_id,
+                    cls_config.query_file_id,
                 );
 
                 match inode_file {
                     Some(file) => (file, parent),
                     None => {
+                        let msg = format!(
+                            "Query file with inode {inode} not found",
+                            inode = cls_config.query_file_id
+                        );
+
+                        warn!(
+                            code = TelemetryCode::WTHPLACE0006.to_string(),
+                            "{msg}"
+                        );
+
                         if let Err(err) = ExecutionMsg::write_file(
                             &parent
                                 .to_owned()
                                 .join(fs_config.error_file_name.to_owned()),
-                            format!(
-                                "Query file with inode {inode} not found",
-                                inode = blutils_config.query_file_id
-                            )
-                            .as_str(),
+                            msg.as_str(),
                         ) {
-                            panic!("Failed to write the error file: {err}");
+                            error!("Failed to write the error file: {err}");
                         };
 
                         continue;
@@ -267,19 +322,22 @@ async fn scan_directories_in_background(
                 }
             }
             None => {
+                let msg = format!(
+                    "Unable to get the parent directory for {path:?}",
+                    path = path
+                );
+
+                warn!(code = TelemetryCode::WTHPLACE0006.to_string(), "{msg}");
+
                 if let Err(err) = ExecutionMsg::write_file(
                     &path
                         .parent()
                         .expect("Error getting the parent")
                         .to_owned()
                         .join(fs_config.error_file_name.to_owned()),
-                    format!(
-                        "Query file with inode {inode} not found",
-                        inode = blutils_config.query_file_id
-                    )
-                    .as_str(),
+                    msg.as_str(),
                 ) {
-                    panic!("Failed to write the error file: {err}");
+                    error!("Failed to write the error file: {err}");
                 };
 
                 continue;
@@ -293,28 +351,46 @@ async fn scan_directories_in_background(
         // ? Build the output file path
         // ? -------------------------------------------------------------------
 
-        let output_file = parent
-            .to_owned()
-            .join(fs_config.output_directory.to_owned().as_str())
-            .join(fs_config.results_file_name.to_owned().as_str());
+        let msg = format!(
+            "Processing the query file {query_file:?} with model {model_id:?}",
+            query_file = query_file_path.file_name().to_owned(),
+            model_id = database_config.id
+        );
+
+        info!(code = TelemetryCode::WTHPLACE0007.to_string(), "{msg}");
 
         if let Err(err) = ExecutionMsg::write_file(
             &parent
                 .to_owned()
                 .join(fs_config.running_file_name.to_owned()),
-            format!(
-                "Processing the query file {query_file:?} with model {model_id:?}",
-                query_file = query_file_path.file_name().to_owned(),
-                model_id = analysis_model.id
-            )
-            .as_str(),
+            msg.as_str(),
         ) {
-            panic!("Failed to write the error file: {err}");
+            let msg = format!(
+                "Failed to write the running file for the query file {query_file:?} with model {model_id:?}: {err}",
+                query_file = query_file_path.file_name().to_owned(),
+                model_id = database_config.id
+            );
+
+            warn!(code = TelemetryCode::WTHPLACE0007.to_string(), "{msg}");
+
+            if let Err(err) = ExecutionMsg::write_file(
+                &parent.to_owned().join(fs_config.error_file_name.to_owned()),
+                msg.as_str(),
+            ) {
+                error!("Failed to write the error file: {err}");
+            };
+
+            continue;
         };
 
         // ? -------------------------------------------------------------------
         // ? Place sequences
         // ? -------------------------------------------------------------------
+
+        let output_file = parent
+            .to_owned()
+            .join(fs_config.output_directory.to_owned().as_str())
+            .join(fs_config.results_file_name.to_owned().as_str());
 
         if let Err(err) = place_sequences(
             query_file,
@@ -323,21 +399,22 @@ async fn scan_directories_in_background(
             &None,
             &None,
             &true,
-            &blutils_config.output_format,
-            &blutils_config.remove_intersection,
+            &cls_config.output_format,
+            &cls_config.remove_intersection,
         ) {
+            let msg = format!(
+                "Failed to process the query file {query_file:?} with model {model_id:?}: {err}",
+                query_file = query_file_path.file_name().to_owned(),
+                model_id = database_config.id
+            );
+
+            warn!(code = TelemetryCode::WTHPLACE0008.to_string(), "{msg}");
+
             if let Err(err) = ExecutionMsg::write_file(
-                &parent
-                    .to_owned()
-                    .join(fs_config.error_file_name.to_owned()),
-                format!(
-                    "Failed to process the query file {query_file:?} with model {model_id:?}: {err}",
-                    query_file = query_file_path.file_name().to_owned(),
-                    model_id = analysis_model.id
-                )
-                .as_str(),
+                &parent.to_owned().join(fs_config.error_file_name.to_owned()),
+                msg.as_str(),
             ) {
-                panic!("Failed to write the error file: {err}");
+                error!("Failed to write the error file: {err}");
             };
 
             continue;
@@ -347,15 +424,37 @@ async fn scan_directories_in_background(
         // ? Write response
         // ? -------------------------------------------------------------------
 
+        let msg = format!(
+            "Query file {query_file:?} processed successfully",
+            query_file = query_file_path.file_name()
+        );
+
         if let Err(err) = ExecutionMsg::write_file(
             &parent.join(fs_config.success_file_name.to_owned()),
-            format!(
-                "Query file {query_file:?} processed successfully",
-                query_file = query_file_path.file_name()
-            )
-            .as_str(),
+            msg.as_str(),
         ) {
-            panic!("Failed to write the error file: {err}");
+            let msg = format!(
+                "Failed to write the success file for the query file {query_file:?}: {err}",
+                query_file = query_file_path.file_name(),
+                err = err
+            );
+
+            warn!(code = TelemetryCode::WTHPLACE0009.to_string(), "{msg}");
+
+            if let Err(err) = ExecutionMsg::write_file(
+                &parent.to_owned().join(fs_config.error_file_name.to_owned()),
+                msg.as_str(),
+            ) {
+                error!("Failed to write the error file: {err}");
+            };
+
+            continue;
         };
+
+        info!(
+            code = TelemetryCode::WTHPLACE0002.to_string(),
+            "Query file {query_file:?} processed successfully",
+            query_file = query_file_path.file_name()
+        );
     }
 }
