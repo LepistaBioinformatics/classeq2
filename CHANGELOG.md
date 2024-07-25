@@ -1,3 +1,16 @@
+## v0.6.0 (2024-07-25)
+
+### Feat
+
+- given the database format of classeq the describe-db function was implemented to allow users do inspect database without convert it to yaml format
+- optimize the database persistence and loading and implements the telemetry to the watcher module
+- do implement the zstandard compression to classeq database
+
+### Refactor
+
+- move the crate import to the top in describe-db command
+- remove unused telemetry import to the execution message struct
+
 ## v0.5.1 (2024-07-24)
 
 ### Refactor
