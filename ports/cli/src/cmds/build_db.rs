@@ -1,6 +1,7 @@
+use anyhow::Result;
 use clap::Parser;
 use classeq_core::use_cases::map_kmers_to_tree;
-use std::path::PathBuf;
+use std::{fs::File, path::PathBuf};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -39,7 +40,10 @@ pub(crate) struct Arguments {
     pub(super) min_branch_support: Option<f64>,
 }
 
-pub(crate) fn build_database_cmd(args: Arguments, threads: Option<usize>) {
+pub(crate) fn build_database_cmd(
+    args: Arguments,
+    threads: Option<usize>,
+) -> Result<()> {
     // ? -----------------------------------------------------------------------
     // ? Create a thread pool configured globally
     // ? -----------------------------------------------------------------------
@@ -51,30 +55,23 @@ pub(crate) fn build_database_cmd(args: Arguments, threads: Option<usize>) {
         panic!("Error creating thread pool: {err}");
     };
 
-    match map_kmers_to_tree(
+    let tree = map_kmers_to_tree(
         args.tree_file_path,
         args.msa_file_path,
         args.k_size,
         args.m_size,
         args.min_branch_support,
-    ) {
-        Ok(tree) => {
-            let content = match serde_yaml::to_string(&tree) {
-                Err(err) => {
-                    eprintln!("Error: {}", err);
-                    return;
-                }
-                Ok(content) => content,
-            };
+    )?;
 
-            match args.output_file_path {
-                Some(path) => match std::fs::write(path, content) {
-                    Ok(_) => (),
-                    Err(err) => eprintln!("Error: {}", err),
-                },
-                None => println!("{}", content),
-            }
-        }
-        Err(err) => eprintln!("Error: {}", err),
-    }
+    let mut output_file_path = args
+        .output_file_path
+        .unwrap_or_else(|| PathBuf::from("output.yaml.zstd"));
+
+    output_file_path.set_extension("yaml.zstd");
+
+    let writer = File::create(output_file_path)?;
+    let writer = zstd::Encoder::new(writer, 0)?.auto_finish();
+    serde_yaml::to_writer(writer, &tree)?;
+
+    Ok(())
 }

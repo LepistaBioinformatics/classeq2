@@ -3,6 +3,7 @@ mod dtos;
 
 use self::Opts::*;
 
+use anyhow::Result;
 use clap::Subcommand;
 use classeq_ports_lib::{expose_runtime_arguments, CliLauncher, LogFormat};
 use std::{path::PathBuf, str::FromStr};
@@ -21,7 +22,7 @@ enum Opts {
     Place(cmds::place_sequences::Arguments),
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = CliLauncher::<Opts>::parse();
 
     // ? -----------------------------------------------------------------------
@@ -102,11 +103,13 @@ fn main() {
             }
         },
         BuildDb(db_args) => {
-            cmds::build_db::build_database_cmd(db_args, args.threads)
+            cmds::build_db::build_database_cmd(db_args, args.threads)?;
         }
         Place(place_args) => cmds::place_sequences::place_sequences_cmd(
             place_args,
             args.threads.unwrap_or(1),
         ),
     }
+
+    Ok(())
 }

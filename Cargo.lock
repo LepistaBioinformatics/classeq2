@@ -1028,6 +1028,7 @@ dependencies = [
 name = "classeq-cli"
 version = "0.5.1"
 dependencies = [
+ "anyhow",
  "clap",
  "classeq-core",
  "classeq-ports-lib",
@@ -1039,6 +1040,7 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "uuid",
+ "zstd",
 ]
 
 [[package]]
