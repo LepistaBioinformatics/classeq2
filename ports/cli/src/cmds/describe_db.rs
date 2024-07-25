@@ -1,9 +1,9 @@
+use crate::dtos::output_format::DatabaseDescriptionOutputFormat;
+
 use anyhow::Result;
 use clap::Parser;
 use classeq_ports_lib::load_database;
 use std::{collections::HashMap, path::PathBuf};
-
-use crate::dtos::output_format::DatabaseDescriptionOutputFormat;
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
