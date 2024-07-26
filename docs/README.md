@@ -1,6 +1,6 @@
 # Table of Contents
 
-[◀️ Home](/README.md)
+[🏠 Home](/README.md)
 
 ___
 
@@ -11,8 +11,13 @@ Classeq is a alignment-free phylogenetic placer of sequences. Our tool perform
 the placement process based on the k-mer composition of the sequences. The
 placement is done using a reference tree and a set of sequences to be placed.
 
-- [Installation](./book/01-installation.md)
-- [Build Database](./book/02-build-db.md)
-- [Place Sequences with CLI](./book/03-place-sequence-cli.md)
-- [Configure the API server](./book/04-configure-api-server.md)
-- [Place Sequences using the API](./book/05-submit-placement-to-api.md)
+The placement process should be done from the command line interface (CLI) or
+using the application programming interface (API) server. The CLI is the primary
+way to use the tool, but the API server can be used to place sequences in a
+distributed way.
+
+- [01. Installation](/docs/book/01-installation.md)
+- [02. Build Database](/docs/book/02-build-db.md)
+- [03. Place Sequences with CLI](/docs/book/03-place-sequence-cli.md)
+- [04. Configure the API server](/docs/book/04-configure-api-server.md)
+- [05. Place Sequences using the API](/docs/book/05-submit-placement-to-api.md)

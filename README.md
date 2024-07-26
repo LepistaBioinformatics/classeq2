@@ -14,4 +14,4 @@ The Classeq book contains the documentation of the tool, including installation,
 usage, and API documentation. This book is a work in progress, and we are
 constantly updating it.
 
-[▶️ 📚 Book](./docs/README.md)
+[▶️ 📚 Book](/docs/README.md)

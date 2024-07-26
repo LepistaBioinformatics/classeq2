@@ -29,14 +29,15 @@ pub(crate) struct Arguments {
 
     /// Output file path
     ///
-    /// The file will be saved in ZSTD or YAML format.
+    /// If not provided, the output will be saved in the current directory with
+    /// the name `classeq-database.cls`.
     #[arg(short, long)]
     pub(super) output_file_path: Option<PathBuf>,
 
     /// Minimum branch support
     ///
     /// The minimum branch support value to consider a branch in the tree.
-    #[arg(long, default_value = "70")]
+    #[arg(short = 's', long, default_value = "70")]
     pub(super) min_branch_support: Option<f64>,
 }
 
