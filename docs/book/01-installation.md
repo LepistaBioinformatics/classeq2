@@ -12,7 +12,7 @@
 > you are using Windows or MacOS. Therefore, be free to test the software in
 > other environments, but we can't guarantee that it will work as expected.
 
-## Using Cargo
+## 1.1 Using Cargo
 
 Classeq works primarily as a command-line tool. To install it, you need to have
 Rust installed on your machine. If you don't have Rust installed, you can
@@ -31,7 +31,7 @@ configuration and usage are described in the [Configure the API
 server](./04-configure-api-server.md) and [Place Sequences using the
 API](./05-submit-placement-to-api.md) sections.
 
-## Using Docker
+## 1.2 Using Docker
 
 If you prefer to use Docker, you can pull the official Classeq image from Docker
 Hub:
