@@ -8,6 +8,7 @@
         "clades",
         "classeq",
         "cmds",
+        "dtos",
         "fasta",
         "hashset",
         "iupac",
@@ -19,6 +20,7 @@
         "phylotre",
         "phylotree",
         "Taxid",
+        "UCPLACE",
         "walkdir"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false,

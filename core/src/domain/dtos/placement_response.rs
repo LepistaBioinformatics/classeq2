@@ -9,7 +9,7 @@ use std::fmt::Debug;
 pub enum PlacementStatus {
     /// The query sequence may does not belong to the reference tree
     ///
-    Unclassifiable,
+    Unclassifiable(String),
 
     /// The query sequence was successfully placed on the reference tree with an
     /// absolute match
@@ -21,11 +21,6 @@ pub enum PlacementStatus {
     ///
     MaxResolutionReached(u64, String),
 
-    /// An internal status used to indicate the search loop to go to the next
-    /// clade
-    ///
-    //NextIteration(i32),
-
     /// The search was inconclusive, with more than one clade having the same
     /// maximum resolution
     ///
@@ -35,7 +30,7 @@ pub enum PlacementStatus {
 impl ToString for PlacementStatus {
     fn to_string(&self) -> String {
         match self {
-            Unclassifiable => "Unclassifiable".to_string(),
+            Unclassifiable(msg) => format!("Unclassifiable: {msg}"),
             IdentityFound(_) => "IdentityFound".to_string(),
             MaxResolutionReached(_, msg) => {
                 format!("MaxResolutionReached: {msg}")

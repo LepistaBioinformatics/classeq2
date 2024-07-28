@@ -157,7 +157,7 @@ pub fn place_sequences(
                         sequence.header_content().to_string(),
                         placement.to_string(),
                         match placement {
-                            PlacementStatus::Unclassifiable => None,
+                            PlacementStatus::Unclassifiable(_) => None,
                             other => Some(other),
                         },
                     );

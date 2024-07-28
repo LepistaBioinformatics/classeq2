@@ -2,7 +2,7 @@
 
 [🏠 Home](/README.md)
 
-[◀️ Docs](/docs/README.md)
+[📋 Summary](/docs/README.md)
 
 ---
 
@@ -102,6 +102,105 @@ command can be used as follows:
 cls describe-db \ 
     cls-database-name.cls
 ```
+
+The database description contains the following information:
+
+```yaml
+# The unique identifier of the database
+ID: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
+# The name of tree file used to build the database
+Name: bsub-rootedmid.nwk
+# The lowest branch support used to sanitize the tree
+MinBranchSupport: '70'
+# The database size when stored in memory
+InMemorySizeMb: '0.000192'
+# The k-mer size
+KmerSize: '35'
+# The total number of k-mers in the database
+kmerCount: '101542'
+# The minimizer size
+MinimizerSize: '4'
+# The total number of minimizers in the database
+MinimizerCount: '256'
+# The number of kmers contained at the largest minimizer
+LargestMinimizer: '1082'
+# The number of kmers contained at the smallest minimizer
+SmallestMinimizer: '86'
+# The average number of kmers contained at the minimizers
+MinimizerAvgKmers: '396'
+```
+
+## 2.4 Output format
+
+The default artifact format of the database is a binary file with the `.cls`.
+Such a file is a compressed file using the Zstandard algorithm. However, whe
+converted to a default format, the database is a standard YAML file. The YAML
+file contains the following information:
+
+```yaml
+# The unique identifier of the database
+id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
+# The name of tree file used to build the database
+name: bsub-rootedmid.nwk
+# The lowest branch support used to sanitize the tree
+minBranchSupport: 70.0
+# The database size when stored in memory
+inMemorySize: 0.000192 Mb
+# The sanitized tree in a yaml format
+root:
+  id: 0
+  kind: ROOT
+  length: 0.0
+  children:
+  - id: 1
+    kind: NODE
+    support: 100.0
+    length: 0.197182
+    children:
+    - id: 2
+      kind: NODE
+      support: 100.0
+      length: 0.0442934
+      children:
+      - id: 3
+        name: NZ_AOFM01000009_Bacillus_sonorensis_L12_contig9
+        kind: LEAF
+        length: 1e-6
+      - id: 4
+        name: _R_NZ_QRLM01000005_Bacillus_sonorensis_strain_AM1257B
+        kind: LEAF
+        length: 0.000619744
+# The kmers map in a yaml format
+kmersMap:
+  # The kmer size
+  kSize: 35
+  # The minimizer size
+  mSize: 4
+  # The kmers map itself
+  map:
+    # A minimizer
+    10631256518523097406:
+      # A hashed kmer
+      15277858258350234285:
+      # A tree node id
+      - 0
+      - 65
+      - ...
+      16738842834674266113:
+      - 0
+      - 78
+      - ...
+    10517626403121597142:
+      13045666331085307167:
+      - 0
+      - 310
+      - ...
+```
+
+The most important parts of the database are the `root` and `kmersMap` fields.
+The `root` field contains the sanitized reference tree in a YAML format. The
+`kmersMap` field include all mapped minimizers and kmers from the reference
+tree, used during predictions.
 
 ---
 

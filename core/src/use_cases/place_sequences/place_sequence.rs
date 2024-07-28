@@ -142,12 +142,10 @@ pub(super) fn place_sequence(
         .get_minimized_hashes_with_node(tree.root.id)
     {
         None => {
-            trace!(
-                code = TelemetryCode::UCPLACE0011.to_string(),
-                "Query sequence has no overlapping kmers with the root node",
-            );
-
-            return Ok(Unclassifiable);
+            let msg = "Query sequence has no overlapping kmers with the \
+                reference tree";
+            trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
+            return Ok(Unclassifiable(msg.to_string()));
         }
         Some(kmers) => query_kmers_map.get_overlapping_minimized_hashes(kmers),
     };
@@ -228,20 +226,19 @@ pub(super) fn place_sequence(
         expected = expected_min_clade_coverage
     );
 
-    let introspection_coverate = introspection_kmers
+    let introspection_coverage = introspection_kmers
         .get_map()
         .into_par_iter()
         .map(|i| i.1 .0.len())
         .sum::<usize>();
 
-    if introspection_coverate < expected_min_clade_coverage as usize {
-        trace!(
-            code = TelemetryCode::UCPLACE0011.to_string(),
-            "Insuficient kmers coverage {len}",
-            len = introspection_coverate
-        );
+    if introspection_coverage < expected_min_clade_coverage as usize {
+        let msg =
+            format!("Insufficient kmers coverage: {}", introspection_coverage);
 
-        return Ok(Unclassifiable);
+        trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
+
+        return Ok(Unclassifiable(msg));
     }
 
     // ? -----------------------------------------------------------------------
@@ -250,7 +247,7 @@ pub(super) fn place_sequence(
     // Each iteration of the loop is a new introspection level. During the
     // search loop the algorithm try to place the sequence into a one or more
     // clades. Case the search loop reach the maximum number of iterations, the
-    // search is considered maxed out and this funcion should return a
+    // search is considered maxed out and this function should return a
     // `use_case_err`.
     //
     // SYMBOLS:
@@ -293,7 +290,7 @@ pub(super) fn place_sequence(
         //
         // ? -------------------------------------------------------------------
         let clade_proposals = {
-            let children_lenghts_time = std::time::Instant::now();
+            let children_lengths_time = std::time::Instant::now();
 
             //
             // Aggregate children kmer lengths. This action is necessary to
@@ -320,9 +317,9 @@ pub(super) fn place_sequence(
 
             trace!(
                 code = TelemetryCode::UCPLACE0012.to_string(),
-                "Level clades (runtime {time}): {lenghts}",
-                time = format!("{:?}", children_lenghts_time.elapsed()),
-                lenghts = children_kmers
+                "Level clades (runtime {time}): {lengths}",
+                time = format!("{:?}", children_lengths_time.elapsed()),
+                lengths = children_kmers
                     .to_owned()
                     .iter()
                     .map(|(kmers, clade)| {
@@ -332,7 +329,7 @@ pub(super) fn place_sequence(
                     .join(", ")
             );
 
-            let clde_proposals_time = std::time::Instant::now();
+            let clade_proposals_time = std::time::Instant::now();
 
             let clade_proposals = children_kmers
                 .to_owned()
@@ -410,7 +407,7 @@ pub(super) fn place_sequence(
             trace!(
                 code = TelemetryCode::UCPLACE0014.to_string(),
                 "Available proposals (runtime {time}): {proposals}",
-                time = format!("{:?}", clde_proposals_time.elapsed()),
+                time = format!("{:?}", clade_proposals_time.elapsed()),
                 proposals = clade_proposals.len()
             );
 
@@ -435,13 +432,11 @@ pub(super) fn place_sequence(
             // ? ---------------------------------------------------------------
             if clade_proposals.is_empty() {
                 if iteration == 1 {
-                    trace!(
-                        code = TelemetryCode::UCPLACE0011.to_string(),
-                        "Insuficient kmers coverage {len}",
-                        len = introspection_coverate
-                    );
-
-                    return Ok(Unclassifiable);
+                    let msg = "Tree introspection not possible. Query \
+                        sequence has no overlapping kmers with the reference \
+                        tree";
+                    trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
+                    return Ok(Unclassifiable(msg.to_string()));
                 }
 
                 trace!(
@@ -469,8 +464,10 @@ pub(super) fn place_sequence(
                     Some(adherence) => adherence.to_owned(),
                     None => {
                         return use_case_err(
-                            "The filtered proposals list is empty. This is unexpected."
-                        ).as_error();
+                            "The filtered proposals list is empty. This is \
+                            unexpected.",
+                        )
+                        .as_error();
                     }
                 };
 
@@ -533,7 +530,8 @@ pub(super) fn place_sequence(
                         Some(adherence) => adherence,
                         None => {
                             return use_case_err(
-                                "The filtered proposals list is empty. This is unexpected."
+                                "The filtered proposals list is empty. This is \
+                                unexpected."
                             ).as_error();
                         }
                     };

@@ -51,12 +51,6 @@ pub(crate) fn describe_database_cmd(args: Arguments) -> Result<()> {
             "kmerCount",
             minimized_kmers.to_owned().sum::<usize>().to_string(),
         );
-        stats.insert(
-            "kmerAvgKmers",
-            (minimized_kmers.to_owned().sum::<usize>()
-                / kmers_map.get_map().len())
-            .to_string(),
-        );
 
         stats.insert(
             "MinimizerSize",

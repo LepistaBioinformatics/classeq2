@@ -2,7 +2,7 @@
 
 [🏠 Home](/README.md)
 
-[◀️ Docs](/docs/README.md)
+[📋 Summary](/docs/README.md)
 
 ---
 
