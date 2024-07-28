@@ -93,10 +93,14 @@ placement:
       kind: NODE
       support: 89.0
       length: 0.0377908
+      children:
+      ...
     - id: 97
       kind: NODE
       support: 88.0
       length: 0.00273586
+      children:
+      ...
 
 # Example of Unclassifiable sequence
 #

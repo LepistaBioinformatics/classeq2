@@ -121,22 +121,14 @@ pub(super) fn place_sequence(
     );
 
     // ? -----------------------------------------------------------------------
-    // ? Try to place the sequence
-    //
-    // Recursive function to traverse the tree and try to place the query
-    // sequence using the overlapping kmers.
-    //
-    // ? -----------------------------------------------------------------------
-
-    let time = std::time::Instant::now();
-
-    // ? -----------------------------------------------------------------------
     // ? Build the root kmers map
     //
     // The root kmers map is built using the kmers from the root node. This map
     // is used to evaluate the adherence of the query sequence to the root node.
     //
     // ? -----------------------------------------------------------------------
+
+    let time = std::time::Instant::now();
 
     let introspection_kmers = match query_kmers_map
         .get_minimized_hashes_with_node(tree.root.id)
@@ -200,6 +192,8 @@ pub(super) fn place_sequence(
     // The clade object is used to store the current clade as a parent being
     // evaluated. The symbol 🍁 indicate wether this object is updated.
     //
+    // ? -----------------------------------------------------------------------
+
     let mut parent = tree.root.to_owned();
 
     Span::current()
