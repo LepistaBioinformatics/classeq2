@@ -4,7 +4,6 @@
 
 ___
 
-
 ## Introduction
 
 Classeq is a alignment-free phylogenetic placer of sequences. Our tool perform
@@ -21,4 +20,4 @@ distributed way.
 - [</> 03. Place Sequences with CLI](/docs/book/03-place-sequence-cli.md)
 - [🔧 04. Configure the API server](/docs/book/04-configure-api-server.md)
 - [🔗 05. Place Sequences using the API](/docs/book/05-submit-placement-to-api.md)
-- [🕒 06. Benchmarking Classeq](/docs/book/06-benchmark.md)
+- [🕒 06. Telemetry and Benchmarking Classeq](/docs/book/06-telemetry-and-benchmark.md)
