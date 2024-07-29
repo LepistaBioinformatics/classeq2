@@ -35,4 +35,7 @@ pub struct FileSystemConfig {
     /// The name of the lock file generated to indicate the analysis is in
     /// error.
     pub error_file_name: String,
+
+    /// The name of the lock file generated to store logging information.
+    pub logging_file_name: String,
 }

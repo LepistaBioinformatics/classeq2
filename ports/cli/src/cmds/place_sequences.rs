@@ -104,6 +104,7 @@ pub(crate) fn place_sequences_cmd(
             &args.force_overwrite,
             &args.out_format,
             &args.remove_intersection,
+            &Some(&span),
         ) {
             Ok(buffer) => buffer,
             Err(err) => panic!("{err}"),

@@ -21,7 +21,8 @@
         "phylotree",
         "Taxid",
         "UCPLACE",
-        "walkdir"
+        "walkdir",
+        "WTHPLACE"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false,
     "rust-analyzer.linkedProjects": [

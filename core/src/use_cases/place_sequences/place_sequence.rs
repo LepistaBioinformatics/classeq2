@@ -20,7 +20,7 @@ use rayon::iter::{
     ParallelIterator,
 };
 use std::collections::{HashMap, HashSet};
-use tracing::{debug_span, info, trace, Span};
+use tracing::{debug_span, info, trace, trace_span, Span};
 
 /// Place a sequence in the tree.
 ///
@@ -45,7 +45,21 @@ pub(super) fn place_sequence(
     max_iterations: &Option<i32>,
     min_match_coverage: &Option<f64>,
     remove_intersection: &Option<bool>,
+    parent_span: &Option<&tracing::Span>,
 ) -> Result<PlacementStatus, MappedErrors> {
+    // ? -----------------------------------------------------------------------
+    // ? Configure the logging span
+    // ? -----------------------------------------------------------------------
+
+    if let Some(span) = parent_span {
+        let span = trace_span!(parent: span.to_owned(), "PlaceSingleSequences");
+        let _span_guard = span.enter();
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? Start placement
+    // ? -----------------------------------------------------------------------
+
     let remove_intersection = remove_intersection.unwrap_or(false);
     let max_iterations = max_iterations.unwrap_or(1000);
 
@@ -617,6 +631,7 @@ mod tests {
         match place_sequence(
             &query_sequence.sequence().to_owned(),
             &tree,
+            &None,
             &None,
             &None,
             &None,

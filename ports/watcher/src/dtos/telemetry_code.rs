@@ -7,7 +7,7 @@ pub(crate) enum TelemetryCode {
     /// The placement is running
     ///
     /// The placement is running and the results are not available yet.
-    WTHLACE0001,
+    WTHPLACE0001,
 
     /// The placement is finished
     ///
@@ -43,11 +43,6 @@ pub(crate) enum TelemetryCode {
     ///
     /// Messages related to the placement run.
     WTHPLACE0008,
-
-    /// Placement finished
-    ///
-    /// Messages related to the placement finished.
-    WTHPLACE0009,
 }
 
 impl Display for TelemetryCode {

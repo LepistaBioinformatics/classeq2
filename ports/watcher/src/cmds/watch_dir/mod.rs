@@ -1,7 +1,10 @@
 mod context;
 
 use crate::{
-    dtos::telemetry_code::TelemetryCode,
+    dtos::{
+        log_writer::VectorWriter, placement_result::PlacementResult,
+        telemetry_code::TelemetryCode,
+    },
     models::{
         config_file::ConfigFile,
         execution_msg::ExecutionMsg,
@@ -35,7 +38,11 @@ use classeq_ports_lib::{
 use context::WorkerCtx;
 use rand::{thread_rng, Rng};
 use std::{path::PathBuf, str::FromStr, time::Duration};
-use tracing::{debug, error, info, info_span, warn, Instrument};
+use tracing::{
+    debug, error, info, info_span, subscriber::with_default, warn, Instrument,
+    Level,
+};
+use tracing_subscriber::fmt;
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -149,13 +156,6 @@ async fn scan_directories_in_background(
     fs_config: Data<FileSystemConfig>,
     models_data: Data<ModelsConfig>,
 ) {
-    let span = info_span!(
-        "PlacingSequenceWatcher",
-        run_id = Uuid::new_v4().to_string().replace("-", "")
-    );
-
-    let _span_guard = span.enter();
-
     //
     // Scan public directory
     //
@@ -186,275 +186,306 @@ async fn scan_directories_in_background(
         })
         .into_iter()
     {
+        let span = info_span!(
+            "PlacingSequenceWatcher",
+            run_id = Uuid::new_v4().to_string().replace("-", "")
+        );
+
+        let _span_guard = span.enter();
+
         info!(
-            code = TelemetryCode::WTHLACE0001.to_string(),
+            code = TelemetryCode::WTHPLACE0001.to_string(),
             "Processing the directory {path:?}",
             path = path
         );
 
-        // ? -------------------------------------------------------------------
-        // ? Load the analysis configuration file
-        //
-        // Directories returned during the scan are expected to contain an
-        // analysis configuration file. Analysis configuration file contain the
-        // model ID and the query file ID to perform the analysis.
-        //
-        // ? -------------------------------------------------------------------
+        let writer = VectorWriter::new();
+        let (non_blocking, _guard) =
+            tracing_appender::non_blocking(writer.to_owned());
 
-        let cls_config = match BluAnalysisConfig::from_yaml_file(&path) {
-            Ok(config_content) => config_content,
+        let subscriber = fmt::Subscriber::builder()
+            .with_max_level(Level::TRACE)
+            .with_writer(non_blocking.to_owned()) // Usa o appender como writer
+            .json()
+            .finish();
+
+        let response = with_default(subscriber, || {
+            do_placement(path.to_owned(), &fs_config, &models_data, &span)
+        });
+
+        let writer = writer.get_buffer();
+
+        let lock_writer = match writer.lock() {
+            Ok(writer) => writer.to_owned(),
             Err(err) => {
-                let msg =
-                    format!("Failed to parse the configuration file: {err}");
+                error!("Failed to lock the writer: {err}");
+                return;
+            }
+        };
 
-                warn!(code = TelemetryCode::WTHPLACE0003.to_string(), "{msg}");
+        match response {
+            PlacementResult::Success((msg, parent)) => {
+                info!(
+                    code = TelemetryCode::WTHPLACE0002.to_string(),
+                    "Placement processed successfully",
+                );
 
-                if let Err(e) = ExecutionMsg::write_file(
-                    &path.join(fs_config.error_file_name.to_owned()),
-                    msg.as_str(),
+                //
+                // Persist the analysis logging to file
+                //
+                if let Err(err) = ExecutionMsg::write_file(
+                    &parent.join(fs_config.logging_file_name.to_owned()),
+                    String::from_utf8(lock_writer)
+                        .unwrap_or(msg.to_owned())
+                        .as_str(),
+                    Some(true),
                 ) {
-                    error!("Failed to parse the configuration file: {e}");
+                    error!("Failed to write the logging file: {err}");
                 }
 
-                continue;
-            }
-        };
-
-        // ? -------------------------------------------------------------------
-        // ? Load the target database
-        //
-        // The target model confain information from the model to be used during
-        // prediciotns.
-        //
-        // ? -------------------------------------------------------------------
-
-        let database_config = if let Some(model) = models_data
-            .get_models()
-            .into_iter()
-            .find(|model| model.id == cls_config.model_id)
-        {
-            model
-        } else {
-            let msg = format!(
-                "Model with ID {id} not found",
-                id = cls_config.model_id
-            );
-
-            warn!(code = TelemetryCode::WTHPLACE0004.to_string(), "{msg}");
-
-            if let Err(err) = ExecutionMsg::write_file(
-                &path.join(fs_config.error_file_name.to_owned()),
-                msg.as_str(),
-            ) {
-                warn!("Failed to write the error file: {err}");
-            };
-
-            continue;
-        };
-
-        // ? -------------------------------------------------------------------
-        // ? Load the model artifacts
-        //
-        // The model artifact is a Tree struct containning the model used for
-        // predictions.
-        //
-        // ? -------------------------------------------------------------------
-
-        let tree_model = match load_database(database_config.get_path()) {
-            Ok(tree) => tree,
-            Err(e) => {
-                let msg = format!(
-                    "Failed to load the model with ID {id}: {e}",
-                    id = database_config.id
-                );
-
-                warn!(code = TelemetryCode::WTHPLACE0005.to_string(), "{msg}");
-
+                //
+                // Persist the analysis success file
+                //
                 if let Err(err) = ExecutionMsg::write_file(
-                    &path.join(fs_config.error_file_name.to_owned()),
+                    &parent.join(fs_config.success_file_name.to_owned()),
                     msg.as_str(),
+                    None,
                 ) {
-                    warn!("Failed to write the error file: {err}");
-                };
-
-                continue;
-            }
-        };
-
-        // ? -------------------------------------------------------------------
-        // ? Load the Query file
-        //
-        // The query file is a file containing the sequences to be processed.
-        //
-        // ? -------------------------------------------------------------------
-
-        let (query_file_path, parent) = match path.parent() {
-            Some(parent) => {
-                let inode_file = get_file_by_inode(
-                    parent.join(fs_config.input_directory.to_owned()),
-                    cls_config.query_file_id,
-                );
-
-                match inode_file {
-                    Some(file) => (file, parent),
-                    None => {
-                        let msg = format!(
-                            "Query file with inode {inode} not found",
-                            inode = cls_config.query_file_id
-                        );
-
-                        warn!(
-                            code = TelemetryCode::WTHPLACE0006.to_string(),
-                            "{msg}"
-                        );
-
-                        if let Err(err) = ExecutionMsg::write_file(
-                            &parent
-                                .to_owned()
-                                .join(fs_config.error_file_name.to_owned()),
-                            msg.as_str(),
-                        ) {
-                            error!("Failed to write the error file: {err}");
-                        };
-
-                        continue;
-                    }
+                    error!("Failed to write the success file: {err}");
                 }
             }
-            None => {
-                let msg = format!(
-                    "Unable to get the parent directory for {path:?}",
-                    path = path
-                );
-
-                warn!(code = TelemetryCode::WTHPLACE0006.to_string(), "{msg}");
-
-                if let Err(err) = ExecutionMsg::write_file(
-                    &path
+            PlacementResult::Error((msg, parent)) => {
+                let default_path = PathBuf::new();
+                let parent = parent.unwrap_or(
+                    path.as_path()
                         .parent()
-                        .expect("Error getting the parent")
+                        .unwrap_or(&default_path)
+                        .to_path_buf(),
+                );
+
+                //
+                // Persist the analysis logging to file
+                //
+                if let Err(err) = ExecutionMsg::write_file(
+                    &parent.join(fs_config.logging_file_name.to_owned()),
+                    String::from_utf8(lock_writer)
+                        .unwrap_or(msg.to_owned())
+                        .as_str(),
+                    Some(true),
+                ) {
+                    error!("Failed to write the logging file: {err}");
+                }
+
+                //
+                // Persist the analysis error file
+                //
+                if let Err(err) = ExecutionMsg::write_file(
+                    &parent
                         .to_owned()
                         .join(fs_config.error_file_name.to_owned()),
                     msg.as_str(),
+                    None,
                 ) {
                     error!("Failed to write the error file: {err}");
                 };
-
-                continue;
             }
-        };
+        }
+    }
+}
 
-        let query_file =
-            FileOrStdin::from_file(&query_file_path.to_str().unwrap());
+#[tracing::instrument(name = "DoPlacement", skip_all)]
+fn do_placement(
+    path: PathBuf,
+    fs_config: &FileSystemConfig,
+    models_data: &ModelsConfig,
+    span: &tracing::Span,
+) -> PlacementResult<(String, PathBuf), (String, Option<PathBuf>)> {
+    // ? -----------------------------------------------------------------------
+    // ? Load the analysis configuration file
+    //
+    // Directories returned during the scan are expected to contain an analysis
+    // configuration file. Analysis configuration file contain the model ID and
+    // the query file ID to perform the analysis.
+    //
+    // ? -----------------------------------------------------------------------
 
-        // ? -------------------------------------------------------------------
-        // ? Build the output file path
-        // ? -------------------------------------------------------------------
+    let cls_config = match BluAnalysisConfig::from_yaml_file(&path) {
+        Ok(config_content) => config_content,
+        Err(err) => {
+            let msg = format!("Failed to parse the configuration file: {err}");
 
-        let msg = format!(
-            "Processing the query file {query_file:?} with model {model_id:?}",
-            query_file = query_file_path.file_name().to_owned(),
-            model_id = database_config.id
-        );
+            warn!(code = TelemetryCode::WTHPLACE0003.to_string(), "{msg}");
 
-        info!(code = TelemetryCode::WTHPLACE0007.to_string(), "{msg}");
+            return PlacementResult::Error((msg, None));
+        }
+    };
 
-        if let Err(err) = ExecutionMsg::write_file(
-            &parent
-                .to_owned()
-                .join(fs_config.running_file_name.to_owned()),
-            msg.as_str(),
-        ) {
+    // ? -----------------------------------------------------------------------
+    // ? Load the target database
+    //
+    // The target model contain information from the model to be used during
+    // predictions.
+    //
+    // ? -----------------------------------------------------------------------
+
+    let database_config = if let Some(model) = models_data
+        .get_models()
+        .into_iter()
+        .find(|model| model.id == cls_config.model_id)
+    {
+        model
+    } else {
+        let msg =
+            format!("Model with ID {id} not found", id = cls_config.model_id);
+
+        warn!(code = TelemetryCode::WTHPLACE0004.to_string(), "{msg}");
+
+        return PlacementResult::Error((msg, None));
+    };
+
+    // ? -----------------------------------------------------------------------
+    // ? Load the model artifacts
+    //
+    // The model artifact is a Tree struct containing the model used for
+    // predictions.
+    //
+    // ? -----------------------------------------------------------------------
+
+    let tree_model = match load_database(database_config.get_path()) {
+        Ok(tree) => tree,
+        Err(e) => {
             let msg = format!(
+                "Failed to load the model with ID {id}: {e}",
+                id = database_config.id
+            );
+
+            warn!(code = TelemetryCode::WTHPLACE0005.to_string(), "{msg}");
+
+            return PlacementResult::Error((msg, None));
+        }
+    };
+
+    // ? -----------------------------------------------------------------------
+    // ? Load the Query file
+    //
+    // The query file is a file containing the sequences to be processed.
+    //
+    // ? -----------------------------------------------------------------------
+
+    let (query_file_path, parent) = match path.parent() {
+        Some(parent) => {
+            let inode_file = get_file_by_inode(
+                parent.join(fs_config.input_directory.to_owned()),
+                cls_config.query_file_id,
+            );
+
+            match inode_file {
+                Some(file) => (file, parent),
+                None => {
+                    let msg = format!(
+                        "Query file with inode {inode} not found",
+                        inode = cls_config.query_file_id
+                    );
+
+                    warn!(
+                        code = TelemetryCode::WTHPLACE0006.to_string(),
+                        "{msg}"
+                    );
+
+                    return PlacementResult::Error((msg, None));
+                }
+            }
+        }
+        None => {
+            let msg = format!(
+                "Unable to get the parent directory for {path:?}",
+                path = path
+            );
+
+            warn!(code = TelemetryCode::WTHPLACE0006.to_string(), "{msg}");
+
+            return PlacementResult::Error((msg, None));
+        }
+    };
+
+    let query_file = FileOrStdin::from_file(&query_file_path.to_str().unwrap());
+
+    // ? -----------------------------------------------------------------------
+    // ? Build the output file path
+    // ? -----------------------------------------------------------------------
+
+    let msg = format!(
+        "Processing the query file {query_file:?} with model {model_id:?}",
+        query_file = match query_file_path.file_name() {
+            Some(file) => file.to_str().unwrap(),
+            None => "Unknown",
+        },
+        model_id = database_config.id
+    );
+
+    info!(code = TelemetryCode::WTHPLACE0007.to_string(), "{msg}");
+
+    if let Err(err) = ExecutionMsg::write_file(
+        &parent
+            .to_owned()
+            .join(fs_config.running_file_name.to_owned()),
+        msg.as_str(),
+        None,
+    ) {
+        let msg = format!(
                 "Failed to write the running file for the query file {query_file:?} with model {model_id:?}: {err}",
                 query_file = query_file_path.file_name().to_owned(),
                 model_id = database_config.id
             );
 
-            warn!(code = TelemetryCode::WTHPLACE0007.to_string(), "{msg}");
+        warn!(code = TelemetryCode::WTHPLACE0007.to_string(), "{msg}");
 
-            if let Err(err) = ExecutionMsg::write_file(
-                &parent.to_owned().join(fs_config.error_file_name.to_owned()),
-                msg.as_str(),
-            ) {
-                error!("Failed to write the error file: {err}");
-            };
+        return PlacementResult::Error((msg, Some(parent.into())));
+    };
 
-            continue;
-        };
+    // ? -----------------------------------------------------------------------
+    // ? Place sequences
+    // ? -----------------------------------------------------------------------
 
-        // ? -------------------------------------------------------------------
-        // ? Place sequences
-        // ? -------------------------------------------------------------------
+    let output_file = parent
+        .to_owned()
+        .join(fs_config.output_directory.to_owned().as_str())
+        .join(fs_config.results_file_name.to_owned().as_str());
 
-        let output_file = parent
-            .to_owned()
-            .join(fs_config.output_directory.to_owned().as_str())
-            .join(fs_config.results_file_name.to_owned().as_str());
-
-        if let Err(err) = place_sequences(
-            query_file,
-            &tree_model,
-            &output_file,
-            &None,
-            &None,
-            &true,
-            &cls_config.output_format,
-            &cls_config.remove_intersection,
-        ) {
-            let msg = format!(
+    if let Err(err) = place_sequences(
+        query_file,
+        &tree_model,
+        &output_file,
+        &None,
+        &None,
+        &true,
+        &cls_config.output_format,
+        &cls_config.remove_intersection,
+        &Some(span),
+    ) {
+        let msg = format!(
                 "Failed to process the query file {query_file:?} with model {model_id:?}: {err}",
                 query_file = query_file_path.file_name().to_owned(),
                 model_id = database_config.id
             );
 
-            warn!(code = TelemetryCode::WTHPLACE0008.to_string(), "{msg}");
+        warn!(code = TelemetryCode::WTHPLACE0008.to_string(), "{msg}");
 
-            if let Err(err) = ExecutionMsg::write_file(
-                &parent.to_owned().join(fs_config.error_file_name.to_owned()),
-                msg.as_str(),
-            ) {
-                error!("Failed to write the error file: {err}");
-            };
-
-            continue;
-        }
-
-        // ? -------------------------------------------------------------------
-        // ? Write response
-        // ? -------------------------------------------------------------------
-
-        let msg = format!(
-            "Query file {query_file:?} processed successfully",
-            query_file = query_file_path.file_name()
-        );
-
-        if let Err(err) = ExecutionMsg::write_file(
-            &parent.join(fs_config.success_file_name.to_owned()),
-            msg.as_str(),
-        ) {
-            let msg = format!(
-                "Failed to write the success file for the query file {query_file:?}: {err}",
-                query_file = query_file_path.file_name(),
-                err = err
-            );
-
-            warn!(code = TelemetryCode::WTHPLACE0009.to_string(), "{msg}");
-
-            if let Err(err) = ExecutionMsg::write_file(
-                &parent.to_owned().join(fs_config.error_file_name.to_owned()),
-                msg.as_str(),
-            ) {
-                error!("Failed to write the error file: {err}");
-            };
-
-            continue;
-        };
-
-        info!(
-            code = TelemetryCode::WTHPLACE0002.to_string(),
-            "Query file {query_file:?} processed successfully",
-            query_file = query_file_path.file_name()
-        );
+        return PlacementResult::Error((msg, Some(parent.into())));
     }
+
+    // ? -----------------------------------------------------------------------
+    // ? Write response
+    // ? -----------------------------------------------------------------------
+
+    let msg = format!(
+        "Query file {query_file:?} processed successfully",
+        query_file = match query_file_path.file_name() {
+            Some(file_name) =>
+                file_name.to_str().unwrap_or("Unknown").to_string(),
+            None => "Unknown".to_string(),
+        }
+    );
+
+    PlacementResult::Success((msg, parent.into()))
 }

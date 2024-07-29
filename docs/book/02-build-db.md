@@ -42,11 +42,10 @@ docker run \
     rooted_reference_tree.nwk
 ```
 
-
 ## 2.2 Build the Database
 
 After rooting the reference tree, you can build the database using the CLI
-command `cls build-db`. The command requires the rooted reference tree and the 
+command `cls build-db`. The command requires the rooted reference tree and the
 reference multi sequence FASTA file as input. The command uses the reference
 tree and the reference sequences to build the database. The command can be used
 as follows:

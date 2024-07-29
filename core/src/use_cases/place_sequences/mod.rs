@@ -2,7 +2,6 @@ mod dtos;
 mod place_sequence;
 mod update_introspection_node;
 
-use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
@@ -13,6 +12,7 @@ use crate::domain::dtos::{
     tree::Tree,
 };
 
+use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::channel;
@@ -21,7 +21,7 @@ use std::{
     path::PathBuf,
     time::Duration,
 };
-use tracing::{debug, debug_span, warn};
+use tracing::{debug, trace_span, warn};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -32,7 +32,7 @@ pub struct PlacementTime {
 
 #[tracing::instrument(
     name = "PlacingMultipleSequences",
-    skip(query_sequence, tree),
+    skip(query_sequence, tree, parent_span),
     fields(
         run_id = Uuid::new_v4().to_string().replace("-", "")
     )
@@ -46,10 +46,17 @@ pub fn place_sequences(
     overwrite: &bool,
     output_format: &OutputFormat,
     remove_intersection: &Option<bool>,
+    parent_span: &Option<&tracing::Span>,
 ) -> Result<Vec<PlacementTime>, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Configure the logging span
     // ? -----------------------------------------------------------------------
+
+    if let Some(span) = parent_span {
+        let span =
+            trace_span!(parent: span.to_owned(), "PlaceMultipleSequences");
+        let _span_guard = span.enter();
+    }
 
     debug!(
         code = TelemetryCode::UCPLACE0001.to_string(),
@@ -114,7 +121,8 @@ pub fn place_sequences(
         .map(|sequence| {
             let header = sequence.header_content();
 
-            let span = debug_span!(
+            let span = trace_span!(
+                parent: parent_span.unwrap_or(&tracing::Span::current()),
                 "PlacingSequence",
                 tree_id = tree.id.to_string().replace("-", ""),
                 header = header.to_string(),
@@ -141,6 +149,7 @@ pub fn place_sequences(
                 &max_iterations,
                 &min_match_coverage,
                 &remove_intersection,
+                parent_span,
             ) {
                 Err(err) => {
                     if let Err(err) = error_writer(
