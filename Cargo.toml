@@ -53,3 +53,9 @@ tokio = { version = "1.38", features = ["rt-multi-thread", "fs"] }
 uuid = { version = "1.1", features = ["v3", "v4", "v7", "serde", "fast-rng"] }
 walkdir = "2.5.0"
 zstd = "0.13"
+
+# Security issues
+bytes = "1"
+subtle = "2.6"
+zerovec = "0.10"
+zerovec-derive = "0.10"
