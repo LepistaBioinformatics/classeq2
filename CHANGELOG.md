@@ -1,3 +1,9 @@
+## v0.7.1 (2024-07-29)
+
+### Perf
+
+- do implement a profilling tool to generate pprof files
+
 ## v0.7.0 (2024-07-28)
 
 ### Feat
