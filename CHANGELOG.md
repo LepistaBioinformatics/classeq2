@@ -1,3 +1,9 @@
+## v0.7.2 (2024-07-29)
+
+### Fix
+
+- replace yanked versions of bytes zerovec zerovec-derive and subtle
+
 ## v0.7.1 (2024-07-29)
 
 ### Perf
