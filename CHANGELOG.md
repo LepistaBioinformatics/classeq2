@@ -1,3 +1,9 @@
+## v0.7.0 (2024-07-28)
+
+### Feat
+
+- improve the telemetry from the watcher to allow delivery analysis logs to users
+
 ## v0.6.0 (2024-07-25)
 
 ### Feat
