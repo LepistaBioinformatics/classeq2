@@ -30,6 +30,13 @@ tracing-subscriber.workspace = true
 uuid.workspace = true
 zstd.workspace = true
 
+pprof = { version = "0.13", features = ["prost-codec"], optional = true }
+
+
+[features]
+
+profiling = ["pprof"]
+
 
 [[bin]]
 name = "cls"

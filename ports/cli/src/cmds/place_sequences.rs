@@ -61,12 +61,42 @@ pub(crate) struct Arguments {
     /// If the output file already exists, it will be overwritten.
     #[arg(short, long, default_value = "false")]
     pub(super) force_overwrite: bool,
+
+    /// Generate profiling
+    ///
+    /// If true, generate a classeq-profile.pb file used to profile the
+    /// placement process. The resulting file should ve visualized using the
+    /// pprof tool (https://pkg.go.dev/github.com/google/pprof#section-readme).
+    #[cfg(feature = "profiling")]
+    #[arg(short = 'p', long, default_value = "false")]
+    pub(super) with_profiling: bool,
 }
 
 pub(crate) fn place_sequences_cmd(
     args: Arguments,
     threads: usize,
 ) -> Result<()> {
+    // ? -----------------------------------------------------------------------
+    // ? Configure profiling
+    // ? -----------------------------------------------------------------------
+
+    #[cfg(feature = "profiling")]
+    let profiling_guard: Option<pprof::ProfilerGuard> = if args.with_profiling {
+        Some(
+            pprof::ProfilerGuardBuilder::default()
+                .frequency(1000)
+                .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+                .build()
+                .unwrap(),
+        )
+    } else {
+        None
+    };
+
+    // ? -----------------------------------------------------------------------
+    // ? Configure logging
+    // ? -----------------------------------------------------------------------
+
     let span = info_span!(
         "PlacingSequenceCMD",
         run_id = Uuid::new_v4().to_string().replace("-", "")
@@ -142,6 +172,34 @@ pub(crate) fn place_sequences_cmd(
         minSeconds = min.as_secs_f32(),
         "Execution times"
     );
+
+    // ? -----------------------------------------------------------------------
+    // ? Run profiling
+    // ? -----------------------------------------------------------------------
+
+    #[cfg(feature = "profiling")]
+    if let Some(guard) = profiling_guard {
+        use pprof::protos::Message;
+        use std::{fs::File, io::Write};
+
+        let mut path = (match args.output_file_path.parent() {
+            Some(parent) => parent.to_path_buf(),
+            None => PathBuf::new(),
+        })
+        .join("classeq-profile");
+        path.set_extension("pb");
+        let mut file = File::create(path)?;
+
+        let report = guard.report().build()?;
+        let profile = report.pprof()?;
+        let mut content = Vec::new();
+        profile.encode(&mut content).unwrap();
+        file.write_all(&content).unwrap();
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? Return a positive response
+    // ? -----------------------------------------------------------------------
 
     Ok(())
 }
