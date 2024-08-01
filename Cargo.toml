@@ -55,7 +55,7 @@ walkdir = "2.5.0"
 zstd = "0.13"
 
 # Security issues
-bytes = "1"
-subtle = "2.6"
-zerovec = "0.10"
-zerovec-derive = "0.10"
+bytes = "1.7"
+subtle = ">=2.6.1"
+zerovec = ">=0.10.4"
+zerovec-derive = ">=0.10.3"
