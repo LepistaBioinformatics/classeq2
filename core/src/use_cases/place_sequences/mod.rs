@@ -1,4 +1,4 @@
-mod dtos;
+mod _dtos;
 mod place_sequence;
 mod update_introspection_node;
 

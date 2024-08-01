@@ -1,4 +1,4 @@
-use super::dtos::IntrospectionUpdateResponse;
+use super::_dtos::IntrospectionUpdateResponse;
 use crate::domain::dtos::{
     adherence_test::AdherenceTest, clade::Clade,
     placement_response::PlacementStatus::*, telemetry_code::TelemetryCode,

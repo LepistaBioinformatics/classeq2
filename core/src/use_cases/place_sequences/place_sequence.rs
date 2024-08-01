@@ -1,5 +1,5 @@
 use super::{
-    dtos::IntrospectionUpdateResponse::*,
+    _dtos::IntrospectionUpdateResponse::*,
     update_introspection_node::update_introspection_node,
 };
 use crate::domain::dtos::{
