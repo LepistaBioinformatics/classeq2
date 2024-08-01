@@ -1,3 +1,16 @@
+## v0.8.0 (2024-08-01)
+
+### Feat
+
+- implements the annotation parsing during sequences placement via cli port
+
+### Refactor
+
+- fix the access control of shared use cases of core module and output-format dto from cli port
+- rename the map-kmers-to-tree to build-database to preciselly indicate their goal
+- rename place-sequences use-case dtos file to indicate a internal module
+- convert the map-kmers-to-tree to module instead of a file
+
 ## v0.7.3 (2024-07-31)
 
 ### Fix
