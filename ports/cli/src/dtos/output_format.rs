@@ -6,7 +6,7 @@ pub enum DatabaseOutputFormat {
     /// Zstandard format
     ///
     /// The file will be compressed using Zstandard. See
-    /// https://github.com/facebook/zstd for more information.
+    /// `<https://github.com/facebook/zstd>` for more information.
     Zstd,
 
     /// YAML format
