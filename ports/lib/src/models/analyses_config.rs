@@ -26,6 +26,9 @@ pub struct BluAnalysisConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overwrite: Option<bool>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remove_intersection: Option<bool>,
+
     pub output_format: OutputFormat,
 
     pub work_dir: String,

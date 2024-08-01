@@ -27,3 +27,4 @@ uuid.workspace = true
 mur3 = "0.1"
 phylotree = "0.1.2"
 thiserror = "1.0"
+dashmap = { version = "6.0", features = ["rayon", "serde"] }

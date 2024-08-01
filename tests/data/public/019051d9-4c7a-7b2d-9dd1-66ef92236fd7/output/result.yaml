@@ -1,0 +1,200 @@
+---
+query: NC_017191_Bacillus_amyloliquefaciens_XH7_complete
+code: IdentityFound
+placement:
+  clade:
+    id: 378
+    kind: NODE
+    support: 99.0
+    length: 0.00630864
+    children:
+    - id: 379
+      name: NZ_LZZO01000019_Bacillus_amyloliquefaciens_strain_SRCM101294
+      kind: LEAF
+      length: 0.00186691
+    - id: 380
+      name: NZ_JAPWDN010000003_Bacillus_amyloliquefaciens_strain_DYC21
+      kind: LEAF
+      length: 0.00367635
+  oneLen: 3094
+  restLen: 3042
+  restAvg: 0.0
+  restMax: 0
+---
+query: NC_014639_Bacillus_atrophaeus_1942_complete
+code: IdentityFound
+placement:
+  clade:
+    id: 61
+    kind: NODE
+    support: 72.0
+    length: 0.000619153
+    children:
+    - id: 62
+      name: NZ_JALAVT010000005_Bacillus_atrophaeus_strain_TP10S1NI5
+      kind: LEAF
+      length: 1e-6
+    - id: 63
+      name: NZ_JALAPU010000003_Bacillus_atrophaeus_strain_TP8F7aA3
+      kind: LEAF
+      length: 0.00123804
+  oneLen: 3754
+  restLen: 0
+  restAvg: 0.0
+  restMax: 0
+---
+query: NZ_JALAKB010000006_Bacillus_sonorensis_strain_S15C8
+code: IdentityFound
+placement:
+  clade:
+    id: 2
+    kind: NODE
+    support: 100.0
+    length: 0.0442934
+    children:
+    - id: 3
+      name: NZ_AOFM01000009_Bacillus_sonorensis_L12_contig9
+      kind: LEAF
+      length: 1e-6
+    - id: 4
+      name: _R_NZ_QRLM01000005_Bacillus_sonorensis_strain_AM1257B
+      kind: LEAF
+      length: 0.000619744
+  oneLen: 3602
+  restLen: 1866
+  restAvg: 0.0
+  restMax: 0
+---
+query: NZ_CM000490_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: LCA Accepted'
+placement: 149
+---
+query: NC_000964_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: LCA Accepted'
+placement: 149
+---
+query: NC_014551_Bacillus_amyloliquefaciens_DSM_7
+code: IdentityFound
+placement:
+  clade:
+    id: 378
+    kind: NODE
+    support: 99.0
+    length: 0.00630864
+    children:
+    - id: 379
+      name: NZ_LZZO01000019_Bacillus_amyloliquefaciens_strain_SRCM101294
+      kind: LEAF
+      length: 0.00186691
+    - id: 380
+      name: NZ_JAPWDN010000003_Bacillus_amyloliquefaciens_strain_DYC21
+      kind: LEAF
+      length: 0.00367635
+  oneLen: 3094
+  restLen: 3042
+  restAvg: 0.0
+  restMax: 0
+---
+query: NZ_CM000488_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: LCA Accepted'
+placement: 149
+---
+query: NZ_CM000489_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: LCA Accepted'
+placement: 149
+---
+query: NC_017061_Bacillus_velezensis_YAU_B9601Y2
+code: IdentityFound
+placement:
+  clade:
+    id: 510
+    kind: NODE
+    support: 95.0
+    length: 0.00245969
+    children:
+    - id: 511
+      name: NZ_CP082262_Bacillus_velezensis_strain_BIM
+      kind: LEAF
+      length: 1e-6
+    - id: 512
+      name: NZ_PPXP01000001_Bacillus_velezensis_strain_JW
+      kind: LEAF
+      length: 0.0012196
+  oneLen: 3434
+  restLen: 3404
+  restAvg: 0.0
+  restMax: 0
+---
+query: NZ_JAPQWF010000002_Bacillus_sonorensis_strain_AB6
+code: IdentityFound
+placement:
+  clade:
+    id: 2
+    kind: NODE
+    support: 100.0
+    length: 0.0442934
+    children:
+    - id: 3
+      name: NZ_AOFM01000009_Bacillus_sonorensis_L12_contig9
+      kind: LEAF
+      length: 1e-6
+    - id: 4
+      name: _R_NZ_QRLM01000005_Bacillus_sonorensis_strain_AM1257B
+      kind: LEAF
+      length: 0.000619744
+  oneLen: 3602
+  restLen: 1866
+  restAvg: 0.0
+  restMax: 0
+---
+query: NC_018520_Bacillus_subtilis_QB928_complete
+code: 'MaxResolutionReached: LCA Accepted'
+placement: 149
+---
+query: NZ_AMPK01000003_Bacillus_velezensis_M27_contig3
+code: IdentityFound
+placement:
+  clade:
+    id: 432
+    kind: NODE
+    support: 100.0
+    length: 0.00368481
+    children:
+    - id: 433
+      name: NZ_CP028439_Bacillus_velezensis_strain_82
+      kind: LEAF
+      length: 1e-6
+    - id: 434
+      name: NZ_CP022556_Bacillus_velezensis_strain_NJAUZ9
+      kind: LEAF
+      length: 0.00122119
+  oneLen: 3666
+  restLen: 3292
+  restAvg: 0.0
+  restMax: 0
+---
+query: NC_019842_Bacillus_velezensis_AS433_complete
+code: IdentityFound
+placement:
+  clade:
+    id: 534
+    kind: NODE
+    support: 94.0
+    length: 0.00122199
+    children:
+    - id: 535
+      name: NZ_CP039297_Bacillus_velezensis_isolate_UFLA258
+      kind: LEAF
+      length: 0.00122524
+    - id: 536
+      name: NZ_JANLFI010000012_Bacillus_amyloliquefaciens_strain_2536
+      kind: LEAF
+      length: 0.00184952
+  oneLen: 3252
+  restLen: 0
+  restAvg: 0.0
+  restMax: 0
+---
+query: NZ_AGFW01000001_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: LCA Accepted'
+placement: 149

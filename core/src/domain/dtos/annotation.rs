@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub enum Tag {
     /// Taxid tag.
-    Taxid(i32),
+    Taxid(u32),
 
     /// The scientific name of the organism.
     SciName(String),
@@ -26,7 +26,7 @@ pub enum Tag {
 #[serde(rename_all = "camelCase")]
 pub struct Annotation {
     /// The clade ID to which the annotation belongs.
-    pub clade: i32,
+    pub clade: u32,
 
     /// A simple list of tags associated with the annotation.
     #[serde(skip_serializing_if = "Option::is_none")]

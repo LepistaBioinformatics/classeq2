@@ -14,11 +14,11 @@ resolver = "2"
 
 [workspace.package]
 
-version = "0.4.4"
+version = "0.7.3"
 edition = "2021"
 authors = ["Samuel Galvão Elias <sgelias@outlook.com>"]
 license = "Apache-2.0"
-repository = "https://github.com/sgelias/classeq2"
+repository = "https://github.com/LepistaBioinformatics/classeq2"
 readme = "README.md"
 keywords = ["bioinformatics", "DNA", "placement", "phylogeny"]
 categories = ["science", "command-line-interface", "command-line-utilities"]
@@ -43,12 +43,19 @@ chrono = { version = "0.4", features = ["serde"] }
 mycelium-base = "5.0"
 mycelium-config = "5.0"
 rayon = "1.10"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 tracing = "0.1"
 tracing-appender = "0.2"
-tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["alloc", "json", "env-filter", "tracing-serde"] }
 tokio = { version = "1.38", features = ["rt-multi-thread", "fs"] }
 uuid = { version = "1.1", features = ["v3", "v4", "v7", "serde", "fast-rng"] }
 walkdir = "2.5.0"
+zstd = "0.13"
+
+# Security issues
+bytes = "1.7"
+subtle = ">=2.6.1"
+zerovec = ">=0.10.4"
+zerovec-derive = ">=0.10.3"

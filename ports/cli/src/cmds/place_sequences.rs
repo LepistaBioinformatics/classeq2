@@ -1,12 +1,16 @@
-use clap::Parser;
+use crate::dtos::telemetry_code::TelemetryCode;
+
+use anyhow::Result;
+use clap::{ArgAction, Parser};
 use classeq_core::{
-    domain::dtos::{
-        file_or_stdin::FileOrStdin, output_format::OutputFormat, tree::Tree,
-    },
+    domain::dtos::{file_or_stdin::FileOrStdin, output_format::OutputFormat},
     use_cases::place_sequences,
 };
-use std::{fs::read_to_string, path::PathBuf, time::Duration};
-use tracing::info;
+use classeq_ports_lib::load_database;
+use std::time::Instant;
+use std::{path::PathBuf, time::Duration};
+use tracing::{info, info_span};
+use uuid::Uuid;
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -45,16 +49,65 @@ pub(crate) struct Arguments {
     #[arg(short, long)]
     pub(super) match_coverage: Option<f64>,
 
+    /// Remove intersection
+    ///
+    /// If true, calculate the one-vs-rest difference without the shared kmers.
+    /// Otherwise, calculate the one-vs-rest difference with the shared kmers.
+    #[arg(short, long, action=ArgAction::SetTrue)]
+    pub(super) remove_intersection: Option<bool>,
+
     /// Force overwrite
     ///
     /// If the output file already exists, it will be overwritten.
     #[arg(short, long, default_value = "false")]
     pub(super) force_overwrite: bool,
+
+    /// Generate profiling
+    ///
+    /// If true, generate a classeq-profile.pb file used to profile the
+    /// placement process. The resulting file should ve visualized using the
+    /// pprof tool (https://pkg.go.dev/github.com/google/pprof#section-readme).
+    #[cfg(feature = "profiling")]
+    #[arg(short = 'p', long, default_value = "false")]
+    pub(super) with_profiling: bool,
 }
 
-pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
-    use std::time::Instant;
-    let now = Instant::now();
+pub(crate) fn place_sequences_cmd(
+    args: Arguments,
+    threads: usize,
+) -> Result<()> {
+    // ? -----------------------------------------------------------------------
+    // ? Configure profiling
+    // ? -----------------------------------------------------------------------
+
+    #[cfg(feature = "profiling")]
+    let profiling_guard: Option<pprof::ProfilerGuard> = if args.with_profiling {
+        Some(
+            pprof::ProfilerGuardBuilder::default()
+                .frequency(1000)
+                .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+                .build()
+                .unwrap(),
+        )
+    } else {
+        None
+    };
+
+    // ? -----------------------------------------------------------------------
+    // ? Configure logging
+    // ? -----------------------------------------------------------------------
+
+    let span = info_span!(
+        "PlacingSequenceCMD",
+        run_id = Uuid::new_v4().to_string().replace("-", "")
+    );
+
+    let _span_guard = span.enter();
+
+    info!(
+        code = TelemetryCode::CLIPLACE0001.to_string(),
+        "Start multiple sequences placement from CLI"
+    );
 
     // ? -----------------------------------------------------------------------
     // ? Create a thread pool configured globally
@@ -67,22 +120,10 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         panic!("Error creating thread pool: {err}");
     };
 
-    let per_seq_time = {
-        let database_file = match read_to_string(&args.database_file_path) {
-            Err(err) => {
-                eprintln!("{}", err);
-                std::process::exit(1);
-            }
-            Ok(content) => content,
-        };
+    let now = Instant::now();
 
-        let tree = match serde_yaml::from_str::<Tree>(database_file.as_str()) {
-            Err(err) => {
-                eprintln!("{}", err);
-                std::process::exit(1);
-            }
-            Ok(buffer) => buffer,
-        };
+    let per_seq_time = {
+        let tree = load_database(args.database_file_path)?;
 
         match place_sequences(
             args.query,
@@ -92,6 +133,8 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
             &args.match_coverage,
             &args.force_overwrite,
             &args.out_format,
+            &args.remove_intersection,
+            &Some(&span),
         ) {
             Ok(buffer) => buffer,
             Err(err) => panic!("{err}"),
@@ -107,8 +150,56 @@ pub(crate) fn place_sequences_cmd(args: Arguments, threads: usize) {
         .sum::<Duration>()
         / per_seq_time.len() as u32;
 
+    let max = per_seq_time
+        .to_owned()
+        .into_iter()
+        .map(|i| i.milliseconds_time)
+        .max()
+        .unwrap_or_default();
+
+    let min = per_seq_time
+        .to_owned()
+        .into_iter()
+        .map(|i| i.milliseconds_time)
+        .min()
+        .unwrap_or_default();
+
     info!(
-        "Execution times:\n{0: <10} | {1: <20?}\n{2: <10} | {3: <20?}",
-        "total", elapsed, "average", average
+        code = TelemetryCode::CLIPLACE0002.to_string(),
+        totalSeconds = elapsed.as_secs_f32(),
+        averageSeconds = average.as_secs_f32(),
+        maxSeconds = max.as_secs_f32(),
+        minSeconds = min.as_secs_f32(),
+        "Execution times"
     );
+
+    // ? -----------------------------------------------------------------------
+    // ? Run profiling
+    // ? -----------------------------------------------------------------------
+
+    #[cfg(feature = "profiling")]
+    if let Some(guard) = profiling_guard {
+        use pprof::protos::Message;
+        use std::{fs::File, io::Write};
+
+        let mut path = (match args.output_file_path.parent() {
+            Some(parent) => parent.to_path_buf(),
+            None => PathBuf::new(),
+        })
+        .join("classeq-profile");
+        path.set_extension("pb");
+        let mut file = File::create(path)?;
+
+        let report = guard.report().build()?;
+        let profile = report.pprof()?;
+        let mut content = Vec::new();
+        profile.encode(&mut content).unwrap();
+        file.write_all(&content).unwrap();
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? Return a positive response
+    // ? -----------------------------------------------------------------------
+
+    Ok(())
 }

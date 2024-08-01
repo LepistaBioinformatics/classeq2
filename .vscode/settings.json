@@ -7,8 +7,11 @@
         "chrono",
         "clades",
         "classeq",
+        "CLIPLACE",
         "cmds",
+        "dtos",
         "fasta",
+        "flamegraph",
         "hashset",
         "iupac",
         "kmer",
@@ -18,8 +21,11 @@
         "Phylo",
         "phylotre",
         "phylotree",
+        "pprof",
         "Taxid",
-        "walkdir"
+        "UCPLACE",
+        "walkdir",
+        "WTHPLACE"
     ],
     "rust-analyzer.showUnlinkedFileNotification": false,
     "rust-analyzer.linkedProjects": [

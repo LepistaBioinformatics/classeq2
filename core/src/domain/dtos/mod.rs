@@ -6,4 +6,5 @@ pub mod kmers_map;
 pub mod output_format;
 pub mod placement_response;
 pub mod sequence;
+pub mod telemetry_code;
 pub mod tree;

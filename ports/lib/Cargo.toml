@@ -14,7 +14,7 @@ categories.workspace = true
 
 [dependencies]
 
-classeq-core = { path = "../../core", version = "0.4.4" }
+classeq-core = { path = "../../core", version = "0.7.3" }
 
 anyhow.workspace = true
 apalis.workspace = true
@@ -24,3 +24,4 @@ serde_yaml.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 walkdir.workspace = true
+zstd.workspace = true

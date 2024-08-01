@@ -12,5 +12,5 @@ pub enum LogFormat {
     /// YAML format
     ///
     /// This format is machine-readable and can be used for log analysis.
-    Json,
+    Jsonl,
 }

@@ -1,14 +1,18 @@
+mod dtos;
 mod place_sequence;
-use mycelium_base::utils::errors::{use_case_err, MappedErrors};
+mod update_introspection_node;
+
 use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
 use crate::domain::dtos::placement_response::PlacementStatus;
 use crate::domain::dtos::{
     file_or_stdin::FileOrStdin, output_format::OutputFormat,
-    placement_response::PlacementResponse, tree::Tree,
+    placement_response::PlacementResponse, telemetry_code::TelemetryCode,
+    tree::Tree,
 };
 
+use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::channel;
@@ -17,7 +21,8 @@ use std::{
     path::PathBuf,
     time::Duration,
 };
-use tracing::{debug, warn};
+use tracing::{debug, trace_span, warn};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PlacementTime {
@@ -26,8 +31,11 @@ pub struct PlacementTime {
 }
 
 #[tracing::instrument(
-    name = "Placing multiple sequences",
-    skip(query_sequence, tree)
+    name = "PlacingMultipleSequences",
+    skip(query_sequence, tree, parent_span),
+    fields(
+        run_id = Uuid::new_v4().to_string().replace("-", "")
+    )
 )]
 pub fn place_sequences(
     query_sequence: FileOrStdin,
@@ -37,7 +45,24 @@ pub fn place_sequences(
     min_match_coverage: &Option<f64>,
     overwrite: &bool,
     output_format: &OutputFormat,
+    remove_intersection: &Option<bool>,
+    parent_span: &Option<&tracing::Span>,
 ) -> Result<Vec<PlacementTime>, MappedErrors> {
+    // ? -----------------------------------------------------------------------
+    // ? Configure the logging span
+    // ? -----------------------------------------------------------------------
+
+    if let Some(span) = parent_span {
+        let span =
+            trace_span!(parent: span.to_owned(), "PlaceMultipleSequences");
+        let _span_guard = span.enter();
+    }
+
+    debug!(
+        code = TelemetryCode::UCPLACE0001.to_string(),
+        "Start multiple sequences placement"
+    );
+
     // ? -----------------------------------------------------------------------
     // ? Build the output paths
     // ? -----------------------------------------------------------------------
@@ -94,16 +119,37 @@ pub fn place_sequences(
         .into_iter()
         .par_bridge()
         .map(|sequence| {
-            debug!("Processing {:?}", sequence.header_content());
+            let header = sequence.header_content();
+
+            let span = trace_span!(
+                parent: parent_span.unwrap_or(&tracing::Span::current()),
+                "PlacingSequence",
+                tree_id = tree.id.to_string().replace("-", ""),
+                header = header.to_string(),
+            );
+
+            let _span_guard = span.enter();
+
+            debug!(
+                code = TelemetryCode::UCPLACE0003.to_string(),
+                query = header,
+                query_id =
+                    Uuid::new_v3(&Uuid::NAMESPACE_DNS, header.as_bytes())
+                        .to_string()
+                        .replace("-", ""),
+                "Start placing sequence: {header}",
+                header = header
+            );
 
             let time = std::time::Instant::now();
 
             match place_sequence(
-                &sequence.header().to_owned(),
                 &sequence.sequence().to_owned(),
                 &tree,
                 &max_iterations,
                 &min_match_coverage,
+                &remove_intersection,
+                parent_span,
             ) {
                 Err(err) => {
                     if let Err(err) = error_writer(
@@ -116,13 +162,11 @@ pub fn place_sequences(
                     };
                 }
                 Ok(placement) => {
-                    debug!("Placed sequence: {:?}", placement);
-
                     let output = PlacementResponse::new(
                         sequence.header_content().to_string(),
                         placement.to_string(),
                         match placement {
-                            PlacementStatus::Unclassifiable => None,
+                            PlacementStatus::Unclassifiable(_) => None,
                             other => Some(other),
                         },
                     );
@@ -153,12 +197,22 @@ pub fn place_sequences(
                 }
             }
 
+            debug!(
+                code = TelemetryCode::UCPLACE0004.to_string(),
+                "Sequence placed"
+            );
+
             PlacementTime {
                 sequence: sequence.header_content().to_string(),
                 milliseconds_time: time.elapsed(),
             }
         })
         .collect();
+
+    debug!(
+        code = TelemetryCode::UCPLACE0002.to_string(),
+        "End multiple sequences placement"
+    );
 
     Ok(responses)
 }

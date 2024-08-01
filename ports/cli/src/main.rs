@@ -1,7 +1,9 @@
 mod cmds;
+mod dtos;
 
 use self::Opts::*;
 
+use anyhow::Result;
 use clap::Subcommand;
 use classeq_ports_lib::{expose_runtime_arguments, CliLauncher, LogFormat};
 use std::{path::PathBuf, str::FromStr};
@@ -18,9 +20,12 @@ enum Opts {
 
     /// Place sequences on the tree
     Place(cmds::place_sequences::Arguments),
+
+    /// Describe the database
+    DescribeDb(cmds::describe_db::Arguments),
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = CliLauncher::<Opts>::parse();
 
     // ? -----------------------------------------------------------------------
@@ -38,28 +43,47 @@ fn main() {
         // If a log file is provided, log to the file
         //
         Some(file) => {
-            let log_file = PathBuf::from(file);
+            let mut log_file = PathBuf::from(file);
 
-            let file_appender = tracing_appender::rolling::minutely(
-                log_file.parent().unwrap(),
-                log_file.file_name().unwrap(),
-            );
+            let binding = log_file.to_owned();
+            let parent_dir = binding
+                .parent()
+                .expect("Log file parent directory not found");
+
+            match args.log_format {
+                LogFormat::Jsonl => {
+                    log_file.set_extension("jsonl");
+                }
+                LogFormat::Ansi => {
+                    log_file.set_extension("log");
+                }
+            };
+
+            let file_name =
+                log_file.file_name().expect("Log file name not found");
+
+            let file_appender =
+                tracing_appender::rolling::never(parent_dir, file_name);
 
             tracing_appender::non_blocking(file_appender)
         }
     };
 
     let tracing_config = tracing_subscriber::fmt()
-        .event_format(fmt::format().with_level(true).compact())
-        .with_target(false)
-        .with_file(false)
-        .with_line_number(false)
+        .event_format(
+            fmt::format()
+                .with_level(true)
+                .with_target(false)
+                .with_thread_ids(true)
+                .with_file(false)
+                .with_line_number(false),
+        )
         .with_writer(non_blocking)
         .with_env_filter(EnvFilter::from_str(log_level.as_str()).unwrap());
 
     match args.log_format {
         LogFormat::Ansi => tracing_config.pretty().init(),
-        LogFormat::Json => tracing_config.json().init(),
+        LogFormat::Jsonl => tracing_config.json().init(),
     };
 
     // ? -----------------------------------------------------------------------
@@ -80,11 +104,21 @@ fn main() {
             cmds::convert::Commands::Kmers(kmers_args) => {
                 cmds::convert::get_kmers_cmd(kmers_args);
             }
+            cmds::convert::Commands::Database(db_args) => {
+                cmds::convert::convert_database_cmd(db_args)?;
+            }
         },
-        BuildDb(db_args) => cmds::build_db::build_database_cmd(db_args),
+        BuildDb(db_args) => {
+            cmds::build_db::build_database_cmd(db_args, args.threads)?;
+        }
         Place(place_args) => cmds::place_sequences::place_sequences_cmd(
             place_args,
-            args.threads.unwrap(),
-        ),
+            args.threads.unwrap_or(1),
+        )?,
+        DescribeDb(db_args) => {
+            cmds::describe_db::describe_database_cmd(db_args)?;
+        }
     }
+
+    Ok(())
 }

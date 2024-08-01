@@ -1,8 +1,12 @@
+use crate::dtos::output_format::DatabaseOutputFormat;
+
+use anyhow::Result;
 use clap::Parser;
 use classeq_core::domain::dtos::{
     kmers_map::KmersMap, output_format::OutputFormat, tree::Tree,
 };
-use std::path::PathBuf;
+use classeq_ports_lib::load_database;
+use std::{fs::File, path::PathBuf};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -22,6 +26,11 @@ pub(crate) enum Commands {
     ///
     /// Extract kmers from a sequence.
     Kmers(GetKmersArguments),
+
+    /// Convert Classeq database
+    ///
+    /// Convert a Classeq database between yaml and binary formats. This is util
+    Database(DatabaseArguments),
 }
 
 // ? ---------------------------------------------------------------------------
@@ -108,7 +117,7 @@ pub(crate) struct GetKmersArguments {
     ///
     /// The length of the kmers to be extracted.
     #[arg(short, long, default_value = "31")]
-    pub(super) kmer_length: usize,
+    pub(super) kmer_length: u64,
 }
 
 pub(crate) fn get_kmers_cmd(args: GetKmersArguments) {
@@ -116,4 +125,55 @@ pub(crate) fn get_kmers_cmd(args: GetKmersArguments) {
     for (kmer, _) in mapper.build_kmer_from_string(args.sequence, None) {
         println!("{}", kmer);
     }
+}
+
+// ? ---------------------------------------------------------------------------
+// ? Database
+// ? ---------------------------------------------------------------------------
+
+#[derive(Parser, Debug)]
+pub(crate) struct DatabaseArguments {
+    /// Path to the database file
+    ///
+    /// The file should be in Classeq database in YAML or Binary format.
+    #[arg(short, long)]
+    pub(super) database_file_path: PathBuf,
+
+    /// Path to the output file
+    ///
+    /// If not provided, the output will be printed to the standard output.
+    #[arg(short, long)]
+    pub(super) output_file_path: Option<PathBuf>,
+
+    /// Output format
+    ///
+    /// The format in which the database will be serialized.
+    #[arg(long, short = 'f', default_value = "yaml")]
+    pub(super) out_format: DatabaseOutputFormat,
+}
+
+pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
+    let tree_content = load_database(args.database_file_path)?;
+    let mut output_file_path = args
+        .output_file_path
+        .unwrap_or_else(|| PathBuf::from("classeq-database"));
+
+    //
+    // Serialize the content
+    //
+    match args.out_format {
+        DatabaseOutputFormat::Zstd => {
+            output_file_path.set_extension("cls");
+            let writer = File::create(output_file_path)?;
+            let writer = zstd::Encoder::new(writer, 0)?.auto_finish();
+            serde_yaml::to_writer(writer, &tree_content)?;
+        }
+        DatabaseOutputFormat::Yaml => {
+            output_file_path.set_extension("cls.yaml");
+            let writer = File::create(output_file_path)?;
+            serde_yaml::to_writer(writer, &tree_content)?;
+        }
+    };
+
+    Ok(())
 }

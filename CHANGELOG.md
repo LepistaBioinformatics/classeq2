@@ -1,3 +1,67 @@
+## v0.7.3 (2024-07-31)
+
+### Fix
+
+- fix the security issue to upgrade bytes subtle zerovec and zerovec-derive
+
+## v0.7.2 (2024-07-29)
+
+### Fix
+
+- replace yanked versions of bytes zerovec zerovec-derive and subtle
+
+## v0.7.1 (2024-07-29)
+
+### Perf
+
+- do implement a profilling tool to generate pprof files
+
+## v0.7.0 (2024-07-28)
+
+### Feat
+
+- improve the telemetry from the watcher to allow delivery analysis logs to users
+
+## v0.6.0 (2024-07-25)
+
+### Feat
+
+- given the database format of classeq the describe-db function was implemented to allow users do inspect database without convert it to yaml format
+- optimize the database persistence and loading and implements the telemetry to the watcher module
+- do implement the zstandard compression to classeq database
+
+### Refactor
+
+- move the crate import to the top in describe-db command
+- remove unused telemetry import to the execution message struct
+
+## v0.5.1 (2024-07-24)
+
+### Refactor
+
+- group functional elements of the introspection loop to turn easy the algorithm comprehension
+
+## v0.5.0 (2024-07-23)
+
+### Feat
+
+- improve the placement process to remove shared kmers between one-vs-rest pairs
+
+### Fix
+
+- fix the log file extension setting during runtime
+- replace the default minimizer size from 2 to 4 given the optimization results
+- fix the log format format specification
+- review telemetry steps and turn one-vs-rest intersection evaluation as an optional element of the cli
+- fix the placement process bug introduced together the performance improvement of commit a19004d03af025f4ef9524d5c483504e04244e1f
+- set the minimizer default size on the cli port to two instead of four
+- update the root tree script to allow set the root type during the root tree script runtime
+
+### Perf
+
+- re-evaluate the indexed kmers search engines to speed-up the placement process
+- upgrade kmers mapping process to speedup the indexation process
+
 ## v0.4.4 (2024-07-14)
 
 ### Perf
