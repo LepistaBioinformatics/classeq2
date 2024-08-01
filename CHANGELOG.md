@@ -1,3 +1,9 @@
+## v0.7.3 (2024-07-31)
+
+### Fix
+
+- fix the security issue to upgrade bytes subtle zerovec and zerovec-derive
+
 ## v0.7.2 (2024-07-29)
 
 ### Fix
