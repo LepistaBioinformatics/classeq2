@@ -10,16 +10,10 @@ pub struct AdherenceTest {
     pub clade: UntaggedParent<Clade, u64>,
 
     /// The number of kmer matches with the desired clade.
-    pub one_len: i32,
+    pub one: i32,
 
     /// The length of the rest of the sequence.
-    pub rest_len: i32,
-
-    /// The average number of kmer matches with sibling clades.
-    pub rest_avg: f64,
-
-    /// The maximum number of kmer matches with sibling clades.
-    pub rest_max: i32,
+    pub rest: i32,
 }
 
 impl std::fmt::Display for AdherenceTest {
@@ -27,7 +21,7 @@ impl std::fmt::Display for AdherenceTest {
         write!(
             f,
             "AdherenceTest: {} - {} - {}",
-            self.clade, self.one_len, self.rest_avg
+            self.clade, self.one, self.rest
         )
     }
 }

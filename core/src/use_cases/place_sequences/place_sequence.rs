@@ -362,10 +362,8 @@ pub(super) fn place_sequence(
                     if rest.is_empty() {
                         return Some(AdherenceTest {
                             clade: UntaggedParent::Record(clade.to_owned()),
-                            one_len: kmers.len() as i32,
-                            rest_len: 0,
-                            rest_avg: 0.0,
-                            rest_max: 0,
+                            one: kmers.len() as i32,
+                            rest: 0,
                         });
                     }
 
@@ -399,16 +397,14 @@ pub(super) fn place_sequence(
 
                     Some(AdherenceTest {
                         clade: UntaggedParent::Record(clade.to_owned()),
-                        one_len: one_kmers.len() as i32,
-                        rest_len: rest_kmers.len() as i32,
-                        rest_avg: 0.0,
-                        rest_max: 0,
+                        one: one_kmers.len() as i32,
+                        rest: rest_kmers.len() as i32,
                     })
                 })
                 .filter_map(|adherence| {
-                    let rest_value = adherence.rest_len;
+                    let rest_value = adherence.rest;
 
-                    if adherence.one_len > rest_value as i32 {
+                    if adherence.one > rest_value as i32 {
                         Some(adherence.to_owned())
                     } else {
                         None
@@ -525,7 +521,7 @@ pub(super) fn place_sequence(
                 let fold_proposals = clade_proposals.iter().fold(
                     HashMap::<i32, Vec<AdherenceTest>>::new(),
                     |mut acc, a| {
-                        acc.entry(a.one_len - a.rest_len)
+                        acc.entry(a.one - a.rest)
                             .or_insert(vec![])
                             .push(a.to_owned());
 
