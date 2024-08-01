@@ -35,12 +35,13 @@ server:
 #
 # ? ----------------------------------------------------------------------------
 models:
-  # This is the model used during the classeq validation. Replace this section
-  # by the models you want to use.
-  - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
-    name: Bacillus subtilis group
-    gene: gyrB complete sequence
-    path: /etc/classeq/models/bsub-gyrb-k35.cls
+# This is the model used during the classeq validation. Replace this section
+# by the models you want to use.
+- id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
+  name: Bacillus subtilis group
+  gene: gyrB complete sequence
+  modelPath: /etc/classeq/models/bsub-gyrb-k35.cls
+  annotationsPath: /etc/classeq/models/bsub-gyrb-annotations.yaml
 
 # ? ----------------------------------------------------------------------------
 # ? Watcher related settings

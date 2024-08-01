@@ -3,7 +3,10 @@ use crate::dtos::telemetry_code::TelemetryCode;
 use anyhow::Result;
 use clap::{ArgAction, Parser};
 use classeq_core::{
-    domain::dtos::{file_or_stdin::FileOrStdin, output_format::OutputFormat},
+    domain::dtos::{
+        annotation::Annotation, file_or_stdin::FileOrStdin,
+        output_format::OutputFormat,
+    },
     use_cases::place_sequences,
 };
 use classeq_ports_lib::load_database;
@@ -30,6 +33,12 @@ pub(crate) struct Arguments {
     /// The file will be saved in JSON or YAML format.
     #[arg(short, long)]
     pub(super) output_file_path: PathBuf,
+
+    /// Path to the annotations file
+    ///
+    /// The filepath to the annotations in YAML format.
+    #[arg(short, long)]
+    pub(super) annotations_file_path: Option<PathBuf>,
 
     /// Output format
     ///
@@ -123,7 +132,16 @@ pub(crate) fn place_sequences_cmd(
     let now = Instant::now();
 
     let per_seq_time = {
-        let tree = load_database(args.database_file_path)?;
+        let mut tree = load_database(args.database_file_path)?;
+
+        if let Some(path) = args.annotations_file_path {
+            let content: Vec<Annotation> =
+                serde_yaml::from_reader(std::fs::File::open(path)?)?;
+
+            if !content.is_empty() {
+                tree.annotations = Some(content);
+            }
+        }
 
         match place_sequences(
             args.query,

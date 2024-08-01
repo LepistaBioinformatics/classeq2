@@ -1,7 +1,7 @@
 use crate::dtos::output_format::DatabaseOutputFormat;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use classeq_core::domain::dtos::{
     kmers_map::KmersMap, output_format::OutputFormat, tree::Tree,
 };
@@ -139,6 +139,12 @@ pub(crate) struct DatabaseArguments {
     #[arg(short, long)]
     pub(super) database_file_path: PathBuf,
 
+    /// Only tree
+    ///
+    /// If true, only the tree will be extracted from the database.
+    #[arg(long, short = 't', action=ArgAction::SetTrue, default_value = "false")]
+    pub(super) only_tree: Option<bool>,
+
     /// Path to the output file
     ///
     /// If not provided, the output will be printed to the standard output.
@@ -166,12 +172,32 @@ pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
             output_file_path.set_extension("cls");
             let writer = File::create(output_file_path)?;
             let writer = zstd::Encoder::new(writer, 0)?.auto_finish();
-            serde_yaml::to_writer(writer, &tree_content)?;
+
+            if args.only_tree.unwrap_or(false) {
+                serde_yaml::to_writer(writer, &tree_content.root)?;
+            } else {
+                serde_yaml::to_writer(writer, &tree_content)?;
+            };
         }
         DatabaseOutputFormat::Yaml => {
             output_file_path.set_extension("cls.yaml");
             let writer = File::create(output_file_path)?;
-            serde_yaml::to_writer(writer, &tree_content)?;
+
+            if args.only_tree.unwrap_or(false) {
+                serde_yaml::to_writer(writer, &tree_content.root)?;
+            } else {
+                serde_yaml::to_writer(writer, &tree_content)?;
+            };
+        }
+        DatabaseOutputFormat::Json => {
+            output_file_path.set_extension("cls.json");
+            let writer = File::create(output_file_path)?;
+
+            if args.only_tree.unwrap_or(false) {
+                serde_json::to_writer_pretty(writer, &tree_content.root)?;
+            } else {
+                serde_json::to_writer_pretty(writer, &tree_content)?;
+            };
         }
     };
 

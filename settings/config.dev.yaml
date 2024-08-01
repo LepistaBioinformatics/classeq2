@@ -35,10 +35,11 @@ server:
 #
 # ? ----------------------------------------------------------------------------
 models:
-  - id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
-    name: Bacillus subtilis group
-    gene: gyrB complete sequence
-    path: tests/models/bsub-gyrb-k35.cls
+- id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
+  name: Bacillus subtilis group
+  gene: gyrB complete sequence
+  modelPath: /etc/classeq/models/bsub-gyrb-k35.cls
+  annotationsPath: /etc/classeq/models/bsub-gyrb-annotations.yaml
 
 # ? ----------------------------------------------------------------------------
 # ? Watcher related settings

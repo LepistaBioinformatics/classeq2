@@ -27,12 +27,23 @@ pub struct ModelConfig {
     /// The serialization are skipped to avoid exposing the path during the API
     /// client responses.
     #[serde(skip_serializing)]
-    path: PathBuf,
+    model_path: PathBuf,
+
+    /// Path to the annotations file
+    ///
+    /// The serialization are skipped to avoid exposing the path during the API
+    /// client responses.
+    #[serde(skip_serializing)]
+    annotations_path: Option<PathBuf>,
 }
 
 impl ModelConfig {
-    pub fn get_path(&self) -> PathBuf {
-        self.path.clone()
+    pub fn model_path(&self) -> PathBuf {
+        self.model_path.clone()
+    }
+
+    pub fn annotations_path(&self) -> Option<PathBuf> {
+        self.annotations_path.clone()
     }
 }
 

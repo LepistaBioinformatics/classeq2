@@ -210,14 +210,35 @@ impl Tree {
         let sanitized_root =
             Tree::sanitize(Clade::new_root(0.0, children), min_branch_support)?;
 
-        let new_tree = Tree::new(
+        let mut new_tree = Tree::new(
             Uuid::new_v3(&Uuid::NAMESPACE_DNS, &*root_name.as_bytes()),
             root_name,
             min_branch_support,
             sanitized_root,
         );
 
+        new_tree.root = Self::fix_parent_ids(&mut new_tree.root, None);
+
         Ok(new_tree)
+    }
+
+    fn fix_parent_ids(clade: &mut Clade, parent: Option<u64>) -> Clade {
+        clade.children = if let Some(children) = clade.children.to_owned() {
+            let children = children
+                .into_iter()
+                .map(|mut child| {
+                    child.parent = Some(clade.id);
+                    Self::fix_parent_ids(&mut child, Some(clade.id))
+                })
+                .collect::<Vec<Clade>>();
+
+            Some(children)
+        } else {
+            None
+        };
+
+        clade.parent = parent;
+        clade.clone()
     }
 
     /// Remove low supported branches
@@ -292,6 +313,7 @@ impl Tree {
                 if child_node.is_tip() {
                     let leaf_node = Clade::new_leaf(
                         child_node.id.try_into().expect("Could not convert id"),
+                        node_id.to_owned() as u64,
                         child_node
                             .name
                             .clone()
@@ -315,6 +337,7 @@ impl Tree {
                                 .id
                                 .try_into()
                                 .expect("Could not convert id"),
+                            node_id.to_owned() as u64,
                             None,
                             match child_node.name.clone() {
                                 Some(name) => match name.parse::<f64>() {

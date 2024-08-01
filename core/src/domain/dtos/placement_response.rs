@@ -1,5 +1,5 @@
 use self::PlacementStatus::*;
-use super::adherence_test::AdherenceTest;
+use super::{adherence_test::AdherenceTest, annotation::Annotation};
 
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -64,6 +64,9 @@ pub struct PlacementResponse<T> {
     code: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    annotations: Option<Vec<Annotation>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     placement: Option<T>,
 }
 
@@ -72,7 +75,20 @@ impl<T> PlacementResponse<T> {
         PlacementResponse {
             query,
             code,
+            annotations: None,
             placement,
         }
+    }
+
+    pub fn with_annotation(
+        mut self,
+        metadata: Option<Vec<Annotation>>,
+    ) -> Self {
+        self.annotations = metadata;
+        self
+    }
+
+    pub fn placement(&self) -> Option<&T> {
+        self.placement.as_ref()
     }
 }

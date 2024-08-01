@@ -1,24 +1,27 @@
 mod _dtos;
+mod clade_from_placement_status;
 mod place_sequence;
 mod update_introspection_node;
 
+use clade_from_placement_status::*;
 use place_sequence::*;
 
 use super::shared::write_or_append_to_file::write_or_append_to_file;
-use crate::domain::dtos::placement_response::PlacementStatus;
 use crate::domain::dtos::{
-    file_or_stdin::FileOrStdin, output_format::OutputFormat,
-    placement_response::PlacementResponse, telemetry_code::TelemetryCode,
+    file_or_stdin::FileOrStdin,
+    output_format::OutputFormat,
+    placement_response::{PlacementResponse, PlacementStatus},
+    telemetry_code::TelemetryCode,
     tree::Tree,
 };
 
 use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
-use std::sync::mpsc::channel;
 use std::{
     fs::{create_dir, remove_file},
     path::PathBuf,
+    sync::mpsc::channel,
     time::Duration,
 };
 use tracing::{debug, trace_span, warn};
@@ -115,6 +118,8 @@ pub fn place_sequences(
     let (sender, receiver) = channel();
     let _ = query_sequence.sequence_content_by_channel(sender);
 
+    let annotations = tree.annotations.to_owned();
+
     let responses = receiver
         .into_iter()
         .par_bridge()
@@ -144,6 +149,7 @@ pub fn place_sequences(
             let time = std::time::Instant::now();
 
             match place_sequence(
+                &sequence.header().to_owned(),
                 &sequence.sequence().to_owned(),
                 &tree,
                 &max_iterations,
@@ -162,7 +168,7 @@ pub fn place_sequences(
                     };
                 }
                 Ok(placement) => {
-                    let output = PlacementResponse::new(
+                    let mut output = PlacementResponse::new(
                         sequence.header_content().to_string(),
                         placement.to_string(),
                         match placement {
@@ -170,6 +176,46 @@ pub fn place_sequences(
                             other => Some(other),
                         },
                     );
+
+                    if let Some(annotations) = annotations.to_owned() {
+                        let optional_clade =
+                            clade_from_placement_status(output.placement());
+
+                        let node_annotations =
+                            if let Some(clade) = optional_clade {
+                                let tree_node = if let Some(node) =
+                                    tree.root.get_node_by_id(clade)
+                                {
+                                    node.get_path_to_root(&tree.root)
+                                        .into_iter()
+                                        .collect::<Vec<_>>()
+                                } else {
+                                    vec![]
+                                };
+
+                                let mut records = annotations
+                                    .to_owned()
+                                    .iter()
+                                    .filter(|item| {
+                                        tree_node.contains(&(item.clade as u64))
+                                    })
+                                    .cloned()
+                                    .collect::<Vec<_>>();
+
+                                if records.len() > 0 {
+                                    records.sort_by(|a, b| {
+                                        a.clade.partial_cmp(&b.clade).unwrap()
+                                    });
+                                    Some(records)
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            };
+
+                        output = output.with_annotation(node_annotations);
+                    }
 
                     let output_content = match output_format {
                         OutputFormat::Yaml => {

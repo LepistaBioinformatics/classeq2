@@ -1,0 +1,95 @@
+- clade: 0
+  meta:
+  - !Taxid 653685
+  - !SciName Bacillus subtilis group
+  - !Rank species group
+  - !Gene gyrB
+  - !InferenceMethod Maximum Likelihood
+  - !Note |
+    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
+    genomes of the Bacillus subtilis group. The tree was inferred using 1000
+    bootstrap replicates.
+
+- clade: 2
+  meta:
+  - !Taxid 119858
+  - !SciName Bacillus sonorensis
+  - !Rank species
+
+- clade: 5
+  meta:
+  - !Taxid 1648923
+  - !SciName Bacillus paralicheniformis
+  - !Rank species
+
+- clade: 29
+  meta:
+  - !Taxid 1402
+  - !SciName Bacillus licheniformis
+  - !Rank species
+
+- clade: 45
+  meta:
+  - !Taxid 1452
+  - !SciName Bacillus atrophaeus
+  - !Rank species
+
+- clade: 96
+  meta:
+  - !Taxid 653388
+  - !SciName Bacillus mojavensis subgroup
+  - !Rank species subgroup
+
+- clade: 97
+  meta:
+  - !Taxid 72360
+  - !SciName Bacillus mojavensis
+  - !Rank species
+
+- clade: 136
+  meta:
+  - !Taxid 227866
+  - !SciName Bacillus tequilensis
+  - !Rank species
+
+- clade: 141
+  meta:
+  - !Taxid 2054641
+  - !SciName Bacillus stercoris
+  - !Rank species
+
+- clade: 148
+  meta:
+  - !Taxid 1423
+  - !SciName Bacillus subtilis
+  - !Rank species
+
+- clade: 289
+  meta:
+  - !Taxid 96241
+  - !SciName Bacillus spizizenii
+  - !Rank species
+
+- clade: 294
+  meta:
+  - !Taxid 72361
+  - !SciName Bacillus vallismortis
+  - !Rank species
+
+- clade: 305
+  meta:
+  - !Taxid 483913
+  - !SciName Bacillus inaquosorum
+  - !Rank species
+
+- clade: 351
+  meta:
+  - !Taxid 659243
+  - !SciName Bacillus siamensis
+  - !Rank species
+
+- clade: 364
+  meta:
+  - !Taxid 1938374
+  - !SciName Bacillus amyloliquefaciens group
+  - !Rank species subgroup

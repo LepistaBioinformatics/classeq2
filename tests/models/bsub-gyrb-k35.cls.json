@@ -1,0 +1,2324 @@
+{
+  "id": 0,
+  "kind": "ROOT",
+  "length": 0.0,
+  "children": [
+    {
+      "id": 1,
+      "kind": "NODE",
+      "support": 100.0,
+      "length": 0.197182,
+      "children": [
+        {
+          "id": 2,
+          "kind": "NODE",
+          "support": 100.0,
+          "length": 0.0442934,
+          "children": [
+            {
+              "id": 3,
+              "name": "NZ_AOFM01000009_Bacillus_sonorensis_L12_contig9",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 4,
+              "name": "_R_NZ_QRLM01000005_Bacillus_sonorensis_strain_AM1257B",
+              "kind": "LEAF",
+              "length": 0.000619744
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "kind": "NODE",
+          "support": 99.0,
+          "length": 0.0426723,
+          "children": [
+            {
+              "id": 6,
+              "name": "NZ_MIZE01000001_Bacillus_paralicheniformis_strain_1672",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 7,
+              "kind": "NODE",
+              "support": 100.0,
+              "length": 0.0270788,
+              "children": [
+                {
+                  "id": 8,
+                  "kind": "NODE",
+                  "support": 99.0,
+                  "length": 0.0105121,
+                  "children": [
+                    {
+                      "id": 9,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.0177626,
+                      "children": [
+                        {
+                          "id": 10,
+                          "name": "NZ_JALJCM010000001_Bacillus_paralicheniformis_strain_LB1A1",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        },
+                        {
+                          "id": 12,
+                          "name": "NZ_NIJN01000001_Bacillus_paralicheniformis_strain_LMG",
+                          "kind": "LEAF",
+                          "length": 0.00123357
+                        },
+                        {
+                          "id": 16,
+                          "name": "NZ_CAOJBV010000005_Bacillus_paralicheniformis_strain_B774",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        },
+                        {
+                          "id": 19,
+                          "name": "NZ_AP023089_Bacillus_paralicheniformis_strain_RSC2",
+                          "kind": "LEAF",
+                          "length": 0.00123223
+                        },
+                        {
+                          "id": 20,
+                          "name": "NZ_JADNAZ010000014_Bacillus_paralicheniformis_strain_J1101004_170508_A1",
+                          "kind": "LEAF",
+                          "length": 0.00185374
+                        },
+                        {
+                          "id": 21,
+                          "name": "NZ_CABJBE010000002_Bacillus_paralicheniformis_isolate_MGYGHGUT00147",
+                          "kind": "LEAF",
+                          "length": 0.000617045
+                        },
+                        {
+                          "id": 23,
+                          "name": "NZ_JABWTN010000003_Bacillus_paralicheniformis_strain_MB647",
+                          "kind": "LEAF",
+                          "length": 0.000614073
+                        },
+                        {
+                          "id": 24,
+                          "kind": "NODE",
+                          "support": 93.0,
+                          "length": 0.00123807,
+                          "children": [
+                            {
+                              "id": 25,
+                              "name": "NZ_CP068988_Bacillus_paralicheniformis_strain_SUBG0010",
+                              "kind": "LEAF",
+                              "length": 0.000617146
+                            },
+                            {
+                              "id": 26,
+                              "name": "NZ_CP104093_Bacillus_paralicheniformis_strain_NGABK31",
+                              "kind": "LEAF",
+                              "length": 0.000614609
+                            }
+                          ]
+                        },
+                        {
+                          "id": 27,
+                          "name": "NZ_JAGTPZ010000028_Bacillus_paralicheniformis_strain_bcasdu201801",
+                          "kind": "LEAF",
+                          "length": 0.00184992
+                        }
+                      ]
+                    },
+                    {
+                      "id": 29,
+                      "kind": "NODE",
+                      "support": 75.0,
+                      "length": 0.00706431,
+                      "children": [
+                        {
+                          "id": 30,
+                          "kind": "NODE",
+                          "support": 100.0,
+                          "length": 0.0317899,
+                          "children": [
+                            {
+                              "id": 33,
+                              "name": "NZ_CP035405_Bacillus_licheniformis_strain_SRCM103608",
+                              "kind": "LEAF",
+                              "length": 0.000616687
+                            },
+                            {
+                              "id": 34,
+                              "name": "NZ_AJLV01000020_Bacillus_licheniformis_101A_contig000020",
+                              "kind": "LEAF",
+                              "length": 0.000616667
+                            },
+                            {
+                              "id": 35,
+                              "name": "NZ_JAGUQO010000002_Bacillus_licheniformis_strain_NL2811",
+                              "kind": "LEAF",
+                              "length": 0.000616625
+                            },
+                            {
+                              "id": 37,
+                              "name": "NZ_JALAXD010000005_Bacillus_licheniformis_strain_T4C7",
+                              "kind": "LEAF",
+                              "length": 0.0012335
+                            },
+                            {
+                              "id": 38,
+                              "name": "NZ_MEDB01000001_Bacillus_licheniformis_strain_YNP2TSU",
+                              "kind": "LEAF",
+                              "length": 1e-6
+                            }
+                          ]
+                        },
+                        {
+                          "id": 39,
+                          "name": "NZ_CP090312_Bacillus_licheniformis_strain_NWMCC0046",
+                          "kind": "LEAF",
+                          "length": 0.0168741
+                        }
+                      ]
+                    },
+                    {
+                      "id": 40,
+                      "kind": "NODE",
+                      "support": 90.0,
+                      "length": 0.00791387,
+                      "children": [
+                        {
+                          "id": 41,
+                          "name": "NZ_AP025339_Bacillus_paralicheniformis_strain_J25TS1",
+                          "kind": "LEAF",
+                          "length": 0.00965772
+                        },
+                        {
+                          "id": 42,
+                          "name": "NZ_CP110812_Bacillus_paralicheniformis_strain_CamBx3",
+                          "kind": "LEAF",
+                          "length": 0.0117848
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": 43,
+                  "name": "NZ_JALIZJ010000004_Bacillus_paralicheniformis_strain_ZP1",
+                  "kind": "LEAF",
+                  "length": 0.0036818
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "kind": "NODE",
+      "support": 89.0,
+      "length": 0.197182,
+      "children": [
+        {
+          "id": 45,
+          "kind": "NODE",
+          "support": 100.0,
+          "length": 0.163579,
+          "children": [
+            {
+              "id": 46,
+              "name": "NZ_PVQO01000002_Bacillus_atrophaeus_strain_LSSC3",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 50,
+              "name": "NZ_JALATD010000001_Bacillus_atrophaeus_strain_TP8F4aB22",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 52,
+              "name": "NZ_JALATW010000006_Bacillus_atrophaeus_strain_TP8F4aA4",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 54,
+              "name": "NZ_JALATY010000003_Bacillus_atrophaeus_strain_TP8F3aB2",
+              "kind": "LEAF",
+              "length": 0.00373533
+            },
+            {
+              "id": 56,
+              "name": "NZ_JALASX010000002_Bacillus_atrophaeus_strain_TP8O1B8",
+              "kind": "LEAF",
+              "length": 0.0012266
+            },
+            {
+              "id": 58,
+              "name": "NZ_AEFS01000014_Bacillus_atrophaeus_10131_contig00015",
+              "kind": "LEAF",
+              "length": 0.00124625
+            },
+            {
+              "id": 61,
+              "kind": "NODE",
+              "support": 72.0,
+              "length": 0.000619153,
+              "children": [
+                {
+                  "id": 62,
+                  "name": "NZ_JALAVT010000005_Bacillus_atrophaeus_strain_TP10S1NI5",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 63,
+                  "name": "NZ_JALAPU010000003_Bacillus_atrophaeus_strain_TP8F7aA3",
+                  "kind": "LEAF",
+                  "length": 0.00123804
+                }
+              ]
+            },
+            {
+              "id": 65,
+              "name": "NZ_JALASZ010000009_Bacillus_atrophaeus_strain_TP8O1B5",
+              "kind": "LEAF",
+              "length": 0.00186708
+            },
+            {
+              "id": 67,
+              "name": "NZ_JALAPY010000010_Bacillus_atrophaeus_strain_CK4F3A52",
+              "kind": "LEAF",
+              "length": 0.00249138
+            },
+            {
+              "id": 69,
+              "name": "NZ_JALAUL010000002_Bacillus_atrophaeus_strain_CK4F12",
+              "kind": "LEAF",
+              "length": 0.00311697
+            },
+            {
+              "id": 73,
+              "name": "NZ_JALAKX010000022_Bacillus_atrophaeus_strain_N9C17",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 74,
+              "name": "NZ_JALAPX010000003_Bacillus_atrophaeus_strain_CK5O2B1",
+              "kind": "LEAF",
+              "length": 0.00310893
+            },
+            {
+              "id": 75,
+              "name": "NZ_JALATU010000001_Bacillus_atrophaeus_strain_TP8FaA4",
+              "kind": "LEAF",
+              "length": 0.00123936
+            },
+            {
+              "id": 78,
+              "name": "NZ_CP073265_Bacillus_atrophaeus_strain_CNY01",
+              "kind": "LEAF",
+              "length": 0.00476386
+            },
+            {
+              "id": 80,
+              "name": "NZ_JALATH010000004_Bacillus_atrophaeus_strain_WR203B5",
+              "kind": "LEAF",
+              "length": 0.00508222
+            },
+            {
+              "id": 81,
+              "name": "NZ_JALAQF010000173_Bacillus_atrophaeus_strain_CK3J3B4",
+              "kind": "LEAF",
+              "length": 0.00339995
+            },
+            {
+              "id": 82,
+              "name": "NZ_JALAUB010000002_Bacillus_atrophaeus_strain_TP601B3a",
+              "kind": "LEAF",
+              "length": 0.00247643
+            },
+            {
+              "id": 83,
+              "name": "NZ_JALAUJ010000006_Bacillus_atrophaeus_strain_CK4F14",
+              "kind": "LEAF",
+              "length": 1e-6
+            },
+            {
+              "id": 86,
+              "name": "NZ_PVWB01000003_Bacillus_atrophaeus_strain_TS1",
+              "kind": "LEAF",
+              "length": 0.0060031
+            },
+            {
+              "id": 87,
+              "name": "NZ_CP021500_Bacillus_atrophaeus_strain_SRCM101359",
+              "kind": "LEAF",
+              "length": 0.0028061
+            },
+            {
+              "id": 89,
+              "name": "NZ_LQYR01000017_Bacillus_atrophaeus_strain_B4144_201601",
+              "kind": "LEAF",
+              "length": 0.00117846
+            },
+            {
+              "id": 90,
+              "name": "NZ_QSNE01000004_Bacillus_atrophaeus_strain_90",
+              "kind": "LEAF",
+              "length": 0.00129346
+            },
+            {
+              "id": 92,
+              "name": "NZ_JALAVP010000011_Bacillus_atrophaeus_strain_EC49O5BF15",
+              "kind": "LEAF",
+              "length": 0.00138915
+            },
+            {
+              "id": 93,
+              "name": "NZ_JALAQD010000002_Bacillus_atrophaeus_strain_CK3O1B51B",
+              "kind": "LEAF",
+              "length": 0.00232009
+            }
+          ]
+        },
+        {
+          "id": 94,
+          "kind": "NODE",
+          "support": 100.0,
+          "length": 0.0683916,
+          "children": [
+            {
+              "id": 95,
+              "kind": "NODE",
+              "support": 100.0,
+              "length": 0.173095,
+              "children": [
+                {
+                  "id": 96,
+                  "kind": "NODE",
+                  "support": 89.0,
+                  "length": 0.0377908,
+                  "children": [
+                    {
+                      "id": 97,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.0173458,
+                      "children": [
+                        {
+                          "id": 98,
+                          "name": "NZ_JALAWC010000009_Bacillus_mojavensis_strain_EC30O2NC3",
+                          "kind": "LEAF",
+                          "length": 0.00242187
+                        },
+                        {
+                          "id": 99,
+                          "kind": "NODE",
+                          "support": 95.0,
+                          "length": 0.00128599,
+                          "children": [
+                            {
+                              "id": 100,
+                              "name": "NZ_JALAQA010000002_Bacillus_mojavensis_strain_CK3O2B54A",
+                              "kind": "LEAF",
+                              "length": 0.00184916
+                            },
+                            {
+                              "id": 101,
+                              "name": "NZ_AYTL01000028_Bacillus_mojavensis_ROH1_",
+                              "kind": "LEAF",
+                              "length": 0.00247909
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": 105,
+                      "name": "NZ_JARQZN010000010_Bacillus_halotolerans_strain_14SM",
+                      "kind": "LEAF",
+                      "length": 0.00187705
+                    },
+                    {
+                      "id": 107,
+                      "name": "NZ_JAMXBU010000021_Bacillus_halotolerans_strain_IcBac21",
+                      "kind": "LEAF",
+                      "length": 0.00123818
+                    },
+                    {
+                      "id": 108,
+                      "name": "NZ_JAJEJN010000003_Bacillus_halotolerans_strain_A1",
+                      "kind": "LEAF",
+                      "length": 0.001861
+                    },
+                    {
+                      "id": 110,
+                      "name": "NZ_JAEACJ010000001_Bacillus_halotolerans_strain_Call11",
+                      "kind": "LEAF",
+                      "length": 0.00124847
+                    },
+                    {
+                      "id": 113,
+                      "name": "NZ_LPVF01000008_Bacillus_halotolerans_strain_ATCC",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 115,
+                      "name": "NZ_JAEACK010000008_Bacillus_halotolerans_strain_Call30",
+                      "kind": "LEAF",
+                      "length": 0.00247414
+                    },
+                    {
+                      "id": 116,
+                      "name": "NZ_PVWC01000004_Bacillus_halotolerans_strain_DGL6",
+                      "kind": "LEAF",
+                      "length": 0.0012349
+                    },
+                    {
+                      "id": 117,
+                      "name": "NZ_CP110264_Bacillus_halotolerans_strain_HMB20199",
+                      "kind": "LEAF",
+                      "length": 0.000639642
+                    },
+                    {
+                      "id": 119,
+                      "kind": "NODE",
+                      "support": 88.0,
+                      "length": 0.00437379,
+                      "children": [
+                        {
+                          "id": 120,
+                          "name": "NZ_JAETVY010000088_Bacillus_halotolerans_strain_RHF12",
+                          "kind": "LEAF",
+                          "length": 0.00336543
+                        },
+                        {
+                          "id": 121,
+                          "name": "NZ_PVXA01000004_Bacillus_halotolerans_strain_86",
+                          "kind": "LEAF",
+                          "length": 0.00352454
+                        }
+                      ]
+                    },
+                    {
+                      "id": 124,
+                      "name": "NZ_CP126530_Bacillus_halotolerans_strain_Tehuacan_S4",
+                      "kind": "LEAF",
+                      "length": 0.00123686
+                    },
+                    {
+                      "id": 126,
+                      "kind": "NODE",
+                      "support": 73.0,
+                      "length": 0.000617035,
+                      "children": [
+                        {
+                          "id": 127,
+                          "name": "NZ_JALAPT010000029_Bacillus_halotolerans_strain_TP8F7aA6",
+                          "kind": "LEAF",
+                          "length": 0.000617147
+                        },
+                        {
+                          "id": 128,
+                          "name": "NZ_CP128116_Bacillus_halotolerans_strain_KF17",
+                          "kind": "LEAF",
+                          "length": 0.0018649
+                        }
+                      ]
+                    },
+                    {
+                      "id": 131,
+                      "name": "NZ_CP054584_Bacillus_halotolerans_strain_KKD1",
+                      "kind": "LEAF",
+                      "length": 0.000616433
+                    },
+                    {
+                      "id": 132,
+                      "name": "NZ_JALAVZ010000020_Bacillus_halotolerans_strain_EC49O2NC22",
+                      "kind": "LEAF",
+                      "length": 0.000618777
+                    },
+                    {
+                      "id": 133,
+                      "name": "NZ_CP065858_Bacillus_halotolerans_strain_P1",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 134,
+                      "name": "NZ_CP126100_Bacillus_halotolerans_strain_LN2",
+                      "kind": "LEAF",
+                      "length": 0.00123691
+                    }
+                  ]
+                },
+                {
+                  "id": 135,
+                  "kind": "NODE",
+                  "support": 100.0,
+                  "length": 0.0691668,
+                  "children": [
+                    {
+                      "id": 136,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.0277987,
+                      "children": [
+                        {
+                          "id": 137,
+                          "name": "NZ_JABMIY010000013_Bacillus_tequilensis_strain_DL21",
+                          "kind": "LEAF",
+                          "length": 0.013924
+                        },
+                        {
+                          "id": 138,
+                          "name": "NZ_AYTO01000007_Bacillus_tequilensis_KCTC_13622",
+                          "kind": "LEAF",
+                          "length": 0.00748032
+                        }
+                      ]
+                    },
+                    {
+                      "id": 140,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.016004,
+                      "children": [
+                        {
+                          "id": 141,
+                          "kind": "NODE",
+                          "support": 100.0,
+                          "length": 0.0298861,
+                          "children": [
+                            {
+                              "id": 143,
+                              "name": "NZ_CP124601_Bacillus_stercoris_strain_BS21",
+                              "kind": "LEAF",
+                              "length": 0.00370123
+                            },
+                            {
+                              "id": 144,
+                              "name": "NZ_JAUPFJ010000001_Bacillus_stercoris_strain_SEN",
+                              "kind": "LEAF",
+                              "length": 0.00128264
+                            },
+                            {
+                              "id": 146,
+                              "name": "NZ_JASXSR010000001_Bacillus_stercoris_strain_45",
+                              "kind": "LEAF",
+                              "length": 0.0043978
+                            },
+                            {
+                              "id": 147,
+                              "name": "NZ_JAMQIY010000013_Bacillus_stercoris_strain_PSM7",
+                              "kind": "LEAF",
+                              "length": 0.00434253
+                            }
+                          ]
+                        },
+                        {
+                          "id": 148,
+                          "kind": "NODE",
+                          "support": 100.0,
+                          "length": 0.0160611,
+                          "children": [
+                            {
+                              "id": 149,
+                              "kind": "NODE",
+                              "support": 78.0,
+                              "length": 0.00148647,
+                              "children": [
+                                {
+                                  "id": 150,
+                                  "kind": "NODE",
+                                  "support": 88.0,
+                                  "length": 0.00273586,
+                                  "children": [
+                                    {
+                                      "id": 151,
+                                      "name": "NZ_JACJGD010000008_Bacillus_subtilis_strain_RSD2",
+                                      "kind": "LEAF",
+                                      "length": 0.00185894
+                                    },
+                                    {
+                                      "id": 152,
+                                      "name": "NZ_CP103784_Bacillus_subtilis_strain_RONN1",
+                                      "kind": "LEAF",
+                                      "length": 0.00437544
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 154,
+                                  "name": "NZ_CP021892_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 0.0048005
+                                },
+                                {
+                                  "id": 156,
+                                  "kind": "NODE",
+                                  "support": 70.0,
+                                  "length": 0.00187474,
+                                  "children": [
+                                    {
+                                      "id": 158,
+                                      "name": "NZ_NBBO01000002_Bacillus_subtilis_strain_TS4",
+                                      "kind": "LEAF",
+                                      "length": 1e-6
+                                    },
+                                    {
+                                      "id": 159,
+                                      "name": "NZ_JXHR01000027_Bacillus_subtilis_strain_B4146",
+                                      "kind": "LEAF",
+                                      "length": 0.00372945
+                                    },
+                                    {
+                                      "id": 160,
+                                      "kind": "NODE",
+                                      "support": 87.0,
+                                      "length": 1e-6,
+                                      "children": [
+                                        {
+                                          "id": 161,
+                                          "name": "NZ_VLJL01000048_Bacillus_subtilis_J27_BacJ27_scaffold_6",
+                                          "kind": "LEAF",
+                                          "length": 0.001237
+                                        },
+                                        {
+                                          "id": 162,
+                                          "name": "NZ_CP061870_Bacillus_subtilis_strain_FX1",
+                                          "kind": "LEAF",
+                                          "length": 1e-6
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 168,
+                                  "name": "NZ_JALAUA010000014_Bacillus_subtilis_strain_TP6F1F",
+                                  "kind": "LEAF",
+                                  "length": 0.00186812
+                                },
+                                {
+                                  "id": 169,
+                                  "kind": "NODE",
+                                  "support": 92.0,
+                                  "length": 0.0018739,
+                                  "children": [
+                                    {
+                                      "id": 170,
+                                      "name": "NZ_JAPFBY010000004_Bacillus_subtilis_strain_BDSA1",
+                                      "kind": "LEAF",
+                                      "length": 0.00123704
+                                    },
+                                    {
+                                      "id": 171,
+                                      "name": "NZ_VLJK01000006_Bacillus_subtilis_J26_BacJ26_scaffold_13",
+                                      "kind": "LEAF",
+                                      "length": 0.00124382
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 174,
+                                  "name": "NZ_CP017112_Bacillus_subtilis_strain_BS16045",
+                                  "kind": "LEAF",
+                                  "length": 0.0050074
+                                },
+                                {
+                                  "id": 175,
+                                  "name": "NZ_CAJNQH010000009_Bacillus_subtilis_isolate_NRS6137",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                },
+                                {
+                                  "id": 176,
+                                  "kind": "NODE",
+                                  "support": 97.0,
+                                  "length": 0.00278917,
+                                  "children": [
+                                    {
+                                      "id": 177,
+                                      "name": "NZ_CP049924_Bacillus_subtilis_strain_So1b",
+                                      "kind": "LEAF",
+                                      "length": 0.00123754
+                                    },
+                                    {
+                                      "id": 179,
+                                      "name": "NZ_CP095736_Bacillus_subtilis_strain_N4",
+                                      "kind": "LEAF",
+                                      "length": 0.000617475
+                                    },
+                                    {
+                                      "id": 180,
+                                      "name": "NZ_CP101936_Bacillus_subtilis_subsp_subtilis",
+                                      "kind": "LEAF",
+                                      "length": 0.00123752
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 183,
+                                  "name": "NZ_CP009796_Bacillus_subtilis_strain_SG6",
+                                  "kind": "LEAF",
+                                  "length": 0.00186385
+                                },
+                                {
+                                  "id": 184,
+                                  "name": "NZ_CAJNQI010000003_Bacillus_subtilis_isolate_NRS6141",
+                                  "kind": "LEAF",
+                                  "length": 0.000616858
+                                },
+                                {
+                                  "id": 186,
+                                  "name": "NZ_LVYH01000008_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 0.00311149
+                                },
+                                {
+                                  "id": 189,
+                                  "name": "NZ_CP026010_Bacillus_subtilis_strain_ATCC",
+                                  "kind": "LEAF",
+                                  "length": 0.0030134
+                                },
+                                {
+                                  "id": 190,
+                                  "name": "NC_020244_Bacillus_subtilis_XF1_complete",
+                                  "kind": "LEAF",
+                                  "length": 0.00135434
+                                },
+                                {
+                                  "id": 191,
+                                  "name": "NZ_CP011534_Bacillus_subtilis_strain_UD1022",
+                                  "kind": "LEAF",
+                                  "length": 0.000725654
+                                },
+                                {
+                                  "id": 197,
+                                  "name": "NZ_CP120577_Bacillus_subtilis_strain_PRO53",
+                                  "kind": "LEAF",
+                                  "length": 0.0018564
+                                },
+                                {
+                                  "id": 198,
+                                  "name": "NZ_OX419652_Bacillus_subtilis_isolate_NRS6131",
+                                  "kind": "LEAF",
+                                  "length": 0.00185627
+                                },
+                                {
+                                  "id": 200,
+                                  "name": "NZ_AMCA01000049_Bacillus_subtilis_Hal1_Contig51",
+                                  "kind": "LEAF",
+                                  "length": 0.00123686
+                                },
+                                {
+                                  "id": 201,
+                                  "name": "NZ_JAACYL010000002_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                },
+                                {
+                                  "id": 205,
+                                  "name": "NZ_CP021903_Bacillus_subtilis_strain_ge28",
+                                  "kind": "LEAF",
+                                  "length": 0.00185607
+                                },
+                                {
+                                  "id": 206,
+                                  "name": "NZ_SIWZ01000001_Bacillus_subtilis_strain_ABP1",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                },
+                                {
+                                  "id": 207,
+                                  "name": "NZ_CAJNPU010000002_Bacillus_subtilis_isolate_NRS6108",
+                                  "kind": "LEAF",
+                                  "length": 0.0037457
+                                },
+                                {
+                                  "id": 208,
+                                  "name": "NZ_CP035226_Bacillus_subtilis_strain_SRCM103517",
+                                  "kind": "LEAF",
+                                  "length": 0.00185495
+                                },
+                                {
+                                  "id": 212,
+                                  "name": "NZ_CP026034_Bacillus_subtilis_strain_PK5_52",
+                                  "kind": "LEAF",
+                                  "length": 0.00136834
+                                },
+                                {
+                                  "id": 214,
+                                  "name": "NZ_CP089514_Bacillus_subtilis_strain_SR7",
+                                  "kind": "LEAF",
+                                  "length": 0.000746021
+                                },
+                                {
+                                  "id": 216,
+                                  "name": "NZ_CP017676_Bacillus_subtilis_strain_VV2",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                },
+                                {
+                                  "id": 219,
+                                  "name": "NZ_NPCP01000013_Bacillus_subtilis_strain_7706",
+                                  "kind": "LEAF",
+                                  "length": 0.00123797
+                                },
+                                {
+                                  "id": 221,
+                                  "name": "NZ_CAJNPS010000002_Bacillus_subtilis_isolate_NRS6094",
+                                  "kind": "LEAF",
+                                  "length": 0.00375135
+                                },
+                                {
+                                  "id": 222,
+                                  "name": "NC_020507_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                },
+                                {
+                                  "id": 223,
+                                  "name": "NZ_CP026035_Bacillus_subtilis_strain_PK5_68",
+                                  "kind": "LEAF",
+                                  "length": 0.002496
+                                },
+                                {
+                                  "id": 224,
+                                  "name": "NZ_MZZI01000001_Bacillus_subtilis_strain_RC",
+                                  "kind": "LEAF",
+                                  "length": 0.001234
+                                },
+                                {
+                                  "id": 225,
+                                  "name": "NZ_JAAEBI010000004_Bacillus_subtilis_strain_TNC32019",
+                                  "kind": "LEAF",
+                                  "length": 0.00123884
+                                },
+                                {
+                                  "id": 227,
+                                  "name": "NZ_CP060417_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 0.00561766
+                                },
+                                {
+                                  "id": 231,
+                                  "name": "NZ_CP029461_Bacillus_subtilis_strain_QB61",
+                                  "kind": "LEAF",
+                                  "length": 0.00376698
+                                },
+                                {
+                                  "id": 234,
+                                  "name": "NZ_CP069789_Bacillus_subtilis_strain_BIM",
+                                  "kind": "LEAF",
+                                  "length": 0.00377443
+                                },
+                                {
+                                  "id": 235,
+                                  "name": "NZ_PVRK01000001_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 0.0031484
+                                },
+                                {
+                                  "id": 236,
+                                  "kind": "NODE",
+                                  "support": 82.0,
+                                  "length": 0.00186747,
+                                  "children": [
+                                    {
+                                      "id": 237,
+                                      "name": "NZ_CP028212_Bacillus_subtilis_strain_SRCM102748",
+                                      "kind": "LEAF",
+                                      "length": 0.00123566
+                                    },
+                                    {
+                                      "id": 238,
+                                      "name": "NZ_NJRD01000003_Bacillus_subtilis_strain_203",
+                                      "kind": "LEAF",
+                                      "length": 1e-6
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 239,
+                                  "name": "NZ_CP035167_Bacillus_subtilis_strain_SRCM104008",
+                                  "kind": "LEAF",
+                                  "length": 0.00248412
+                                },
+                                {
+                                  "id": 242,
+                                  "name": "NZ_JAHHXX010000016_Bacillus_subtilis_strain_179I",
+                                  "kind": "LEAF",
+                                  "length": 0.00186513
+                                },
+                                {
+                                  "id": 243,
+                                  "name": "NZ_CP021169_Bacillus_subtilis_strain_TLO3",
+                                  "kind": "LEAF",
+                                  "length": 0.00124312
+                                },
+                                {
+                                  "id": 246,
+                                  "name": "NZ_JAAEBH010000002_Bacillus_subtilis_strain_TNW12019",
+                                  "kind": "LEAF",
+                                  "length": 0.00249685
+                                },
+                                {
+                                  "id": 247,
+                                  "name": "NZ_RPHF01000001_Bacillus_subtilis_strain_EH5",
+                                  "kind": "LEAF",
+                                  "length": 0.00123684
+                                },
+                                {
+                                  "id": 250,
+                                  "name": "NC_017196_Bacillus_subtilis_subsp_natto",
+                                  "kind": "LEAF",
+                                  "length": 0.00185667
+                                },
+                                {
+                                  "id": 253,
+                                  "name": "NZ_CP031693_Bacillus_subtilis_strain_SRCM101393",
+                                  "kind": "LEAF",
+                                  "length": 0.00185796
+                                },
+                                {
+                                  "id": 255,
+                                  "name": "NZ_CP020915_Bacillus_subtilis_strain_501",
+                                  "kind": "LEAF",
+                                  "length": 0.000614948
+                                },
+                                {
+                                  "id": 256,
+                                  "name": "NZ_CP021499_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 0.00123712
+                                },
+                                {
+                                  "id": 257,
+                                  "name": "NZ_CP016894_Bacillus_subtilis_strain_HJ06",
+                                  "kind": "LEAF",
+                                  "length": 0.00123845
+                                },
+                                {
+                                  "id": 260,
+                                  "name": "NZ_CAJNPP010000001_Bacillus_subtilis_isolate_NRS6084",
+                                  "kind": "LEAF",
+                                  "length": 0.00123606
+                                },
+                                {
+                                  "id": 262,
+                                  "kind": "NODE",
+                                  "support": 92.0,
+                                  "length": 0.00436733,
+                                  "children": [
+                                    {
+                                      "id": 264,
+                                      "name": "NZ_CP028217_Bacillus_subtilis_strain_SRCM102751",
+                                      "kind": "LEAF",
+                                      "length": 0.00225499
+                                    },
+                                    {
+                                      "id": 265,
+                                      "name": "NZ_CP020367_Bacillus_subtilis_strain_GQJK2",
+                                      "kind": "LEAF",
+                                      "length": 0.0012061
+                                    },
+                                    {
+                                      "id": 266,
+                                      "name": "NZ_FWZZ01000001_Bacillus_subtilis_strain_CC12022201",
+                                      "kind": "LEAF",
+                                      "length": 0.00124037
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 268,
+                                  "name": "NZ_JAOYTF010000012_Bacillus_subtilis_strain_BPM12",
+                                  "kind": "LEAF",
+                                  "length": 0.000621815
+                                },
+                                {
+                                  "id": 269,
+                                  "name": "NZ_CP021921_Bacillus_subtilis_subsp_subtilis",
+                                  "kind": "LEAF",
+                                  "length": 0.00311721
+                                },
+                                {
+                                  "id": 271,
+                                  "name": "NZ_CP045816_Bacillus_subtilis_strain_P5_B2",
+                                  "kind": "LEAF",
+                                  "length": 0.000905021
+                                },
+                                {
+                                  "id": 272,
+                                  "kind": "NODE",
+                                  "support": 76.0,
+                                  "length": 0.000948958,
+                                  "children": [
+                                    {
+                                      "id": 273,
+                                      "name": "NZ_JAUUCM010000002_Bacillus_subtilis_strain_RNC6",
+                                      "kind": "LEAF",
+                                      "length": 1e-6
+                                    },
+                                    {
+                                      "id": 274,
+                                      "name": "NZ_RFFO01000010_Bacillus_subtilis_strain_M9",
+                                      "kind": "LEAF",
+                                      "length": 0.00123703
+                                    }
+                                  ]
+                                },
+                                {
+                                  "id": 275,
+                                  "kind": "NODE",
+                                  "support": 100.0,
+                                  "length": 0.00563139,
+                                  "children": [
+                                    {
+                                      "id": 276,
+                                      "name": "NZ_RPHG01000002_Bacillus_subtilis_strain_EH2",
+                                      "kind": "LEAF",
+                                      "length": 0.000621475
+                                    },
+                                    {
+                                      "id": 277,
+                                      "name": "NZ_JAHHYT010000001_Bacillus_subtilis_strain_179D",
+                                      "kind": "LEAF",
+                                      "length": 0.000614899
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "id": 278,
+                              "kind": "NODE",
+                              "support": 100.0,
+                              "length": 0.0052065,
+                              "children": [
+                                {
+                                  "id": 279,
+                                  "name": "NZ_JAGFPI010000015_Bacillus_subtilis_strain_ASM1",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                },
+                                {
+                                  "id": 281,
+                                  "name": "NZ_JACAAP010000002_Bacillus_subtilis_strain_JS12",
+                                  "kind": "LEAF",
+                                  "length": 0.000617007
+                                },
+                                {
+                                  "id": 283,
+                                  "name": "NZ_OX419577_Bacillus_subtilis_isolate_NRS6120",
+                                  "kind": "LEAF",
+                                  "length": 0.00310352
+                                },
+                                {
+                                  "id": 284,
+                                  "name": "NZ_VDPU01000031_Bacillus_subtilis_strain_DE0516",
+                                  "kind": "LEAF",
+                                  "length": 0.000617026
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": 287,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.0166318,
+                      "children": [
+                        {
+                          "id": 288,
+                          "name": "NC_016047_Bacillus_subtilis_subsp_spizizenii",
+                          "kind": "LEAF",
+                          "length": 0.00767928
+                        },
+                        {
+                          "id": 289,
+                          "kind": "NODE",
+                          "support": 93.0,
+                          "length": 1e-6,
+                          "children": [
+                            {
+                              "id": 290,
+                              "name": "NZ_AFSG01000020_Bacillus_subtilis_subsp_spizizenii",
+                              "kind": "LEAF",
+                              "length": 0.0234732
+                            },
+                            {
+                              "id": 291,
+                              "kind": "NODE",
+                              "support": 100.0,
+                              "length": 0.0194794,
+                              "children": [
+                                {
+                                  "id": 292,
+                                  "name": "NZ_AJHL01000020_Bacillus_subtilis_subsp_spizizenii",
+                                  "kind": "LEAF",
+                                  "length": 0.00494605
+                                },
+                                {
+                                  "id": 293,
+                                  "name": "NC_014479_Bacillus_subtilis_subsp_spizizenii",
+                                  "kind": "LEAF",
+                                  "length": 0.00452083
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": 294,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.0194272,
+                      "children": [
+                        {
+                          "id": 295,
+                          "name": "NZ_JAUCEQ010000002_Bacillus_subtilis_strain_b15",
+                          "kind": "LEAF",
+                          "length": 0.0289099
+                        },
+                        {
+                          "id": 296,
+                          "kind": "NODE",
+                          "support": 100.0,
+                          "length": 0.0320339,
+                          "children": [
+                            {
+                              "id": 297,
+                              "name": "NZ_NXEM01000019_Bacillus_vallismortis_strain_TD3",
+                              "kind": "LEAF",
+                              "length": 0.00604459
+                            },
+                            {
+                              "id": 298,
+                              "kind": "NODE",
+                              "support": 95.0,
+                              "length": 0.00252323,
+                              "children": [
+                                {
+                                  "id": 299,
+                                  "name": "NZ_CP026362_Bacillus_vallismortis_strain_DSM",
+                                  "kind": "LEAF",
+                                  "length": 0.0029164
+                                },
+                                {
+                                  "id": 300,
+                                  "kind": "NODE",
+                                  "support": 77.0,
+                                  "length": 0.00124626,
+                                  "children": [
+                                    {
+                                      "id": 301,
+                                      "kind": "NODE",
+                                      "support": 100.0,
+                                      "length": 0.00276163,
+                                      "children": [
+                                        {
+                                          "id": 302,
+                                          "name": "NZ_JALAQJ010000010_Bacillus_vallismortis_strain_N6b2",
+                                          "kind": "LEAF",
+                                          "length": 0.00186221
+                                        },
+                                        {
+                                          "id": 303,
+                                          "name": "NZ_CP033052_Bacillus_vallismortis_strain_Bac111",
+                                          "kind": "LEAF",
+                                          "length": 0.0018674
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": 304,
+                                      "name": "NZ_JALAOG010000004_Bacillus_vallismortis_strain_9810",
+                                      "kind": "LEAF",
+                                      "length": 0.00541435
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": 305,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.0235936,
+                      "children": [
+                        {
+                          "id": 306,
+                          "name": "NZ_JALALO010000008_Bacillus_inaquosorum_strain_N9A14",
+                          "kind": "LEAF",
+                          "length": 0.00426415
+                        },
+                        {
+                          "id": 308,
+                          "kind": "NODE",
+                          "support": 97.0,
+                          "length": 0.00195874,
+                          "children": [
+                            {
+                              "id": 309,
+                              "name": "NZ_JALAYC010000004_Bacillus_inaquosorum_strain_T16B2",
+                              "kind": "LEAF",
+                              "length": 0.00124462
+                            },
+                            {
+                              "id": 310,
+                              "name": "NZ_JALANQ010000020_Bacillus_inaquosorum_strain_M15B4",
+                              "kind": "LEAF",
+                              "length": 0.000620282
+                            }
+                          ]
+                        },
+                        {
+                          "id": 312,
+                          "name": "NZ_JALAVD010000001_Bacillus_inaquosorum_strain_EC30O5NE3",
+                          "kind": "LEAF",
+                          "length": 0.00252579
+                        },
+                        {
+                          "id": 316,
+                          "kind": "NODE",
+                          "support": 81.0,
+                          "length": 0.00283158,
+                          "children": [
+                            {
+                              "id": 317,
+                              "name": "NZ_JALAUU010000008_Bacillus_inaquosorum_strain_EC49O2BD21",
+                              "kind": "LEAF",
+                              "length": 1e-6
+                            },
+                            {
+                              "id": 318,
+                              "kind": "NODE",
+                              "support": 96.0,
+                              "length": 0.00374769,
+                              "children": [
+                                {
+                                  "id": 319,
+                                  "name": "NZ_JALAVA010000002_Bacillus_inaquosorum_strain_EC30O5BF21",
+                                  "kind": "LEAF",
+                                  "length": 0.00124273
+                                },
+                                {
+                                  "id": 320,
+                                  "name": "NZ_JALAUT010000008_Bacillus_inaquosorum_strain_EC49O5BF1",
+                                  "kind": "LEAF",
+                                  "length": 1e-6
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "id": 321,
+                          "name": "NZ_JALATJ010000007_Bacillus_inaquosorum_strain_WR203A1m",
+                          "kind": "LEAF",
+                          "length": 0.00218399
+                        },
+                        {
+                          "id": 323,
+                          "name": "NZ_JALALA010000024_Bacillus_inaquosorum_strain_N9B29",
+                          "kind": "LEAF",
+                          "length": 0.00281113
+                        },
+                        {
+                          "id": 325,
+                          "name": "NZ_CP080644_Bacillus_inaquosorum_strain_CCSR02",
+                          "kind": "LEAF",
+                          "length": 0.00670633
+                        },
+                        {
+                          "id": 326,
+                          "name": "NZ_JALAVB010000008_Bacillus_inaquosorum_strain_EC30O2BD2",
+                          "kind": "LEAF",
+                          "length": 0.00408556
+                        },
+                        {
+                          "id": 332,
+                          "name": "NZ_JALAKZ010000001_Bacillus_inaquosorum_strain_N9C1",
+                          "kind": "LEAF",
+                          "length": 0.00251438
+                        },
+                        {
+                          "id": 333,
+                          "name": "NZ_JALAUY010000016_Bacillus_inaquosorum_strain_EC30O1BJ4",
+                          "kind": "LEAF",
+                          "length": 0.000616792
+                        },
+                        {
+                          "id": 334,
+                          "name": "NZ_JALALG010000010_Bacillus_inaquosorum_strain_N9B20",
+                          "kind": "LEAF",
+                          "length": 0.00312493
+                        },
+                        {
+                          "id": 335,
+                          "name": "NZ_CP127095_Bacillus_inaquosorum_strain_LBA001",
+                          "kind": "LEAF",
+                          "length": 0.00249498
+                        },
+                        {
+                          "id": 336,
+                          "name": "NZ_CP111073_Bacillus_inaquosorum_strain_BSXE2102",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        },
+                        {
+                          "id": 338,
+                          "name": "NZ_JALAVE010000007_Bacillus_inaquosorum_strain_EC30O1BJ3",
+                          "kind": "LEAF",
+                          "length": 0.00250535
+                        },
+                        {
+                          "id": 341,
+                          "name": "NZ_JALAJS010000008_Bacillus_inaquosorum_strain_S18C12",
+                          "kind": "LEAF",
+                          "length": 0.00438631
+                        },
+                        {
+                          "id": 342,
+                          "kind": "NODE",
+                          "support": 95.0,
+                          "length": 0.00125589,
+                          "children": [
+                            {
+                              "id": 343,
+                              "name": "NZ_JALAWU010000014_Bacillus_inaquosorum_strain_T5B8",
+                              "kind": "LEAF",
+                              "length": 0.000620126
+                            },
+                            {
+                              "id": 344,
+                              "name": "NZ_JALAOY010000023_Bacillus_inaquosorum_strain_1054",
+                              "kind": "LEAF",
+                              "length": 0.000622322
+                            }
+                          ]
+                        },
+                        {
+                          "id": 347,
+                          "name": "NZ_JALAKN010000010_Bacillus_inaquosorum_strain_S11C11",
+                          "kind": "LEAF",
+                          "length": 0.00265135
+                        },
+                        {
+                          "id": 348,
+                          "name": "NZ_JALAMJ010000003_Bacillus_inaquosorum_strain_N15A8",
+                          "kind": "LEAF",
+                          "length": 0.00425867
+                        },
+                        {
+                          "id": 349,
+                          "name": "NZ_JALAJB010000006_Bacillus_inaquosorum_strain_S8C1X2",
+                          "kind": "LEAF",
+                          "length": 0.000896001
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 351,
+              "kind": "NODE",
+              "support": 88.0,
+              "length": 0.0114116,
+              "children": [
+                {
+                  "id": 352,
+                  "name": "NZ_NPCI01000009_Bacillus_siamensis_strain_7551",
+                  "kind": "LEAF",
+                  "length": 0.00376801
+                },
+                {
+                  "id": 354,
+                  "name": "NZ_LAGT01000009_Bacillus_siamensis_strain_XY18",
+                  "kind": "LEAF",
+                  "length": 0.00195089
+                },
+                {
+                  "id": 356,
+                  "name": "NZ_CP101610_Bacillus_siamensis_strain_WYJE14",
+                  "kind": "LEAF",
+                  "length": 0.00865396
+                },
+                {
+                  "id": 358,
+                  "name": "NZ_CP110268_Bacillus_siamensis_strain_YB1631",
+                  "kind": "LEAF",
+                  "length": 0.00121525
+                },
+                {
+                  "id": 360,
+                  "name": "NZ_LYUE01000024_Bacillus_siamensis_strain_SRCM100169",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 362,
+                  "name": "NZ_AJVF01000039_Bacillus_siamensis_KCTC_13613",
+                  "kind": "LEAF",
+                  "length": 0.00183351
+                },
+                {
+                  "id": 363,
+                  "name": "NZ_JTJG01000022_Bacillus_siamensis_strain_JJC33M",
+                  "kind": "LEAF",
+                  "length": 0.00245185
+                }
+              ]
+            },
+            {
+              "id": 364,
+              "kind": "NODE",
+              "support": 82.0,
+              "length": 0.00908436,
+              "children": [
+                {
+                  "id": 365,
+                  "kind": "NODE",
+                  "support": 98.0,
+                  "length": 0.0229271,
+                  "children": [
+                    {
+                      "id": 367,
+                      "kind": "NODE",
+                      "support": 99.0,
+                      "length": 0.00875025,
+                      "children": [
+                        {
+                          "id": 368,
+                          "name": "NZ_CP016913_Bacillus_amyloliquefaciens_strain_RD77",
+                          "kind": "LEAF",
+                          "length": 0.00372556
+                        },
+                        {
+                          "id": 369,
+                          "name": "NZ_CP073635_Bacillus_amyloliquefaciens_strain_Ba13",
+                          "kind": "LEAF",
+                          "length": 0.00308287
+                        }
+                      ]
+                    },
+                    {
+                      "id": 370,
+                      "name": "NZ_MOEA01000002_Bacillus_amyloliquefaciens_strain_K2",
+                      "kind": "LEAF",
+                      "length": 0.0038487
+                    },
+                    {
+                      "id": 372,
+                      "name": "NZ_JAROZI010000001_Bacillus_amyloliquefaciens_strain_PRO40",
+                      "kind": "LEAF",
+                      "length": 0.00387131
+                    },
+                    {
+                      "id": 376,
+                      "name": "NC_017188_Bacillus_amyloliquefaciens_TA208_complete",
+                      "kind": "LEAF",
+                      "length": 0.00373997
+                    },
+                    {
+                      "id": 377,
+                      "name": "NZ_CP011252_Bacillus_amyloliquefaciens_strain_MT45",
+                      "kind": "LEAF",
+                      "length": 0.00693844
+                    },
+                    {
+                      "id": 378,
+                      "kind": "NODE",
+                      "support": 99.0,
+                      "length": 0.00630864,
+                      "children": [
+                        {
+                          "id": 379,
+                          "name": "NZ_LZZO01000019_Bacillus_amyloliquefaciens_strain_SRCM101294",
+                          "kind": "LEAF",
+                          "length": 0.00186691
+                        },
+                        {
+                          "id": 380,
+                          "name": "NZ_JAPWDN010000003_Bacillus_amyloliquefaciens_strain_DYC21",
+                          "kind": "LEAF",
+                          "length": 0.00367635
+                        }
+                      ]
+                    },
+                    {
+                      "id": 381,
+                      "name": "NZ_DF836086_Bacillus_amyloliquefaciens_strain_CMW1",
+                      "kind": "LEAF",
+                      "length": 0.00877343
+                    }
+                  ]
+                },
+                {
+                  "id": 384,
+                  "name": "NZ_AOFO01000016_Bacillus_velezensis_SK19001_contig19_scaffold10",
+                  "kind": "LEAF",
+                  "length": 0.00245755
+                },
+                {
+                  "id": 386,
+                  "kind": "NODE",
+                  "support": 70.0,
+                  "length": 0.00185508,
+                  "children": [
+                    {
+                      "id": 387,
+                      "name": "NZ_CP021011_Bacillus_velezensis_strain_GFP2",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 388,
+                      "kind": "NODE",
+                      "support": 91.0,
+                      "length": 0.00183311,
+                      "children": [
+                        {
+                          "id": 389,
+                          "name": "NZ_CP066337_Bacillus_velezensis_strain_Mr12",
+                          "kind": "LEAF",
+                          "length": 0.00122029
+                        },
+                        {
+                          "id": 390,
+                          "name": "NZ_WODE01000003_Bacillus_amyloliquefaciens_strain_CB",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": 391,
+                  "kind": "NODE",
+                  "support": 76.0,
+                  "length": 0.00246393,
+                  "children": [
+                    {
+                      "id": 396,
+                      "name": "NZ_BQFE01000011_Bacillus_velezensis_strain_N1",
+                      "kind": "LEAF",
+                      "length": 0.0029068
+                    },
+                    {
+                      "id": 397,
+                      "kind": "NODE",
+                      "support": 73.0,
+                      "length": 0.00122304,
+                      "children": [
+                        {
+                          "id": 398,
+                          "name": "NZ_CP076514_Bacillus_velezensis_strain_WB",
+                          "kind": "LEAF",
+                          "length": 0.00165255
+                        },
+                        {
+                          "id": 399,
+                          "name": "NZ_CP050462_Bacillus_velezensis_strain_Htq6",
+                          "kind": "LEAF",
+                          "length": 0.00203335
+                        }
+                      ]
+                    },
+                    {
+                      "id": 400,
+                      "name": "NZ_CACRZA010000002_Bacillus_velezensis_strain_MarseilleQ1230",
+                      "kind": "LEAF",
+                      "length": 0.00122499
+                    },
+                    {
+                      "id": 406,
+                      "name": "NZ_WKKU01000009_Bacillus_velezensis_strain_VRA_336g_n",
+                      "kind": "LEAF",
+                      "length": 0.00061477
+                    },
+                    {
+                      "id": 407,
+                      "name": "NZ_CP075054_Bacillus_velezensis_strain_VTX20",
+                      "kind": "LEAF",
+                      "length": 0.00183831
+                    },
+                    {
+                      "id": 409,
+                      "name": "NZ_JAGFPJ010000009_Bacillus_velezensis_strain_ASM2",
+                      "kind": "LEAF",
+                      "length": 0.00122067
+                    },
+                    {
+                      "id": 411,
+                      "kind": "NODE",
+                      "support": 75.0,
+                      "length": 0.000613124,
+                      "children": [
+                        {
+                          "id": 412,
+                          "name": "NC_020272_Bacillus_amyloliquefaciens_IT45_complete",
+                          "kind": "LEAF",
+                          "length": 0.00121924
+                        },
+                        {
+                          "id": 413,
+                          "name": "NZ_CP125289_Bacillus_velezensis_strain_SF334",
+                          "kind": "LEAF",
+                          "length": 0.001221
+                        }
+                      ]
+                    },
+                    {
+                      "id": 415,
+                      "name": "NZ_CP010556_Bacillus_velezensis_strain_LH15",
+                      "kind": "LEAF",
+                      "length": 0.0012244
+                    },
+                    {
+                      "id": 417,
+                      "name": "NZ_CP102350_Bacillus_velezensis_strain_PMC206",
+                      "kind": "LEAF",
+                      "length": 0.0012202
+                    },
+                    {
+                      "id": 418,
+                      "name": "NZ_CP031880_Bacillus_velezensis_strain_OSYGA1",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 419,
+                      "name": "NC_016784_Bacillus_velezensis_CAU_B946",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 422,
+                      "name": "NZ_CP072791_Bacillus_velezensis_strain_GS1",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 423,
+                      "name": "NZ_CP102603_Bacillus_amyloliquefaciens_strain_MBLB0692",
+                      "kind": "LEAF",
+                      "length": 0.00245496
+                    },
+                    {
+                      "id": 425,
+                      "name": "NZ_MTID01000002_Bacillus_velezensis_strain_NB91",
+                      "kind": "LEAF",
+                      "length": 0.00060973
+                    },
+                    {
+                      "id": 427,
+                      "name": "NZ_CP074685_Bacillus_velezensis_strain_VTX9",
+                      "kind": "LEAF",
+                      "length": 0.000609504
+                    },
+                    {
+                      "id": 429,
+                      "name": "NZ_JAAKXX010000011_Bacillus_velezensis_strain_FZ06",
+                      "kind": "LEAF",
+                      "length": 0.000609648
+                    },
+                    {
+                      "id": 431,
+                      "name": "NZ_CP092383_Bacillus_velezensis_strain_SF327",
+                      "kind": "LEAF",
+                      "length": 0.000609506
+                    },
+                    {
+                      "id": 432,
+                      "kind": "NODE",
+                      "support": 100.0,
+                      "length": 0.00368481,
+                      "children": [
+                        {
+                          "id": 433,
+                          "name": "NZ_CP028439_Bacillus_velezensis_strain_82",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        },
+                        {
+                          "id": 434,
+                          "name": "NZ_CP022556_Bacillus_velezensis_strain_NJAUZ9",
+                          "kind": "LEAF",
+                          "length": 0.00122119
+                        }
+                      ]
+                    },
+                    {
+                      "id": 435,
+                      "name": "NZ_CP031424_Bacillus_velezensis_strain_B4",
+                      "kind": "LEAF",
+                      "length": 0.00122067
+                    },
+                    {
+                      "id": 436,
+                      "name": "NZ_JAFKQM010000002_Bacillus_amyloliquefaciens_strain_N11",
+                      "kind": "LEAF",
+                      "length": 0.000608362
+                    },
+                    {
+                      "id": 437,
+                      "name": "NZ_CP094618_Bacillus_velezensis_strain_FTL7",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    }
+                  ]
+                },
+                {
+                  "id": 439,
+                  "kind": "NODE",
+                  "support": 74.0,
+                  "length": 0.00183411,
+                  "children": [
+                    {
+                      "id": 441,
+                      "name": "NC_020410_Bacillus_velezensis_UCMB5036_complete",
+                      "kind": "LEAF",
+                      "length": 0.000608217
+                    },
+                    {
+                      "id": 443,
+                      "name": "NZ_NQXV01000025_Bacillus_velezensis_strain_GF610",
+                      "kind": "LEAF",
+                      "length": 0.00121769
+                    },
+                    {
+                      "id": 444,
+                      "name": "NZ_CP099859_Bacillus_velezensis_strain_2987tsa1",
+                      "kind": "LEAF",
+                      "length": 0.000608217
+                    },
+                    {
+                      "id": 445,
+                      "name": "NZ_CANMRO010000009_Bacillus_velezensis_isolate_2769fasta",
+                      "kind": "LEAF",
+                      "length": 0.00121753
+                    }
+                  ]
+                },
+                {
+                  "id": 449,
+                  "name": "NZ_AP024603_Bacillus_velezensis_strain_KOF112",
+                  "kind": "LEAF",
+                  "length": 0.00185242
+                },
+                {
+                  "id": 452,
+                  "name": "NZ_JABVDP010000004_Bacillus_amyloliquefaciens_strain_IIF7SWP4",
+                  "kind": "LEAF",
+                  "length": 0.00557733
+                },
+                {
+                  "id": 454,
+                  "name": "NZ_CP027429_Bacillus_velezensis_strain_VCC2003",
+                  "kind": "LEAF",
+                  "length": 0.000611878
+                },
+                {
+                  "id": 457,
+                  "name": "NZ_NBMN01000002_Bacillus_velezensis_strain_SSBW18",
+                  "kind": "LEAF",
+                  "length": 0.0100989
+                },
+                {
+                  "id": 458,
+                  "name": "NZ_NBMM01000001_Bacillus_velezensis_strain_SSBW19",
+                  "kind": "LEAF",
+                  "length": 0.00123554
+                },
+                {
+                  "id": 459,
+                  "name": "NZ_CP043809_Bacillus_velezensis_strain_ZeaDK315Endobac16",
+                  "kind": "LEAF",
+                  "length": 0.00122432
+                },
+                {
+                  "id": 462,
+                  "name": "NZ_CP006890_Bacillus_velezensis_SQR9_chromosome",
+                  "kind": "LEAF",
+                  "length": 0.000610998
+                },
+                {
+                  "id": 463,
+                  "name": "NZ_CP011347_Bacillus_velezensis_strain_YJ1114",
+                  "kind": "LEAF",
+                  "length": 0.00245358
+                },
+                {
+                  "id": 464,
+                  "name": "NZ_CP045926_Bacillus_velezensis_strain_AL7",
+                  "kind": "LEAF",
+                  "length": 0.00183574
+                },
+                {
+                  "id": 466,
+                  "name": "NZ_JYGH01000027_Bacillus_velezensis_strain_GR45",
+                  "kind": "LEAF",
+                  "length": 0.00245789
+                },
+                {
+                  "id": 467,
+                  "name": "NZ_MSYT01000023_Bacillus_amyloliquefaciens_strain_Fito_F321",
+                  "kind": "LEAF",
+                  "length": 0.00248189
+                },
+                {
+                  "id": 469,
+                  "kind": "NODE",
+                  "support": 87.0,
+                  "length": 0.00371731,
+                  "children": [
+                    {
+                      "id": 470,
+                      "name": "NZ_JARKHX010000002_Bacillus_amyloliquefaciens_strain_OSU101324",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 475,
+                      "name": "NZ_JACLQB010000002_Bacillus_velezensis_strain_J3P2",
+                      "kind": "LEAF",
+                      "length": 0.00183081
+                    },
+                    {
+                      "id": 476,
+                      "name": "NZ_RCDH01000002_Bacillus_velezensis_strain_CS110S",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 477,
+                      "name": "NZ_AP024501_Bacillus_velezensis_strain_AD3",
+                      "kind": "LEAF",
+                      "length": 0.00121902
+                    },
+                    {
+                      "id": 481,
+                      "name": "NZ_CP045993_Bacillus_velezensis_strain_LABIM22",
+                      "kind": "LEAF",
+                      "length": 0.00245913
+                    },
+                    {
+                      "id": 482,
+                      "kind": "NODE",
+                      "support": 71.0,
+                      "length": 0.00183988,
+                      "children": [
+                        {
+                          "id": 483,
+                          "name": "NZ_JAROZR010000002_Bacillus_velezensis_strain_PRO103",
+                          "kind": "LEAF",
+                          "length": 0.00122152
+                        },
+                        {
+                          "id": 485,
+                          "name": "NZ_JAIWPK010000003_Bacillus_amyloliquefaciens_strain_AD20_2",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        },
+                        {
+                          "id": 486,
+                          "kind": "NODE",
+                          "support": 75.0,
+                          "length": 0.001224,
+                          "children": [
+                            {
+                              "id": 487,
+                              "name": "NZ_JABSVY010000015_Bacillus_velezensis_strain_MR21A",
+                              "kind": "LEAF",
+                              "length": 1e-6
+                            },
+                            {
+                              "id": 488,
+                              "name": "NZ_CP024897_Bacillus_velezensis_strain_CN026",
+                              "kind": "LEAF",
+                              "length": 0.00122048
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": 492,
+                      "name": "NZ_CP006960_Bacillus_amyloliquefaciens_UMAF6614_chromosome",
+                      "kind": "LEAF",
+                      "length": 0.000609222
+                    },
+                    {
+                      "id": 495,
+                      "name": "NZ_CP066501_Bacillus_velezensis_strain_IDA02",
+                      "kind": "LEAF",
+                      "length": 0.00182886
+                    },
+                    {
+                      "id": 496,
+                      "name": "NZ_CP026533_Bacillus_velezensis_strain_DKU_NT_04",
+                      "kind": "LEAF",
+                      "length": 0.00122156
+                    },
+                    {
+                      "id": 497,
+                      "name": "NZ_CP035393_Bacillus_velezensis_strain_SRCM103691",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 498,
+                      "name": "NZ_JAIONG010000017_Bacillus_amyloliquefaciens_strain_SN_Endo51",
+                      "kind": "LEAF",
+                      "length": 0.00305953
+                    },
+                    {
+                      "id": 502,
+                      "name": "NC_022530_Bacillus_velezensis_NAUB3_chromosome",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 504,
+                      "name": "NZ_AVQH01000023_Bacillus_amyloliquefaciens_EGDAQ14_contig3",
+                      "kind": "LEAF",
+                      "length": 0.000608504
+                    },
+                    {
+                      "id": 506,
+                      "name": "NC_017912_Bacillus_velezensis_YAU_B9601Y2",
+                      "kind": "LEAF",
+                      "length": 0.000608647
+                    },
+                    {
+                      "id": 507,
+                      "name": "NZ_CP023075_Bacillus_velezensis_strain_K26",
+                      "kind": "LEAF",
+                      "length": 0.000608535
+                    },
+                    {
+                      "id": 508,
+                      "name": "NZ_CP048002_Bacillus_velezensis_strain_CACC",
+                      "kind": "LEAF",
+                      "length": 0.00184162
+                    },
+                    {
+                      "id": 509,
+                      "name": "NZ_JAROZD010000002_Bacillus_amyloliquefaciens_strain_PRO83",
+                      "kind": "LEAF",
+                      "length": 0.00183787
+                    },
+                    {
+                      "id": 510,
+                      "kind": "NODE",
+                      "support": 95.0,
+                      "length": 0.00245969,
+                      "children": [
+                        {
+                          "id": 511,
+                          "name": "NZ_CP082262_Bacillus_velezensis_strain_BIM",
+                          "kind": "LEAF",
+                          "length": 1e-6
+                        },
+                        {
+                          "id": 512,
+                          "name": "NZ_PPXP01000001_Bacillus_velezensis_strain_JW",
+                          "kind": "LEAF",
+                          "length": 0.0012196
+                        }
+                      ]
+                    },
+                    {
+                      "id": 514,
+                      "name": "NZ_JAFETM010000006_Bacillus_velezensis_strain_S3",
+                      "kind": "LEAF",
+                      "length": 1e-6
+                    },
+                    {
+                      "id": 515,
+                      "name": "NZ_CAJQZS010000002_Bacillus_velezensis_isolate_Pilsner21",
+                      "kind": "LEAF",
+                      "length": 0.00430588
+                    }
+                  ]
+                },
+                {
+                  "id": 518,
+                  "name": "NZ_JAIXGY010000002_Bacillus_velezensis_strain_BG1",
+                  "kind": "LEAF",
+                  "length": 0.00431135
+                },
+                {
+                  "id": 523,
+                  "name": "NZ_CP007242_Bacillus_amyloliquefaciens_KHG19_chromosome",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 524,
+                  "name": "NZ_CP085282_Bacillus_amyloliquefaciens_strain_TPS17",
+                  "kind": "LEAF",
+                  "length": 0.00122517
+                },
+                {
+                  "id": 526,
+                  "name": "NZ_CP044132_Bacillus_amyloliquefaciens_strain_ZKY01",
+                  "kind": "LEAF",
+                  "length": 0.00184
+                },
+                {
+                  "id": 527,
+                  "name": "NZ_CP039380_Bacillus_velezensis_strain_LPLK103",
+                  "kind": "LEAF",
+                  "length": 0.000611458
+                },
+                {
+                  "id": 529,
+                  "name": "NZ_CP032144_Bacillus_velezensis_strain_BIM",
+                  "kind": "LEAF",
+                  "length": 0.00183528
+                },
+                {
+                  "id": 532,
+                  "kind": "NODE",
+                  "support": 73.0,
+                  "length": 0.00246978,
+                  "children": [
+                    {
+                      "id": 533,
+                      "name": "NZ_CP034037_Bacillus_velezensis_strain_BCSo1",
+                      "kind": "LEAF",
+                      "length": 0.00247962
+                    },
+                    {
+                      "id": 534,
+                      "kind": "NODE",
+                      "support": 94.0,
+                      "length": 0.00122199,
+                      "children": [
+                        {
+                          "id": 535,
+                          "name": "NZ_CP039297_Bacillus_velezensis_isolate_UFLA258",
+                          "kind": "LEAF",
+                          "length": 0.00122524
+                        },
+                        {
+                          "id": 536,
+                          "name": "NZ_JANLFI010000012_Bacillus_amyloliquefaciens_strain_2536",
+                          "kind": "LEAF",
+                          "length": 0.00184952
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": 538,
+                  "name": "NZ_CP082243_Bacillus_amyloliquefaciens_strain_JP3042",
+                  "kind": "LEAF",
+                  "length": 0.000610253
+                },
+                {
+                  "id": 542,
+                  "name": "NZ_CP023414_Bacillus_velezensis_strain_BS37",
+                  "kind": "LEAF",
+                  "length": 0.00184298
+                },
+                {
+                  "id": 545,
+                  "name": "NZ_CP079719_Bacillus_velezensis_strain_LABIM44",
+                  "kind": "LEAF",
+                  "length": 0.00122575
+                },
+                {
+                  "id": 546,
+                  "name": "NZ_LMUC01000001_Bacillus_amyloliquefaciens_strain_H57",
+                  "kind": "LEAF",
+                  "length": 0.001224
+                },
+                {
+                  "id": 547,
+                  "name": "NZ_JAMJPS010000001_Bacillus_velezensis_strain_CHBv1",
+                  "kind": "LEAF",
+                  "length": 0.00369391
+                },
+                {
+                  "id": 548,
+                  "name": "NZ_VDTZ01000007_Bacillus_velezensis_strain_DE0573",
+                  "kind": "LEAF",
+                  "length": 0.00183382
+                },
+                {
+                  "id": 550,
+                  "name": "NZ_JAKLOT010000006_Bacillus_velezensis_strain_KRD20",
+                  "kind": "LEAF",
+                  "length": 0.00122383
+                },
+                {
+                  "id": 553,
+                  "name": "NZ_CP028210_Bacillus_velezensis_strain_SRCM102746",
+                  "kind": "LEAF",
+                  "length": 0.00122134
+                },
+                {
+                  "id": 554,
+                  "name": "NZ_CP028206_Bacillus_velezensis_strain_SRCM102742",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 558,
+                  "name": "NZ_JANKNY010000008_Bacillus_amyloliquefaciens_strain_2788",
+                  "kind": "LEAF",
+                  "length": 0.0018331
+                },
+                {
+                  "id": 559,
+                  "name": "NZ_JAUUUY010000006_Bacillus_velezensis_strain_IM14",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 561,
+                  "name": "NZ_LYNA01000015_Bacillus_velezensis_strain_CFSAN034338",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 563,
+                  "name": "NZ_JALJWJ010000001_Bacillus_amyloliquefaciens_strain_CIADIB72",
+                  "kind": "LEAF",
+                  "length": 0.00122104
+                },
+                {
+                  "id": 565,
+                  "name": "NZ_CP020805_Bacillus_velezensis_strain_9D6",
+                  "kind": "LEAF",
+                  "length": 0.000609668
+                },
+                {
+                  "id": 567,
+                  "name": "NZ_CP023748_Bacillus_velezensis_strain_LABIM40",
+                  "kind": "LEAF",
+                  "length": 0.00308024
+                },
+                {
+                  "id": 568,
+                  "name": "NZ_JAAEBG010000020_Bacillus_velezensis_strain_TNW22019",
+                  "kind": "LEAF",
+                  "length": 0.000615027
+                },
+                {
+                  "id": 570,
+                  "name": "NZ_CP044133_Bacillus_velezensis_strain_FJAT46737",
+                  "kind": "LEAF",
+                  "length": 0.000610234
+                },
+                {
+                  "id": 571,
+                  "name": "NZ_CP079099_Bacillus_velezensis_strain_LBY1",
+                  "kind": "LEAF",
+                  "length": 0.000611375
+                },
+                {
+                  "id": 573,
+                  "name": "NC_022081_Bacillus_velezensis_UCMB5113_chromosome",
+                  "kind": "LEAF",
+                  "length": 0.00183639
+                },
+                {
+                  "id": 574,
+                  "name": "NZ_CP076045_Bacillus_velezensis_strain_VCN56",
+                  "kind": "LEAF",
+                  "length": 1e-6
+                },
+                {
+                  "id": 576,
+                  "name": "NZ_JAFLWZ010000010_Bacillus_amyloliquefaciens_strain_CBMAI",
+                  "kind": "LEAF",
+                  "length": 0.00183861
+                },
+                {
+                  "id": 577,
+                  "name": "NZ_CP059318_Bacillus_velezensis_strain_BIOMA",
+                  "kind": "LEAF",
+                  "length": 0.0012265
+                },
+                {
+                  "id": 578,
+                  "kind": "NODE",
+                  "support": 90.0,
+                  "length": 0.00185417,
+                  "children": [
+                    {
+                      "id": 579,
+                      "kind": "NODE",
+                      "support": 99.0,
+                      "length": 0.002469,
+                      "children": [
+                        {
+                          "id": 580,
+                          "name": "NZ_CP023859_Bacillus_velezensis_strain_L1",
+                          "kind": "LEAF",
+                          "length": 0.00122823
+                        },
+                        {
+                          "id": 581,
+                          "name": "NZ_JAHCQU010000002_Bacillus_velezensis_strain_A12010",
+                          "kind": "LEAF",
+                          "length": 0.000609579
+                        }
+                      ]
+                    },
+                    {
+                      "id": 582,
+                      "kind": "NODE",
+                      "length": 0.0024727,
+                      "children": [
+                        {
+                          "id": 583,
+                          "name": "NC_009725_Bacillus_velezensis_FZB42_complete",
+                          "kind": "LEAF",
+                          "length": 0.00184258
+                        },
+                        {
+                          "id": 584,
+                          "name": "NZ_CP029296_Bacillus_velezensis_strain_AP183",
+                          "kind": "LEAF",
+                          "length": 0.000614489
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -351,7 +351,7 @@ fn do_placement(
     //
     // ? -----------------------------------------------------------------------
 
-    let tree_model = match load_database(database_config.get_path()) {
+    let tree_model = match load_database(database_config.model_path()) {
         Ok(tree) => tree,
         Err(e) => {
             let msg = format!(

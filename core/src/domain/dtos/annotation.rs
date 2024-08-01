@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub enum Tag {
     /// Taxid tag.
     Taxid(u32),
@@ -15,11 +15,11 @@ pub enum Tag {
     /// A tag for genes.
     Gene(String),
 
-    /// The tag is a simple tag.
-    Tag(String),
+    /// The method used to infer the phylogeny.
+    InferenceMethod(String),
 
-    #[serde(untagged)]
-    Unknown(String),
+    /// The tag is a simple tag.
+    Note(String),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -45,11 +45,13 @@ mod tests {
             meta: Some(vec![
                 Tag::Taxid(9606),
                 Tag::SciName("Colletotrichum higginsianum".to_string()),
-                Tag::Tag("any other tag".to_string()),
+                Tag::Note("any other tag".to_string()),
             ]),
         };
 
-        let yaml = serde_yaml::to_string(&annotation).unwrap();
+        let annotations = vec![annotation.clone(), annotation.clone()];
+
+        let yaml = serde_yaml::to_string(&annotations).unwrap();
 
         // Save to file
         let path = std::path::PathBuf::from("/tmp/annotation.yaml");

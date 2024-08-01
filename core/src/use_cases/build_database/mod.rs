@@ -60,7 +60,7 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     let mut map = KmersMap::new(k_size, m_size);
-    let tree_leaves = tree.root.get_leaves(None);
+    let tree_leaves = tree.root.get_leaves_with_paths(None);
 
     // ? -----------------------------------------------------------------------
     // ? Read the MSA file and map the kmers to the tree

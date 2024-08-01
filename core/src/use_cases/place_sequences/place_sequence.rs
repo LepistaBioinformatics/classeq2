@@ -6,7 +6,7 @@ use crate::domain::dtos::{
     adherence_test::AdherenceTest,
     clade::Clade,
     placement_response::PlacementStatus::{self, *},
-    sequence::SequenceBody,
+    sequence::{SequenceBody, SequenceHeader},
     telemetry_code::TelemetryCode,
     tree::Tree,
 };
@@ -40,6 +40,7 @@ use tracing::{debug_span, info, trace, trace_span, Span};
     )
 )]
 pub(super) fn place_sequence(
+    header: &SequenceHeader,
     sequence: &SequenceBody,
     tree: &Tree,
     max_iterations: &Option<i32>,
@@ -126,7 +127,10 @@ pub(super) fn place_sequence(
         .record("query.kmers.treeMatches", &Some(query_kmers_len as i32));
 
     if query_kmers_len == 0 {
-        info!("Query sequence may not be related to the phylogeny");
+        info!(
+            "Query sequence {query:?} may not be related to the phylogeny",
+            query = header
+        );
     }
 
     trace!(
@@ -629,6 +633,7 @@ mod tests {
         // let invalid_query = "ASDFASDFASDFASDFASDFADSF";
 
         match place_sequence(
+            &query_sequence.header().to_owned(),
             &query_sequence.sequence().to_owned(),
             &tree,
             &None,

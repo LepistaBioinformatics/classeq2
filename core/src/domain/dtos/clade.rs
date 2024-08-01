@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -18,10 +20,12 @@ pub enum NodeType {
 pub struct Clade {
     pub id: u64,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    pub parent: Option<u64>,
 
     pub kind: NodeType,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support: Option<f64>,
@@ -43,6 +47,7 @@ impl Clade {
     pub(super) fn new_root(length: f64, children: Option<Vec<Clade>>) -> Clade {
         Clade {
             id: 0,
+            parent: None,
             name: None,
             kind: NodeType::Root,
             support: None,
@@ -53,11 +58,13 @@ impl Clade {
 
     pub(super) fn new_leaf(
         id: u64,
+        parent_id: u64,
         name: String,
         length: Option<f64>,
     ) -> Clade {
         Clade {
             id,
+            parent: Some(parent_id),
             name: Some(name),
             kind: NodeType::Leaf,
             support: None,
@@ -68,6 +75,7 @@ impl Clade {
 
     pub(super) fn new_internal(
         id: u64,
+        parent_id: u64,
         name: Option<String>,
         support: Option<f64>,
         length: Option<f64>,
@@ -75,6 +83,7 @@ impl Clade {
     ) -> Clade {
         Clade {
             id,
+            parent: Some(parent_id),
             name,
             kind: NodeType::Node,
             support,
@@ -83,7 +92,39 @@ impl Clade {
         }
     }
 
-    pub fn get_leaves(
+    pub fn get_node_by_id(&self, id: u64) -> Option<&Clade> {
+        if self.id == id {
+            return Some(self);
+        }
+
+        if let Some(children) = &self.children {
+            for child in children {
+                if let Some(node) = child.get_node_by_id(id) {
+                    return Some(node);
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn get_path_to_root(&self, root: &Clade) -> HashSet<u64> {
+        let mut path = HashSet::<u64>::new();
+
+        path.insert(self.id);
+
+        if let Some(parent_id) = self.parent {
+            path.insert(parent_id);
+
+            if let Some(parent) = root.get_node_by_id(parent_id) {
+                path.extend(parent.get_path_to_root(root));
+            }
+        }
+
+        path
+    }
+
+    pub fn get_leaves_with_paths(
         &self,
         parent_ids: Option<Vec<u64>>,
     ) -> Vec<(Clade, Vec<u64>)> {
@@ -104,7 +145,9 @@ impl Clade {
         } else {
             if let Some(children) = &self.children {
                 for child in children {
-                    leaves.extend(child.get_leaves(Some(parent_ids.clone())));
+                    leaves.extend(
+                        child.get_leaves_with_paths(Some(parent_ids.clone())),
+                    );
                 }
             }
         }
