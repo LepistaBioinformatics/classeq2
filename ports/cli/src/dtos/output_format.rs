@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, clap::ValueEnum)]
 #[serde(rename_all = "camelCase")]
-pub enum DatabaseOutputFormat {
+pub(crate) enum DatabaseOutputFormat {
     /// Zstandard format
     ///
     /// The file will be compressed using Zstandard. See
@@ -18,7 +18,7 @@ pub enum DatabaseOutputFormat {
 
 #[derive(Clone, Debug, Serialize, Deserialize, clap::ValueEnum)]
 #[serde(rename_all = "camelCase")]
-pub enum DatabaseDescriptionOutputFormat {
+pub(crate) enum DatabaseDescriptionOutputFormat {
     /// JSON format
     ///
     /// The file will be saved in JSON format.
