@@ -53,7 +53,7 @@ impl MinimizerValue {
     }
 
     fn get_overlapping_hashed_kmers(&self, kmers: &HashSet<u64>) -> Self {
-        let mut map = MinimizerValue(HashMap::new());
+        let mut map = MinimizerValue::new();
 
         self.0
             .iter()
