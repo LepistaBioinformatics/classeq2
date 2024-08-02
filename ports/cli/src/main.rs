@@ -59,6 +59,10 @@ fn main() -> Result<()> {
                 }
             };
 
+            if log_file.exists() {
+                std::fs::remove_file(&log_file)?;
+            }
+
             let file_name =
                 log_file.file_name().expect("Log file name not found");
 
