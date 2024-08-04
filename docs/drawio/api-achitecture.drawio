@@ -1,0 +1,237 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.5 Chrome/126.0.6478.183 Electron/31.3.0 Safari/537.36" version="24.7.5">
+  <diagram name="Page-1" id="M4G4a46BqW0jDixxyeKU">
+    <mxGraphModel dx="2074" dy="870" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="650" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-51" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;curved=0;flowAnimation=1;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-5" target="WlSgmrwbtceeHHhEDn4X-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="290" y="187" />
+              <mxPoint x="290" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-5" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;font color=&quot;#6600cc&quot;&gt;POST&lt;/font&gt; /wd&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;Create work directory&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="168" width="120" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=none;endFill=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-2" target="WlSgmrwbtceeHHhEDn4X-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=none;endFill=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-2" target="WlSgmrwbtceeHHhEDn4X-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=none;endFill=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-2" target="WlSgmrwbtceeHHhEDn4X-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=none;endFill=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-2" target="WlSgmrwbtceeHHhEDn4X-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=none;endFill=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-2" target="WlSgmrwbtceeHHhEDn4X-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-8" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;font color=&quot;#6600cc&quot;&gt;GET&lt;/font&gt; /wd/&lt;font color=&quot;#66cc00&quot;&gt;&amp;lt;dir_id&amp;gt;&lt;/font&gt;&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;List content of a work directory&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="317" width="170" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-49" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;curved=0;flowAnimation=1;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-10">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="371" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="340" y="259" />
+              <mxPoint x="340" y="371" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-10" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;font color=&quot;#6600cc&quot;&gt;POST&lt;/font&gt; /wd/&lt;font color=&quot;#66cc00&quot;&gt;&amp;lt;dir_id&amp;gt;&lt;/font&gt;&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;Upload query file as FASTA format&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="240" width="190" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-48" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;curved=0;flowAnimation=1;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-12">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="451" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="400" y="416" />
+              <mxPoint x="400" y="451" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-12" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;font color=&quot;#6600cc&quot;&gt;POST&lt;/font&gt; /wd/&lt;font color=&quot;#66cc00&quot;&gt;&amp;lt;dir_id&amp;gt;&lt;/font&gt;/config&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;Configure the placement process&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="397" width="250" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-14" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;font color=&quot;#6600cc&quot;&gt;GET&lt;/font&gt; /wd/&lt;font color=&quot;#66cc00&quot;&gt;&amp;lt;dir_id&amp;gt;&lt;/font&gt;/&lt;font color=&quot;#66cc00&quot;&gt;&amp;lt;file_id&amp;gt;&lt;/font&gt;&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;Get content of a single file&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="478" width="260" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-16" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="20" y="21" width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="N5YZWNXMNzbVgrV_dNlq-3" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=hexagon;perimeter=hexagonPerimeter2;arcSize=6;size=0.2;" parent="WlSgmrwbtceeHHhEDn4X-16" vertex="1">
+          <mxGeometry width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-2" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;CLS API&lt;/h1&gt;&lt;p&gt;Serve basic features related to the sequences placement process&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;align=center;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-16">
+          <mxGeometry x="20" y="10" width="140" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-21" target="WlSgmrwbtceeHHhEDn4X-32">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="455" y="371" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-21" target="WlSgmrwbtceeHHhEDn4X-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-21" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 16px;&quot;&gt;&amp;nbsp;/019051d9-4c7a-&lt;/span&gt;&lt;font style=&quot;font-size: 20px;&quot; color=&quot;#3333ff&quot;&gt;7&lt;/font&gt;&lt;span style=&quot;font-size: 16px;&quot;&gt;b2d-9dd1-66ef92236fd7&lt;/span&gt;&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;The work directory. When user perform a post operation in &quot;/wd&quot; endpoint a new work directory is created from a UUID v7 hash, where is returned to the user. The hash should be used to further retrieve analysis content, configure the analysis itself, and upload quefy files.&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="375" y="187" width="320" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-23" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;font color=&quot;#6600cc&quot;&gt;GET&lt;/font&gt; /models&lt;/font&gt;&lt;/h1&gt;&lt;p&gt;List models available for predictions&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="100" y="556" width="200" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=none;endFill=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-2" target="WlSgmrwbtceeHHhEDn4X-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-29" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="770" y="21" width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-30" value="" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=hexagon;perimeter=hexagonPerimeter2;arcSize=6;size=0.2;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-29">
+          <mxGeometry width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-31" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;CLS WATCHER&lt;/h1&gt;&lt;p&gt;Listen and dispatch the classeq placement&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;align=center;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-29">
+          <mxGeometry x="20" y="10" width="140" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-32" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp;/input&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="351" width="75" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-33" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp;/output&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="391" width="85" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-36" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp;/config.yaml&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="431" width="135" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-21" target="WlSgmrwbtceeHHhEDn4X-36">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="448" y="453" as="sourcePoint" />
+            <mxPoint x="485" y="531" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-39" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp;/running.yaml&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="471" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-40" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp;/success.yaml&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="511" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-41" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp;/error.yaml&lt;/font&gt;&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="495" y="551" width="115" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-21" target="WlSgmrwbtceeHHhEDn4X-39">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="461" as="sourcePoint" />
+            <mxPoint x="535" y="571" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-21" target="WlSgmrwbtceeHHhEDn4X-40">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="461" as="sourcePoint" />
+            <mxPoint x="535" y="611" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-44" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-21" target="WlSgmrwbtceeHHhEDn4X-41">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="461" as="sourcePoint" />
+            <mxPoint x="535" y="651" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-56" target="WlSgmrwbtceeHHhEDn4X-58">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-56" value="The Classeq Watcher service track the public directory listening for work directories containing configuration files, which no include success, running, or error files, dispatching new analysis when necessary." style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="940" y="195" width="140" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-57" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-31" target="WlSgmrwbtceeHHhEDn4X-58">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="900" y="265" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-61" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="800" y="240" width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-58" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-61">
+          <mxGeometry width="120" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-54" value="" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;strokeWidth=2;shape=mxgraph.lean_mapping.physical_pull;pointerEvents=1;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-61">
+          <mxGeometry x="10" y="8" width="100" height="102" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-60" value="Infinite loop" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-61">
+          <mxGeometry x="30" y="25" width="60" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-62" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.25;entryDx=0;entryDy=0;flowAnimation=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-58" target="WlSgmrwbtceeHHhEDn4X-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-66" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;flowAnimation=1;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-64" target="WlSgmrwbtceeHHhEDn4X-32">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="750" y="475" />
+              <mxPoint x="750" y="371" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-67" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;flowAnimation=1;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-64" target="WlSgmrwbtceeHHhEDn4X-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="475" />
+              <mxPoint x="720" y="411" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-68" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;flowAnimation=1;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-64" target="WlSgmrwbtceeHHhEDn4X-36">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="475" />
+              <mxPoint x="690" y="451" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-69" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;flowAnimation=1;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-64" target="WlSgmrwbtceeHHhEDn4X-39">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="475" />
+              <mxPoint x="690" y="491" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-70" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;flowAnimation=1;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-64" target="WlSgmrwbtceeHHhEDn4X-40">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="475" />
+              <mxPoint x="720" y="531" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-72" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;flowAnimation=1;curved=0;fillColor=#ffcd28;gradientColor=#ffa500;strokeColor=#d79b00;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-64" target="WlSgmrwbtceeHHhEDn4X-41">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="750" y="475" />
+              <mxPoint x="750" y="571" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-64" value="Background Classeq Placement" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="780" y="430" width="160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="WlSgmrwbtceeHHhEDn4X-58" target="WlSgmrwbtceeHHhEDn4X-64">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-73" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="360" y="16" width="350" height="144" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-52" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-73">
+          <mxGeometry width="350" height="144" as="geometry" />
+        </mxCell>
+        <mxCell id="N5YZWNXMNzbVgrV_dNlq-1" value="" style="sketch=0;outlineConnect=0;fillColor=#1ba1e2;strokeColor=#006EAF;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.file_system;fontColor=#ffffff;" parent="WlSgmrwbtceeHHhEDn4X-73" vertex="1">
+          <mxGeometry x="24.440000000000055" y="19.5" width="110.06" height="103" as="geometry" />
+        </mxCell>
+        <mxCell id="WlSgmrwbtceeHHhEDn4X-19" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;/public&lt;/h1&gt;&lt;p&gt;Directory where the analysis contents should be stored. The public directory is shared between API and Watcher services.&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="WlSgmrwbtceeHHhEDn4X-73">
+          <mxGeometry x="154.5" y="6" width="180" height="130" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

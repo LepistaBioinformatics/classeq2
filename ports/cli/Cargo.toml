@@ -2,7 +2,7 @@
 
 name = "classeq-cli"
 description = "A command line interface for the classeq library"
-readme = "README.md"
+readme = "../../README.md"
 
 version.workspace = true
 edition.workspace = true

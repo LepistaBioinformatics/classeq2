@@ -2,7 +2,7 @@
 
 name = "classeq-api"
 description = "API for Classeq"
-readme = "README.md"
+readme = "../../README.md"
 
 version.workspace = true
 edition.workspace = true

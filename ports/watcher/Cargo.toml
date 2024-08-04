@@ -2,7 +2,7 @@
 
 name = "classeq-watcher"
 description = "A simple watcher for the Classeq project"
-readme = "README.md"
+readme = "../../README.md"
 
 version.workspace = true
 edition.workspace = true

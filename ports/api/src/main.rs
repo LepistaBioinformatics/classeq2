@@ -83,13 +83,16 @@ async fn main() -> std::io::Result<()> {
             .route("/wd", web::post().to(fs::init_wd))
             .route("/wd/{work_dir_id}", web::get().to(fs::list_wd_content))
             .route(
-                "/wd/{work_dir_id}/{file_id}",
-                web::get().to(fs::get_file_content_by_id),
+                "/wd/{work_dir_id}",
+                web::post().to(fs::upload_analysis_file),
             )
-            .route("/wd/{work_dir_id}", web::put().to(fs::upload_analysis_file))
             .route(
                 "/wd/{work_dir_id}/config",
-                web::post().to(fs::configure_blutils_analysis),
+                web::post().to(fs::configure_placement_analysis),
+            )
+            .route(
+                "/wd/{work_dir_id}/{file_id}",
+                web::get().to(fs::get_file_content_by_id),
             )
             .route(
                 "/models",

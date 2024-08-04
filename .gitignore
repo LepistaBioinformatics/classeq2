@@ -2,3 +2,4 @@
 cls*.log*
 .amq-conf
 .venv
+.$*.bkp

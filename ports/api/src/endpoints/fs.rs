@@ -262,8 +262,8 @@ pub(crate) async fn upload_analysis_file(
     })
 }
 
-#[instrument(name = "Configure Blutils Analysis")]
-pub(crate) async fn configure_blutils_analysis(
+#[instrument(name = "Configure Placement Analysis")]
+pub(crate) async fn configure_placement_analysis(
     work_dir_id: web::Path<String>,
     fs_config: web::Data<Mutex<FileSystemConfig>>,
     trees_config: web::Data<Mutex<ModelsConfig>>,
