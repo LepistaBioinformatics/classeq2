@@ -1,3 +1,9 @@
+## v0.9.0 (2024-08-03)
+
+### Feat
+
+- include annotation parsing from the watcher placement process
+
 ## v0.8.1 (2024-08-03)
 
 ### Fix

@@ -15,13 +15,13 @@ categories.workspace = true
 
 [dependencies]
 
-classeq-core = { path = "../../core", version = "0.8.1" }
-classeq-ports-lib = { path = "../lib", version = "0.8.1" }
+classeq-core = { path = "../../core", version = "0.9.0" }
+classeq-ports-lib = { path = "../lib", version = "0.9.0" }
 
 actix-files = "0.6.6"
 actix-multipart = "0.6.1"
 actix-web = "4.7"
-actix-web-httpauth = "0.8.1"
+actix-web-httpauth = "0.9.0"
 actix-web-opentelemetry = "0.18.0"
 futures = "0.3"
 futures-util = "0.3"
