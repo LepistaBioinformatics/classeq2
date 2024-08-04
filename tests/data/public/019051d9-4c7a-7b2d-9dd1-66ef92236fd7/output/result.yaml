@@ -79,7 +79,7 @@ placement:
   one: 3094
   rest: 3042
 ---
-query: NZ_JALAKB010000006_Bacillus_sonorensis_strain_S15C8
+query: NC_019842_Bacillus_velezensis_AS433_complete
 code: IdentityFound
 annotations:
 - clade: 0
@@ -93,73 +93,31 @@ annotations:
     A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
     genomes of the Bacillus subtilis group. The tree was inferred using 1000
     bootstrap replicates.
-- clade: 2
+- clade: 364
   meta:
-  - !Taxid 119858
-  - !SciName Bacillus sonorensis
-  - !Rank species
+  - !Taxid 1938374
+  - !SciName Bacillus amyloliquefaciens group
+  - !Rank species subgroup
 placement:
   clade:
-    id: 2
-    parent: 1
+    id: 534
+    parent: 532
     kind: NODE
-    support: 100.0
-    length: 0.0442934
+    support: 94.0
+    length: 0.00122199
     children:
-    - id: 3
-      parent: 2
+    - id: 535
+      parent: 534
       kind: LEAF
-      name: NZ_AOFM01000009_Bacillus_sonorensis_L12_contig9
-      length: 1e-6
-    - id: 4
-      parent: 2
+      name: NZ_CP039297_Bacillus_velezensis_isolate_UFLA258
+      length: 0.00122524
+    - id: 536
+      parent: 534
       kind: LEAF
-      name: _R_NZ_QRLM01000005_Bacillus_sonorensis_strain_AM1257B
-      length: 0.000619744
-  one: 3602
-  rest: 1866
----
-query: NZ_CM000490_Bacillus_subtilis_subsp_subtilis
-code: 'MaxResolutionReached: LCA Accepted'
-annotations:
-- clade: 0
-  meta:
-  - !Taxid 653685
-  - !SciName Bacillus subtilis group
-  - !Rank species group
-  - !Gene gyrB
-  - !InferenceMethod Maximum Likelihood
-  - !Note |
-    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
-    genomes of the Bacillus subtilis group. The tree was inferred using 1000
-    bootstrap replicates.
-- clade: 148
-  meta:
-  - !Taxid 1423
-  - !SciName Bacillus subtilis
-  - !Rank species
-placement: 149
----
-query: NC_000964_Bacillus_subtilis_subsp_subtilis
-code: 'MaxResolutionReached: LCA Accepted'
-annotations:
-- clade: 0
-  meta:
-  - !Taxid 653685
-  - !SciName Bacillus subtilis group
-  - !Rank species group
-  - !Gene gyrB
-  - !InferenceMethod Maximum Likelihood
-  - !Note |
-    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
-    genomes of the Bacillus subtilis group. The tree was inferred using 1000
-    bootstrap replicates.
-- clade: 148
-  meta:
-  - !Taxid 1423
-  - !SciName Bacillus subtilis
-  - !Rank species
-placement: 149
+      name: NZ_JANLFI010000012_Bacillus_amyloliquefaciens_strain_2536
+      length: 0.00184952
+  one: 3252
+  rest: 0
 ---
 query: NC_014551_Bacillus_amyloliquefaciens_DSM_7
 code: IdentityFound
@@ -201,7 +159,7 @@ placement:
   one: 3094
   rest: 3042
 ---
-query: NZ_JAPQWF010000002_Bacillus_sonorensis_strain_AB6
+query: NZ_JALAKB010000006_Bacillus_sonorensis_strain_S15C8
 code: IdentityFound
 annotations:
 - clade: 0
@@ -241,8 +199,8 @@ placement:
   one: 3602
   rest: 1866
 ---
-query: NC_019842_Bacillus_velezensis_AS433_complete
-code: IdentityFound
+query: NC_018520_Bacillus_subtilis_QB928_complete
+code: 'MaxResolutionReached: LCA Accepted'
 annotations:
 - clade: 0
   meta:
@@ -255,71 +213,12 @@ annotations:
     A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
     genomes of the Bacillus subtilis group. The tree was inferred using 1000
     bootstrap replicates.
-- clade: 364
+- clade: 148
   meta:
-  - !Taxid 1938374
-  - !SciName Bacillus amyloliquefaciens group
-  - !Rank species subgroup
-placement:
-  clade:
-    id: 534
-    parent: 532
-    kind: NODE
-    support: 94.0
-    length: 0.00122199
-    children:
-    - id: 535
-      parent: 534
-      kind: LEAF
-      name: NZ_CP039297_Bacillus_velezensis_isolate_UFLA258
-      length: 0.00122524
-    - id: 536
-      parent: 534
-      kind: LEAF
-      name: NZ_JANLFI010000012_Bacillus_amyloliquefaciens_strain_2536
-      length: 0.00184952
-  one: 3252
-  rest: 0
----
-query: NC_017061_Bacillus_velezensis_YAU_B9601Y2
-code: IdentityFound
-annotations:
-- clade: 0
-  meta:
-  - !Taxid 653685
-  - !SciName Bacillus subtilis group
-  - !Rank species group
-  - !Gene gyrB
-  - !InferenceMethod Maximum Likelihood
-  - !Note |
-    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
-    genomes of the Bacillus subtilis group. The tree was inferred using 1000
-    bootstrap replicates.
-- clade: 364
-  meta:
-  - !Taxid 1938374
-  - !SciName Bacillus amyloliquefaciens group
-  - !Rank species subgroup
-placement:
-  clade:
-    id: 510
-    parent: 469
-    kind: NODE
-    support: 95.0
-    length: 0.00245969
-    children:
-    - id: 511
-      parent: 510
-      kind: LEAF
-      name: NZ_CP082262_Bacillus_velezensis_strain_BIM
-      length: 1e-6
-    - id: 512
-      parent: 510
-      kind: LEAF
-      name: NZ_PPXP01000001_Bacillus_velezensis_strain_JW
-      length: 0.0012196
-  one: 3434
-  rest: 3404
+  - !Taxid 1423
+  - !SciName Bacillus subtilis
+  - !Rank species
+placement: 149
 ---
 query: NZ_AMPK01000003_Bacillus_velezensis_M27_contig3
 code: IdentityFound
@@ -382,6 +281,27 @@ annotations:
   - !Rank species
 placement: 149
 ---
+query: NZ_CM000490_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: LCA Accepted'
+annotations:
+- clade: 0
+  meta:
+  - !Taxid 653685
+  - !SciName Bacillus subtilis group
+  - !Rank species group
+  - !Gene gyrB
+  - !InferenceMethod Maximum Likelihood
+  - !Note |
+    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
+    genomes of the Bacillus subtilis group. The tree was inferred using 1000
+    bootstrap replicates.
+- clade: 148
+  meta:
+  - !Taxid 1423
+  - !SciName Bacillus subtilis
+  - !Rank species
+placement: 149
+---
 query: NZ_AGFW01000001_Bacillus_subtilis_subsp_subtilis
 code: 'MaxResolutionReached: LCA Accepted'
 annotations:
@@ -403,7 +323,47 @@ annotations:
   - !Rank species
 placement: 149
 ---
-query: NZ_CM000489_Bacillus_subtilis_subsp_subtilis
+query: NZ_JAPQWF010000002_Bacillus_sonorensis_strain_AB6
+code: IdentityFound
+annotations:
+- clade: 0
+  meta:
+  - !Taxid 653685
+  - !SciName Bacillus subtilis group
+  - !Rank species group
+  - !Gene gyrB
+  - !InferenceMethod Maximum Likelihood
+  - !Note |
+    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
+    genomes of the Bacillus subtilis group. The tree was inferred using 1000
+    bootstrap replicates.
+- clade: 2
+  meta:
+  - !Taxid 119858
+  - !SciName Bacillus sonorensis
+  - !Rank species
+placement:
+  clade:
+    id: 2
+    parent: 1
+    kind: NODE
+    support: 100.0
+    length: 0.0442934
+    children:
+    - id: 3
+      parent: 2
+      kind: LEAF
+      name: NZ_AOFM01000009_Bacillus_sonorensis_L12_contig9
+      length: 1e-6
+    - id: 4
+      parent: 2
+      kind: LEAF
+      name: _R_NZ_QRLM01000005_Bacillus_sonorensis_strain_AM1257B
+      length: 0.000619744
+  one: 3602
+  rest: 1866
+---
+query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'MaxResolutionReached: LCA Accepted'
 annotations:
 - clade: 0
@@ -424,7 +384,47 @@ annotations:
   - !Rank species
 placement: 149
 ---
-query: NC_018520_Bacillus_subtilis_QB928_complete
+query: NC_017061_Bacillus_velezensis_YAU_B9601Y2
+code: IdentityFound
+annotations:
+- clade: 0
+  meta:
+  - !Taxid 653685
+  - !SciName Bacillus subtilis group
+  - !Rank species group
+  - !Gene gyrB
+  - !InferenceMethod Maximum Likelihood
+  - !Note |
+    A maximum likelihood tree of gyrB gene sequences extracted from RefSeq
+    genomes of the Bacillus subtilis group. The tree was inferred using 1000
+    bootstrap replicates.
+- clade: 364
+  meta:
+  - !Taxid 1938374
+  - !SciName Bacillus amyloliquefaciens group
+  - !Rank species subgroup
+placement:
+  clade:
+    id: 510
+    parent: 469
+    kind: NODE
+    support: 95.0
+    length: 0.00245969
+    children:
+    - id: 511
+      parent: 510
+      kind: LEAF
+      name: NZ_CP082262_Bacillus_velezensis_strain_BIM
+      length: 1e-6
+    - id: 512
+      parent: 510
+      kind: LEAF
+      name: NZ_PPXP01000001_Bacillus_velezensis_strain_JW
+      length: 0.0012196
+  one: 3434
+  rest: 3404
+---
+query: NZ_CM000489_Bacillus_subtilis_subsp_subtilis
 code: 'MaxResolutionReached: LCA Accepted'
 annotations:
 - clade: 0

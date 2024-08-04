@@ -13,7 +13,7 @@ x-common-config: &common-config
     - ./settings/config.prod.yaml:/etc/classeq/config.yaml
   environment:
     - LOG_LEVEL=info
-    - LOG_FORMAT=asci
+    - LOG_FORMAT=jsonl # Alternative valyue ansi
     - SETTINGS_PATH=/etc/classeq/config.yaml
   networks:
     - cls_net
@@ -49,7 +49,7 @@ services:
       - api
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       resources:
         limits:
           cpus: 12.0
@@ -57,3 +57,26 @@ services:
         reservations:
           cpus: 1.0
           memory: 1GB
+
+  # OpenTelemetry agents
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./telemetry/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp" # UDP port for Jaeger agent
+      - "16686:16686" # Web UI
+      - "14268:14268" # HTTP port for spans
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./telemetry/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
