@@ -41,6 +41,12 @@ tokio.workspace = true
 uuid.workspace = true
 walkdir.workspace = true
 
+# Security issues
+bytes.workspace = true
+subtle.workspace = true
+zerovec.workspace = true
+zerovec-derive.workspace = true
+
 
 [[bin]]
 name = "cls-api"

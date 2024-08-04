@@ -32,6 +32,12 @@ zstd.workspace = true
 
 pprof = { version = "0.13", features = ["prost-codec"], optional = true }
 
+# Security issues
+bytes.workspace = true
+subtle.workspace = true
+zerovec.workspace = true
+zerovec-derive.workspace = true
+
 
 [features]
 

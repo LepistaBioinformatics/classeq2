@@ -39,6 +39,12 @@ async-channel = "2"
 ctrlc = "3.2.5"
 rand = "0.8"
 
+# Security issues
+bytes.workspace = true
+subtle.workspace = true
+zerovec.workspace = true
+zerovec-derive.workspace = true
+
 
 [[bin]]
 name = "cls-watcher"

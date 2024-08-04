@@ -883,9 +883,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "bytes"
-version = "1.6.0"
+version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "514de17de45fdb8dc022b1a7975556c53c86f9f0aa5f534b98977b171857c2c9"
+checksum = "8318a53db07bb3f8dca91a600466bdb3f2eaadeedfdbcf02e1accbad9271ba50"
 
 [[package]]
 name = "bytestring"
@@ -997,7 +997,7 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "classeq-api"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "actix-files",
  "actix-multipart",
@@ -1005,6 +1005,7 @@ dependencies = [
  "actix-web-httpauth",
  "actix-web-opentelemetry",
  "anyhow",
+ "bytes",
  "chrono",
  "classeq-core",
  "classeq-ports-lib",
@@ -1014,6 +1015,7 @@ dependencies = [
  "mycelium-config",
  "serde 1.0.198",
  "serde_yaml",
+ "subtle",
  "tokio",
  "tracing",
  "tracing-actix-web",
@@ -1022,13 +1024,16 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "walkdir",
+ "zerovec",
+ "zerovec-derive",
 ]
 
 [[package]]
 name = "classeq-cli"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
+ "bytes",
  "clap",
  "classeq-core",
  "classeq-ports-lib",
@@ -1037,16 +1042,19 @@ dependencies = [
  "serde 1.0.198",
  "serde_json",
  "serde_yaml",
+ "subtle",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
  "uuid",
+ "zerovec",
+ "zerovec-derive",
  "zstd",
 ]
 
 [[package]]
 name = "classeq-core"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "clap",
  "dashmap",
@@ -1065,7 +1073,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-ports-lib"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "apalis",
@@ -1081,13 +1089,14 @@ dependencies = [
 
 [[package]]
 name = "classeq-watcher"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "apalis",
  "apalis-core",
  "async-channel 2.2.0",
  "async-std",
+ "bytes",
  "chrono",
  "clap",
  "classeq-core",
@@ -1099,11 +1108,14 @@ dependencies = [
  "serde 1.0.198",
  "serde_json",
  "serde_yaml",
+ "subtle",
  "tokio",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
  "uuid",
+ "zerovec",
+ "zerovec-derive",
 ]
 
 [[package]]
@@ -2911,7 +2923,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools",
  "log",
  "multimap",
@@ -3739,9 +3751,9 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "subtle"
-version = "2.6.0"
+version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d0208408ba0c3df17ed26eb06992cb1a1268d41b2c0e12e65203fbe3972cee5"
+checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "symbolic-common"
@@ -4754,9 +4766,9 @@ checksum = "ced3678a2879b30306d323f4542626697a464a97c0a07c9aebf7ebca65cd4dde"
 
 [[package]]
 name = "zerovec"
-version = "0.10.2"
+version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb2cc8827d6c0994478a15c53f374f46fbd41bea663d809b14744bc42e6b109c"
+checksum = "aa2b893d79df23bfb12d5461018d408ea19dfafe76c2c7ef6d4eba614f8ff079"
 dependencies = [
  "yoke",
  "zerofrom",
@@ -4765,9 +4777,9 @@ dependencies = [
 
 [[package]]
 name = "zerovec-derive"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97cf56601ee5052b4417d90c8755c6683473c926039908196cf35d99f893ebe7"
+checksum = "6eafa6dfb17584ea3e2bd6e76e0cc15ad7af12b09abdd1ca55961bed9b1063c6"
 dependencies = [
  "proc-macro2",
  "quote",
