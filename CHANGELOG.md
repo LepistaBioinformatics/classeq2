@@ -1,3 +1,11 @@
+## v0.8.1 (2024-08-03)
+
+### Fix
+
+- fix the new minimizer building
+- include a deletion option to log file if exits
+- remove rest-max and rest-avg struct elements not used
+
 ## v0.8.0 (2024-08-01)
 
 ### Feat
