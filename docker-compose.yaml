@@ -1,14 +1,20 @@
-version: "3"
-
 networks:
   cls_net:
     driver: bridge
 
 x-common-config: &common-config
+  volumes:
+    # Replace the following paths by the paths to the directories containing
+    # the data and the models
+    - ./tests/data:/var/classeq/data
+    - ./tests/models:/etc/classeq/models
+
+    # Replace the following path by the path to the shared configuration file
+    - ./settings/config.prod.yaml:/etc/classeq/config.yaml
   environment:
     - LOG_LEVEL=info
-  volumes:
-    - ./tests/data:/var/classeq/data
+    - LOG_FORMAT=asci
+    - SETTINGS_PATH=/etc/classeq/config.yaml
   networks:
     - cls_net
 
@@ -38,7 +44,7 @@ services:
     <<: *common-config
 
     # Service specific configs
-    image: sgelias/classeq-watcher:latest
+    image: classeq-watcher:latest
     depends_on:
       - api
     deploy:

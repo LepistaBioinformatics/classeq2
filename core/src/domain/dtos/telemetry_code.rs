@@ -23,6 +23,11 @@ pub(crate) enum TelemetryCode {
     /// A single sequence placement ended
     ///
     UCPLACE0004,
+    //
+    /// Indicate that te model include annotations and it should be used to
+    /// finish the placement process
+    ///
+    UCPLACE00020,
     // ? -----------------------------------------------------------------------
 
     // ? -----------------------------------------------------------------------

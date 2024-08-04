@@ -4,7 +4,7 @@ use actix_files::NamedFile;
 use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
 use classeq_ports_lib::{
-    get_file_by_inode, BluAnalysisConfig, FileSystemConfig, ModelsConfig,
+    get_file_by_inode, PlacementConfig, FileSystemConfig, ModelsConfig,
 };
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -268,7 +268,7 @@ pub(crate) async fn configure_placement_analysis(
     fs_config: web::Data<Mutex<FileSystemConfig>>,
     trees_config: web::Data<Mutex<ModelsConfig>>,
     request: HttpRequest,
-    body: web::Json<BluAnalysisConfig>,
+    body: web::Json<PlacementConfig>,
 ) -> HttpResponse {
     let target_dir = match check_directory_existence(
         fs_config.to_owned(),

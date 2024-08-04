@@ -178,6 +178,12 @@ pub fn place_sequences(
                     );
 
                     if let Some(annotations) = annotations.to_owned() {
+                        debug!(
+                            code = TelemetryCode::UCPLACE00020.to_string(),
+                            "Annotating sequence: {header}",
+                            header = header
+                        );
+
                         let optional_clade =
                             clade_from_placement_status(output.placement());
 

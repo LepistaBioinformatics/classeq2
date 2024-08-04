@@ -29,17 +29,18 @@ use apalis_core::{
 use async_std::task::sleep;
 use clap::Parser;
 use classeq_core::{
-    domain::dtos::file_or_stdin::FileOrStdin, use_cases::place_sequences,
+    domain::dtos::{annotation::Annotation, file_or_stdin::FileOrStdin},
+    use_cases::place_sequences,
 };
 use classeq_ports_lib::{
-    get_file_by_inode, load_database, BluAnalysisConfig, FileSystemConfig,
-    ModelsConfig,
+    get_file_by_inode, load_database, FileSystemConfig, ModelsConfig,
+    PlacementConfig,
 };
 use context::WorkerCtx;
 use rand::{thread_rng, Rng};
 use std::{path::PathBuf, str::FromStr, time::Duration};
 use tracing::{
-    debug, error, info, info_span, subscriber::with_default, warn, Instrument,
+    error, info, info_span, subscriber::with_default, trace, warn, Instrument,
     Level,
 };
 use tracing_subscriber::fmt;
@@ -113,7 +114,7 @@ pub(crate) async fn start_watch_directory_cmd(args: Arguments) -> Result<()> {
 
     Monitor::<AsyncStdExecutor>::new()
         .register_with_count(config.watcher.workers as usize, worker)
-        .on_event(|e| debug!("Worker event: {e:?}"))
+        .on_event(|e| trace!("Worker event: {e:?}"))
         .run_with_signal(async {
             ctrl_c.recv().await.ok();
             info!("Shutting down");
@@ -309,7 +310,7 @@ fn do_placement(
     //
     // ? -----------------------------------------------------------------------
 
-    let cls_config = match BluAnalysisConfig::from_yaml_file(&path) {
+    let cls_config = match PlacementConfig::from_yaml_file(&path) {
         Ok(config_content) => config_content,
         Err(err) => {
             let msg = format!("Failed to parse the configuration file: {err}");
@@ -351,7 +352,7 @@ fn do_placement(
     //
     // ? -----------------------------------------------------------------------
 
-    let tree_model = match load_database(database_config.model_path()) {
+    let mut tree_model = match load_database(database_config.model_path()) {
         Ok(tree) => tree,
         Err(e) => {
             let msg = format!(
@@ -364,6 +365,30 @@ fn do_placement(
             return PlacementResult::Error((msg, None));
         }
     };
+
+    if let Some(path) = database_config.annotations_path() {
+        if let Ok(file) = std::fs::File::open(path) {
+            let content: Option<Vec<Annotation>> =
+                match serde_yaml::from_reader(file) {
+                    Ok(content) => Some(content),
+                    Err(err) => {
+                        warn!(
+                            code = TelemetryCode::WTHPLACE0006.to_string(),
+                            "{msg}",
+                            msg = format!(
+                                "Failed to parse the annotations file: {err}"
+                            )
+                        );
+
+                        None
+                    }
+                };
+
+            if let Some(content) = content {
+                tree_model.annotations = Some(content.clone());
+            }
+        };
+    }
 
     // ? -----------------------------------------------------------------------
     // ? Load the Query file
