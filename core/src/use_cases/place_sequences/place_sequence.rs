@@ -97,6 +97,7 @@ pub(super) fn place_sequence(
 
     if query_kmers.len() < 2 {
         return use_case_err("The sequence does not contain enough kmers.")
+            .with_code(TelemetryCode::UCPLACE0005.to_string().as_str())
             .as_error();
     }
 
@@ -127,10 +128,14 @@ pub(super) fn place_sequence(
         .record("query.kmers.treeMatches", &Some(query_kmers_len as i32));
 
     if query_kmers_len == 0 {
-        info!(
+        let msg = format!(
             "Query sequence {query:?} may not be related to the phylogeny",
             query = header
         );
+
+        info!(code = TelemetryCode::UCPLACE0006.to_string(), msg);
+
+        return Ok(Unclassifiable(msg));
     }
 
     trace!(
@@ -154,7 +159,7 @@ pub(super) fn place_sequence(
         None => {
             let msg = "Query sequence has no overlapping kmers with the \
                 reference tree";
-            trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
+            trace!(code = TelemetryCode::UCPLACE0007.to_string(), msg);
             return Ok(Unclassifiable(msg.to_string()));
         }
         Some(kmers) => query_kmers_map.get_overlapping_minimized_hashes(kmers),
@@ -217,11 +222,6 @@ pub(super) fn place_sequence(
     Span::current()
         .record("subject.kmers.children", &Some(children.len() as i32));
 
-    trace!(
-        code = TelemetryCode::UCPLACE0008.to_string(),
-        "Starting tree introspection"
-    );
-
     //
     // This rule is used to determine if the child node has enough kmers
     // to be considered for the adherence test. If the child node does
@@ -232,7 +232,7 @@ pub(super) fn place_sequence(
         (query_kmers_len as f64 * min_match_coverage).round();
 
     trace!(
-        code = TelemetryCode::UCPLACE0009.to_string(),
+        code = TelemetryCode::UCPLACE0008.to_string(),
         "Expected min clade coverage (base {base}): {expected}",
         base = min_match_coverage,
         expected = expected_min_clade_coverage
@@ -246,9 +246,9 @@ pub(super) fn place_sequence(
 
     if introspection_coverage < expected_min_clade_coverage as usize {
         let msg =
-            format!("Insufficient kmers coverage: {}", introspection_coverage);
+            format!("Insufficient kmers coverage: {introspection_coverage}");
 
-        trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
+        trace!(code = TelemetryCode::UCPLACE0008.to_string(), msg);
 
         return Ok(Unclassifiable(msg));
     }
@@ -270,6 +270,12 @@ pub(super) fn place_sequence(
     //  - ✅: conclusive identity found
     //
     // ? -----------------------------------------------------------------------
+
+    trace!(
+        code = TelemetryCode::UCPLACE0009.to_string(),
+        "Starting tree introspection"
+    );
+
     loop {
         iteration += 1;
 
@@ -290,6 +296,7 @@ pub(super) fn place_sequence(
             return use_case_err(
                 "The maximum number of iterations has been reached.",
             )
+            .with_code(TelemetryCode::UCPLACE0010.to_string().as_str())
             .as_error();
         }
 
@@ -402,9 +409,7 @@ pub(super) fn place_sequence(
                     })
                 })
                 .filter_map(|adherence| {
-                    let rest_value = adherence.rest;
-
-                    if adherence.one > rest_value as i32 {
+                    if adherence.one > adherence.rest as i32 {
                         Some(adherence.to_owned())
                     } else {
                         None

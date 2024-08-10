@@ -45,11 +45,11 @@ pub(crate) enum TelemetryCode {
     ///
     UCPLACE0007,
     //
-    /// Starting tree introspection
+    /// Expected clade coverage related message
     ///
     UCPLACE0008,
     //
-    /// Expected min clade coverage calculated
+    /// Starting tree introspection
     ///
     UCPLACE0009,
     //

@@ -1,4 +1,4 @@
-# 6. Telemetry and Benchmark
+# 6. Telemetry and Benchmark 🕒
 
 [🏠 Home](/README.md)
 
