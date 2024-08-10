@@ -1,3 +1,9 @@
+## v0.10.0 (2024-08-10)
+
+### Feat
+
+- wip - start the implementation of the opentelemetry at the api and watcher service
+
 ## v0.9.0 (2024-08-03)
 
 ### Feat
