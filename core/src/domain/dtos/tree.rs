@@ -3,7 +3,7 @@ use super::{annotation::Annotation, clade::Clade, kmers_map::KmersMap};
 use mycelium_base::utils::errors::MappedErrors;
 use phylotree::tree::Tree as PhyloTree;
 use serde::{Deserialize, Serialize};
-use std::{ffi::OsStr, fs::read_to_string, mem::size_of_val, path::Path};
+use std::{ffi::OsStr, fs::read_to_string, mem::size_of_val, path::Path, sync::Arc};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,7 +48,7 @@ pub struct Tree {
     pub annotations: Option<Vec<Annotation>>,
 
     //#[serde(skip_serializing_if = "Option::is_none")]
-    pub kmers_map: Option<KmersMap>,
+    pub kmers_map: Option<Arc<KmersMap>>,
 }
 
 impl Tree {

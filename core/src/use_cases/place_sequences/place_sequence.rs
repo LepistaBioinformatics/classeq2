@@ -74,9 +74,9 @@ pub(super) fn place_sequence(
         0.7
     };
 
-    let mut kmers_map = tree
+    let kmers_map = tree
         .kmers_map
-        .to_owned()
+        .as_ref()
         .expect("The tree does not have a kmers map.");
 
     // ? -----------------------------------------------------------------------

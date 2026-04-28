@@ -1,6 +1,7 @@
 use crate::domain::dtos::{
     kmers_map::KmersMap, sequence::SequenceBody, tree::Tree,
 };
+use std::sync::Arc;
 
 use mycelium_base::utils::errors::MappedErrors;
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -174,7 +175,7 @@ pub fn map_kmers_to_tree(
     // ? Return a positive response
     // ? -----------------------------------------------------------------------
 
-    tree.kmers_map = Some(map);
+    tree.kmers_map = Some(Arc::new(map));
     tree.update_in_memory_size();
 
     Ok(tree)

@@ -237,7 +237,7 @@ impl KmersMap {
     ///
     #[allow(dead_code)]
     pub(crate) fn get_overlapping_hashes(
-        &mut self,
+        &self,
         hashes: &HashSet<u64>,
     ) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
@@ -271,7 +271,7 @@ impl KmersMap {
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
     pub(crate) fn get_overlapping_hashed_kmers(
-        &mut self,
+        &self,
         hashed_kmers: Vec<(String, u64)>,
     ) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
