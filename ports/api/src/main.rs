@@ -19,6 +19,27 @@ async fn health_check() -> HttpResponse {
     HttpResponse::Ok().body("healthy")
 }
 
+fn routes(cfg: &mut web::ServiceConfig) {
+    cfg.route("/wd", web::post().to(fs::init_wd))
+        .route("/wd/{work_dir_id}", web::get().to(fs::list_wd_content))
+        .route("/wd/{work_dir_id}", web::post().to(fs::upload_analysis_file))
+        .route(
+            "/wd/{work_dir_id}/config",
+            web::post().to(fs::configure_placement_analysis),
+        )
+        .route(
+            "/wd/{work_dir_id}/{file_id}",
+            web::get().to(fs::get_file_content_by_id),
+        )
+        .route(
+            "/models",
+            web::get().to(endpoints::subjects::list_available_models),
+        );
+}
+
+#[cfg(test)]
+mod tests;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // ? -----------------------------------------------------------------------
@@ -80,24 +101,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(TracingLogger::default())
             .app_data(web::Data::new(Mutex::new(fs_config.clone())))
             .app_data(web::Data::new(Mutex::new(trees_config.clone())))
-            .route("/wd", web::post().to(fs::init_wd))
-            .route("/wd/{work_dir_id}", web::get().to(fs::list_wd_content))
-            .route(
-                "/wd/{work_dir_id}",
-                web::post().to(fs::upload_analysis_file),
-            )
-            .route(
-                "/wd/{work_dir_id}/config",
-                web::post().to(fs::configure_placement_analysis),
-            )
-            .route(
-                "/wd/{work_dir_id}/{file_id}",
-                web::get().to(fs::get_file_content_by_id),
-            )
-            .route(
-                "/models",
-                web::get().to(endpoints::subjects::list_available_models),
-            )
+            .configure(routes)
             .default_service(web::get().to(health_check))
     })
     .bind(address)?

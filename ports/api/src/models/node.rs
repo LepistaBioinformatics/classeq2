@@ -6,7 +6,7 @@ use std::{os::unix::fs::MetadataExt, path::PathBuf};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Node {
-    pub id: u32,
+    pub id: u64,
     pub name: String,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
@@ -48,7 +48,7 @@ impl Node {
         };
 
         Ok(Node {
-            id: metadata.ino() as u32,
+            id: metadata.ino(),
             name,
             created_at,
             updated_at,
