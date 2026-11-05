@@ -103,7 +103,7 @@ fn main() -> Result<()> {
     match args.opts {
         Convert(io_args) => match io_args.convert {
             cmds::convert::Commands::Tree(tree_args) => {
-                cmds::convert::serialize_tree_cmd(tree_args);
+                cmds::convert::serialize_tree_cmd(tree_args)?;
             }
             cmds::convert::Commands::Kmers(kmers_args) => {
                 cmds::convert::get_kmers_cmd(kmers_args);

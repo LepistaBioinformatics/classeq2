@@ -25,3 +25,7 @@ tracing.workspace = true
 uuid.workspace = true
 walkdir.workspace = true
 zstd.workspace = true
+
+[dev-dependencies]
+
+tempfile = "3"
