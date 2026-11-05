@@ -4,8 +4,30 @@ use super::{adherence_test::AdherenceTest, annotation::Annotation};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(untagged, rename_all = "camelCase")]
+/// Serialized as an object tagged by `status`:
+///
+/// ```yaml
+/// status: IdentityFound
+/// clade: 2
+/// one: 10
+/// rest: 3
+/// ---
+/// status: MaxResolutionReached
+/// clade: 7
+/// message: LCA Accepted
+/// ---
+/// status: Inconclusive
+/// proposals:
+/// - clade: 2
+///   one: 5
+///   rest: 1
+/// message: Multiple proposals
+/// ---
+/// status: Unclassifiable
+/// message: no kmers
+/// ```
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(into = "TaggedPlacementStatus", from = "TaggedPlacementStatus")]
 pub enum PlacementStatus {
     /// The query sequence may does not belong to the reference tree
     ///
@@ -41,19 +63,51 @@ impl ToString for PlacementStatus {
     }
 }
 
-impl Serialize for PlacementStatus {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            MaxResolutionReached(id, _) => {
-                serializer.serialize_u64(id.to_owned())
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "status")]
+enum TaggedPlacementStatus {
+    Unclassifiable {
+        message: String,
+    },
+    IdentityFound(AdherenceTest),
+    MaxResolutionReached {
+        clade: u64,
+        message: String,
+    },
+    Inconclusive {
+        proposals: Vec<AdherenceTest>,
+        message: String,
+    },
+}
+
+impl From<PlacementStatus> for TaggedPlacementStatus {
+    fn from(status: PlacementStatus) -> Self {
+        match status {
+            Unclassifiable(message) => Self::Unclassifiable { message },
+            IdentityFound(test) => Self::IdentityFound(test),
+            MaxResolutionReached(clade, message) => {
+                Self::MaxResolutionReached { clade, message }
             }
-            IdentityFound(adherence_test) => {
-                adherence_test.serialize(serializer)
+            Inconclusive(proposals, message) => {
+                Self::Inconclusive { proposals, message }
             }
-            _ => serializer.serialize_str(&self.to_string()),
+        }
+    }
+}
+
+impl From<TaggedPlacementStatus> for PlacementStatus {
+    fn from(status: TaggedPlacementStatus) -> Self {
+        match status {
+            TaggedPlacementStatus::Unclassifiable { message } => {
+                Unclassifiable(message)
+            }
+            TaggedPlacementStatus::IdentityFound(test) => IdentityFound(test),
+            TaggedPlacementStatus::MaxResolutionReached { clade, message } => {
+                MaxResolutionReached(clade, message)
+            }
+            TaggedPlacementStatus::Inconclusive { proposals, message } => {
+                Inconclusive(proposals, message)
+            }
         }
     }
 }

@@ -19,7 +19,7 @@ use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{create_dir, remove_file},
+    fs::{create_dir_all, remove_file},
     path::PathBuf,
     sync::mpsc::channel,
     time::Duration,
@@ -82,8 +82,18 @@ pub fn place_sequences(
 
     let out_dir = out_file_path.parent().unwrap();
 
-    if !out_dir.exists() {
-        let _ = create_dir(out_dir);
+    if let Err(err) = create_dir_all(out_dir) {
+        return use_case_err(format!(
+            "Could not create output directory {out_dir:?}: {err}"
+        ))
+        .as_error();
+    }
+
+    let (sender, receiver) = channel();
+
+    if let Err(err) = query_sequence.sequence_content_by_channel(sender) {
+        return use_case_err(format!("Could not read query sequences: {err}"))
+            .as_error();
     }
 
     if out_file_path.exists() {
@@ -103,6 +113,15 @@ pub fn place_sequences(
             }
             Ok(_) => warn!("Output file overwritten!"),
         };
+
+        if err_file_path.exists() {
+            if let Err(err) = remove_file(err_file_path.clone()) {
+                return use_case_err(format!(
+                    "Could not remove file given {err}"
+                ))
+                .as_error();
+            }
+        }
     };
 
     // ? -----------------------------------------------------------------------
@@ -114,9 +133,6 @@ pub fn place_sequences(
 
     let (error_writer, error_file) =
         write_or_append_to_file(err_file_path.as_path());
-
-    let (sender, receiver) = channel();
-    let _ = query_sequence.sequence_content_by_channel(sender);
 
     let annotations = tree.annotations.to_owned();
 
@@ -159,7 +175,7 @@ pub fn place_sequences(
             ) {
                 Err(err) => {
                     if let Err(err) = error_writer(
-                        err.to_string(),
+                        format!("{header}\t{err}\n"),
                         error_file.try_clone().expect(
                             "Unexpected error detected on write blast result",
                         ),

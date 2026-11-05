@@ -5,3 +5,7 @@ pub mod domain;
 
 /// Here resides the use cases of the application.
 pub mod use_cases;
+
+#[cfg(test)]
+#[path = "../tests/common/synth.rs"]
+pub(crate) mod synth;

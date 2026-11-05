@@ -108,6 +108,12 @@ impl FileOrStdin {
             }
         }
 
+        if header.is_empty() && !sequence.is_empty() {
+            return Err(StdinError::FromStr(
+                "unexpected sequence without header".to_owned(),
+            ));
+        }
+
         if !header.is_empty() && !sequence.is_empty() {
             chan.send(Sequence::new(header, sequence)).unwrap();
         };
@@ -157,6 +163,12 @@ impl FileOrStdin {
                         .as_str(),
                 );
             }
+        }
+
+        if header.is_empty() && !sequence.is_empty() {
+            return Err(StdinError::FromStr(
+                "unexpected sequence without header".to_owned(),
+            ));
         }
 
         if !header.is_empty() && !sequence.is_empty() {
