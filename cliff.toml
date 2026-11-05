@@ -1,0 +1,57 @@
+# git-cliff configuration: changelog generation and version bumps.
+#
+# Release flow (on a release/vX.Y.Z branch):
+#   V=$(git cliff --bumped-version)
+#   cargo set-version --workspace "${V#v}"
+#   git cliff --unreleased --bump --prepend CHANGELOG.md
+#   commit as "bump: <old> -> <new>", open a PR, squash-merge,
+#   then tag the merge commit on main with $V and push the tag.
+
+[changelog]
+header = ""
+body = """
+{% if version %}\
+## {{ version }} ({{ timestamp | date(format="%Y-%m-%d") }})
+{% else %}\
+## Unreleased
+{% endif %}\
+{% for commit in commits | filter(attribute="breaking", value=true) %}\
+{% if loop.first %}
+### BREAKING CHANGE
+
+{% endif %}\
+- {{ commit.breaking_description | split(pat="\n") | join(sep=" ") | trim }}
+{% endfor %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+
+{% for commit in commits %}\
+- {{ commit.message | split(pat="\n") | first | trim }}
+{% endfor %}\
+{% endfor %}
+"""
+footer = ""
+trim = false
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = "v[0-9].*"
+sort_commits = "oldest"
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Feat" },
+  { message = "^fix", group = "<!-- 1 -->Fix" },
+  { message = "^perf", group = "<!-- 2 -->Perf" },
+  { message = "^refactor", group = "<!-- 3 -->Refactor" },
+  { message = "^bump", skip = true },
+  { message = ".*", skip = true },
+]
+
+[bump]
+# Pre-1.0: a breaking change and a feature both bump the minor version (as in past releases).
+features_always_bump_minor = true
+breaking_always_bump_major = false
+initial_tag = "v0.1.0"

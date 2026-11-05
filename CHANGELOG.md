@@ -1,3 +1,13 @@
+## v0.11.0 (2026-11-05)
+
+### BREAKING CHANGE
+
+- placement results are serialized as objects tagged by `status`; `describe-db` no longer reports InMemorySizeMb and the field is removed from databases. Databases built before this change must be rebuilt (BUG-001).
+
+### Fix
+
+- add workspace test suite and fix the bugs it uncovered (#9)
+
 ## v0.10.0 (2024-08-10)
 
 ### Feat
