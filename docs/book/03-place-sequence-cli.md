@@ -41,6 +41,9 @@ The default output format of the CLI is a YAML file containing the placed
 sequences. As an example, the output file can be as follows:
 
 ```yaml
+# Every placement is an object tagged by `status`: IdentityFound,
+# MaxResolutionReached, Inconclusive or Unclassifiable.
+
 # Example of fully classified sequence
 #
 # Occurs when the query sequence is placed at the terminal node of the reference
@@ -49,24 +52,26 @@ sequences. As an example, the output file can be as follows:
 query: NC_014639_Bacillus_atrophaeus_1942_complete
 code: IdentityFound
 placement:
+  status: IdentityFound
   clade:
     id: 61
+    parent: 60
     kind: NODE
     support: 72.0
     length: 0.000619153
     children:
     - id: 62
-      name: NZ_JALAVT010000005_Bacillus_atrophaeus_strain_TP10S1NI5
+      parent: 61
       kind: LEAF
+      name: NZ_JALAVT010000005_Bacillus_atrophaeus_strain_TP10S1NI5
       length: 1e-6
     - id: 63
-      name: NZ_JALAPU010000003_Bacillus_atrophaeus_strain_TP8F7aA3
+      parent: 61
       kind: LEAF
+      name: NZ_JALAPU010000003_Bacillus_atrophaeus_strain_TP8F7aA3
       length: 0.00123804
-  oneLen: 3754
-  restLen: 0
-  restAvg: 0.0
-  restMax: 0
+  one: 3754
+  rest: 0
 
 # Example of partially classified sequence
 #
@@ -74,39 +79,35 @@ placement:
 ---
 query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'MaxResolutionReached: LCA Accepted'
-placement: 149
+placement:
+  status: MaxResolutionReached
+  clade: 149
+  message: LCA Accepted
 
-# Example of unclassified sequence
+# Example of inconclusive sequence
 #
 # Occurs when more than one internal node is proposed as the placement of the
-# query sequence.
+# query sequence. Each proposal carries the clade id and its k-mer counts.
 ---
 query: NC_000964_Bacillus_subtilis_subsp_subtilis
-code: 'Inconclusive'
+code: 'Inconclusive: Multiple proposals'
 placement:
-  - id: 95
-    kind: NODE
-    support: 100.0
-    length: 0.173095
-    children:
-    - id: 96
-      kind: NODE
-      support: 89.0
-      length: 0.0377908
-      children:
-      ...
-    - id: 97
-      kind: NODE
-      support: 88.0
-      length: 0.00273586
-      children:
-      ...
+  status: Inconclusive
+  proposals:
+  - clade: 96
+    one: 1520
+    rest: 1210
+  - clade: 97
+    one: 1520
+    rest: 1210
+  message: Multiple proposals
 
 # Example of Unclassifiable sequence
 #
 # Occurs when the query sequence has no overlapping kmers with the reference
-# tree OR the minimum number of overlapping kmers is not reached (controlled by 
-# the -m option).
+# tree OR the fraction of the query k-mers found in the tree is below the
+# minimum match coverage (controlled by the -m option, default 0.7). The
+# placement field is omitted and the reason is reported in `code`.
 ---
 query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'Unclassifiable: Query sequence has no overlapping kmers with the reference tree'
