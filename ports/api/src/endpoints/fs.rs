@@ -8,7 +8,11 @@ use classeq_ports_lib::{
 };
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf, sync::Mutex};
+use std::{
+    collections::HashMap,
+    path::{Component, Path, PathBuf},
+    sync::Mutex,
+};
 use tokio::io::AsyncWriteExt;
 use tracing::{error, instrument};
 use uuid::Uuid;
@@ -26,6 +30,13 @@ fn check_directory_existence(
     ignore_empty_input_dir: Option<bool>,
 ) -> Result<PathBuf, HttpResponse> {
     let ignore_empty_input_dir = ignore_empty_input_dir.unwrap_or(false);
+
+    if Uuid::parse_str(&work_dir_id).is_err() {
+        return Err(HttpResponse::BadRequest().json(DirResponse {
+            status: 400,
+            msg: Some("Invalid work directory id".to_string()),
+        }));
+    }
 
     let data = match fs_config.lock() {
         Err(err) => {
@@ -129,7 +140,7 @@ pub(crate) async fn list_wd_content(
 
 #[instrument(name = "Get file content", skip(config))]
 pub(crate) async fn get_file_content_by_id(
-    info: web::Path<(String, i32)>,
+    info: web::Path<(String, u64)>,
     config: web::Data<Mutex<FileSystemConfig>>,
     req: HttpRequest,
 ) -> HttpResponse {
@@ -151,7 +162,7 @@ pub(crate) async fn get_file_content_by_id(
         }
     };
 
-    match get_file_by_inode(parent.to_owned(), file_id as u32) {
+    match get_file_by_inode(parent.to_owned(), file_id) {
         None => HttpResponse::NoContent().finish(),
         Some(file) => match NamedFile::open(file) {
             Ok(file) => file.into_response(&req),
@@ -205,6 +216,14 @@ pub(crate) async fn upload_analysis_file(
             None => return HttpResponse::BadRequest().body("Invalid request"),
         };
 
+        let mut components = Path::new(file_name).components();
+        if !matches!(
+            (components.next(), components.next()),
+            (Some(Component::Normal(_)), None)
+        ) {
+            return HttpResponse::BadRequest().body("Invalid file name");
+        }
+
         let target_file = target_dir.join(file_name);
 
         if target_file.exists() {
@@ -254,6 +273,11 @@ pub(crate) async fn upload_analysis_file(
                 };
             }
         }
+
+        if let Err(err) = file.flush().await {
+            error!("{:?}", err);
+            return HttpResponse::InternalServerError().finish();
+        };
     }
 
     HttpResponse::Created().json(DirResponse {

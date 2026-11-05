@@ -3,7 +3,7 @@ use super::{annotation::Annotation, clade::Clade, kmers_map::KmersMap};
 use mycelium_base::utils::errors::MappedErrors;
 use phylotree::tree::Tree as PhyloTree;
 use serde::{Deserialize, Serialize};
-use std::{ffi::OsStr, fs::read_to_string, mem::size_of_val, path::Path};
+use std::{ffi::OsStr, fs::read_to_string, path::Path};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -28,11 +28,6 @@ pub struct Tree {
     /// this value are removed from the tree and children are reconnected to the
     /// parent node.
     pub min_branch_support: f64,
-
-    /// The in-memory size of the tree (in Mb).
-    ///
-    /// This is usual to predict the memory usage of the tree index.
-    in_memory_size: Option<String>,
 
     /// The root Clade of the tree.
     ///
@@ -67,43 +62,10 @@ impl Tree {
             id,
             name,
             min_branch_support,
-            in_memory_size: None,
             root,
             annotations: None,
             kmers_map: None,
         }
-    }
-
-    pub fn get_in_memory_size(&self) -> Option<String> {
-        self.in_memory_size.clone()
-    }
-
-    pub fn update_in_memory_size(&mut self) {
-        let id_size = size_of_val(&self.id);
-
-        let name_size = size_of_val(&self.name);
-
-        let root_size = size_of_val(&self.root);
-
-        let annotations_size = match &self.annotations {
-            Some(annotations) => size_of_val(annotations),
-            None => 0,
-        };
-
-        let kmers_map_size = match &self.kmers_map {
-            Some(kmers_map) => size_of_val(kmers_map),
-            None => 0,
-        };
-
-        self.in_memory_size = Some(format!(
-            "{:.6} Mb",
-            ((id_size
-                + name_size
-                + root_size
-                + annotations_size
-                + kmers_map_size)
-                / 1_000_000) as f64
-        ));
     }
 
     /// Pretty print the tree.
@@ -367,16 +329,88 @@ impl Tree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
+
+    fn leaf(id: u64, parent: u64, name: &str) -> Clade {
+        Clade::new_leaf(id, parent, name.to_string(), Some(0.1))
+    }
+
+    fn internal(
+        id: u64,
+        parent: u64,
+        support: Option<f64>,
+        children: Vec<Clade>,
+    ) -> Clade {
+        Clade::new_internal(
+            id,
+            parent,
+            None,
+            support,
+            Some(0.2),
+            Some(children),
+        )
+    }
+
+    /// root(0) -> [n1(0.9) -> [n2(0.5) -> [A3, B4], C5], n6(None) -> [D7, E8]]
+    fn hand_built_root() -> Clade {
+        Clade::new_root(
+            0.0,
+            Some(vec![
+                internal(
+                    1,
+                    0,
+                    Some(0.9),
+                    vec![
+                        internal(
+                            2,
+                            1,
+                            Some(0.5),
+                            vec![leaf(3, 2, "A"), leaf(4, 2, "B")],
+                        ),
+                        leaf(5, 1, "C"),
+                    ],
+                ),
+                internal(6, 0, None, vec![leaf(7, 6, "D"), leaf(8, 6, "E")]),
+            ]),
+        )
+    }
+
+    fn child_ids(clade: &Clade) -> Vec<u64> {
+        clade.children.iter().flatten().map(|c| c.id).collect()
+    }
 
     #[test]
-    fn test_tree_from_file() {
-        let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
+    fn sanitize_reattaches_children_and_keeps_nodes_without_support() {
+        let root = Tree::sanitize(hand_built_root(), 0.6).unwrap();
 
-        let tree = Tree::init_from_file(&path, 80.0);
+        assert_eq!(child_ids(&root), [1, 6]);
+        let n1 = root.get_node_by_id(1).unwrap();
+        assert_eq!(child_ids(n1), [3, 4, 5]);
+        assert!(root.get_node_by_id(2).is_none());
+        assert_eq!(child_ids(root.get_node_by_id(6).unwrap()), [7, 8]);
 
-        assert!(tree.is_ok());
+        // sanitize does not touch parent ids; fix_parent_ids does
+        assert_eq!(root.get_node_by_id(3).unwrap().parent, Some(2));
+    }
 
-        tree.unwrap().pretty_print();
+    #[test]
+    fn sanitize_keeps_everything_when_threshold_is_met() {
+        let root = Tree::sanitize(hand_built_root(), 0.5).unwrap();
+        assert_eq!(root, hand_built_root());
+    }
+
+    #[test]
+    fn fix_parent_ids_points_every_child_to_its_parent() {
+        let mut root = Tree::sanitize(hand_built_root(), 1.0).unwrap();
+        assert_eq!(child_ids(&root), [3, 4, 5, 6]);
+
+        let fixed = Tree::fix_parent_ids(&mut root, None);
+
+        assert_eq!(fixed.parent, None);
+        for id in [3, 4, 5, 6] {
+            assert_eq!(fixed.get_node_by_id(id).unwrap().parent, Some(0));
+        }
+        for id in [7, 8] {
+            assert_eq!(fixed.get_node_by_id(id).unwrap().parent, Some(6));
+        }
     }
 }

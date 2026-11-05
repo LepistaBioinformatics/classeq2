@@ -39,6 +39,13 @@ zerovec.workspace = true
 zerovec-derive.workspace = true
 
 
+[dev-dependencies]
+
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
+
+
 [features]
 
 profiling = ["pprof"]

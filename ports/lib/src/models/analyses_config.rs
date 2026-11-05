@@ -19,7 +19,7 @@ pub struct PlacementConfig {
 
     pub email: String,
 
-    pub query_file_id: u32,
+    pub query_file_id: u64,
 
     pub model_id: Uuid,
 

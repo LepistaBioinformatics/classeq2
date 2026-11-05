@@ -33,15 +33,6 @@ pub(crate) fn describe_database_cmd(args: Arguments) -> Result<()> {
     stats.insert("Name", name.to_owned());
     stats.insert("MinBranchSupport", min_branch_support);
 
-    if let Some(size) = tree.get_in_memory_size() {
-        let binding = size.to_string();
-        let splitted = binding.split_whitespace().collect::<Vec<&str>>();
-        stats.insert(
-            "InMemorySizeMb",
-            splitted.first().unwrap_or(&"0").to_string(),
-        );
-    }
-
     if let Some(kmers_map) = &tree.kmers_map {
         let minimized_kmers =
             kmers_map.get_map().into_iter().map(|(_, v)| v.0.len());
@@ -60,19 +51,30 @@ pub(crate) fn describe_database_cmd(args: Arguments) -> Result<()> {
         stats.insert("MinimizerCount", kmers_map.get_map().len().to_string());
         stats.insert(
             "MinimizerAvgKmers",
-            (minimized_kmers.to_owned().sum::<usize>()
-                / kmers_map.get_map().len())
-            .to_string(),
+            minimized_kmers
+                .to_owned()
+                .sum::<usize>()
+                .checked_div(kmers_map.get_map().len())
+                .unwrap_or_default()
+                .to_string(),
         );
 
         stats.insert(
             "LargestMinimizer",
-            minimized_kmers.to_owned().max().unwrap().to_string(),
+            minimized_kmers
+                .to_owned()
+                .max()
+                .unwrap_or_default()
+                .to_string(),
         );
 
         stats.insert(
             "SmallestMinimizer",
-            minimized_kmers.to_owned().min().unwrap().to_string(),
+            minimized_kmers
+                .to_owned()
+                .min()
+                .unwrap_or_default()
+                .to_string(),
         );
     }
 

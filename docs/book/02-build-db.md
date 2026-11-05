@@ -111,8 +111,6 @@ ID: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
 Name: bsub-rootedmid.nwk
 # The lowest branch support used to sanitize the tree
 MinBranchSupport: '70'
-# The database size when stored in memory
-InMemorySizeMb: '0.000192'
 # The k-mer size
 KmerSize: '35'
 # The total number of k-mers in the database
@@ -143,8 +141,6 @@ id: ce47d8bc-2885-3d2c-8247-5b8c8b28fefe
 name: bsub-rootedmid.nwk
 # The lowest branch support used to sanitize the tree
 minBranchSupport: 70.0
-# The database size when stored in memory
-inMemorySize: 0.000192 Mb
 # The sanitized tree in a yaml format
 root:
   id: 0

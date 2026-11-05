@@ -4,7 +4,8 @@ use anyhow::Result;
 use clap::{ArgAction, Parser};
 use classeq_core::{
     domain::dtos::{
-        annotation::Annotation, file_or_stdin::FileOrStdin,
+        annotation::Annotation,
+        file_or_stdin::{FileOrStdin, Source},
         output_format::OutputFormat,
     },
     use_cases::place_sequences,
@@ -132,6 +133,10 @@ pub(crate) fn place_sequences_cmd(
     let now = Instant::now();
 
     let per_seq_time = {
+        if let Source::Arg(path) = &args.query.source {
+            std::fs::metadata(path)?;
+        }
+
         let mut tree = load_database(args.database_file_path)?;
 
         if let Some(path) = args.annotations_file_path {
@@ -166,7 +171,8 @@ pub(crate) fn place_sequences_cmd(
         .into_iter()
         .map(|i| i.milliseconds_time)
         .sum::<Duration>()
-        / per_seq_time.len() as u32;
+        .checked_div(per_seq_time.len() as u32)
+        .unwrap_or_default();
 
     let max = per_seq_time
         .to_owned()

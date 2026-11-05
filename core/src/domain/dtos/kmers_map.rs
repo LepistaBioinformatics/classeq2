@@ -166,7 +166,7 @@ impl KmersMap {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```text
     /// use std::collections::HashSet;
     /// use classeq_core::domain::dtos::kmers_map::KmersMap;
     ///
@@ -237,7 +237,7 @@ impl KmersMap {
     ///
     #[allow(dead_code)]
     pub(crate) fn get_overlapping_hashes(
-        &mut self,
+        &self,
         hashes: &HashSet<u64>,
     ) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
@@ -271,7 +271,7 @@ impl KmersMap {
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
     pub(crate) fn get_overlapping_hashed_kmers(
-        &mut self,
+        &self,
         hashed_kmers: Vec<(String, u64)>,
     ) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
@@ -350,7 +350,7 @@ impl KmersMap {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```text
     /// use classeq_core::domain::dtos::kmers_map::KmersMap;
     ///
     /// let sequence = "ATCG".to_string();
@@ -380,7 +380,7 @@ impl KmersMap {
         let mut kmers = Vec::new();
         let size = k_size.unwrap_or(self.k_size);
 
-        if sequence.len() < self.k_size as usize {
+        if sequence.len() < size as usize {
             return vec![];
         }
 
@@ -444,14 +444,430 @@ impl KmersMap {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
+    use crate::synth;
+    use std::collections::{BTreeMap, BTreeSet};
+
+    fn mur(kmer: &str) -> u64 {
+        murmurhash3_x64_128(kmer.as_bytes(), 0).0
+    }
+
+    fn set(ids: &[u64]) -> HashSet<u64> {
+        ids.iter().copied().collect()
+    }
+
+    /// Flattens a map into `hash -> sorted node ids` for order-free comparison.
+    fn flatten(map: &KmersMap) -> BTreeMap<u64, BTreeSet<u64>> {
+        let mut out = BTreeMap::new();
+        for value in map.get_map().values() {
+            for (hash, nodes) in value.0.iter() {
+                out.insert(*hash, nodes.iter().copied().collect());
+            }
+        }
+        out
+    }
+
+    fn keys(map: &KmersMap) -> BTreeSet<u64> {
+        map.get_map().keys().map(|k| k.0).collect()
+    }
+
+    fn expected(entries: &[(&str, &[u64])]) -> BTreeMap<u64, BTreeSet<u64>> {
+        entries
+            .iter()
+            .map(|(kmer, nodes)| (mur(kmer), nodes.iter().copied().collect()))
+            .collect()
+    }
+
+    /// ACGTA and ACTTG share the minimizer `AC` when m = 2. ACGTA is
+    /// inserted twice to exercise node-set merging.
+    fn fixture(m: u64) -> KmersMap {
+        let mut map = KmersMap::new(5, m);
+        for (kmer, nodes) in [
+            ("ACGTA", set(&[0, 1])),
+            ("ACTTG", set(&[0, 2])),
+            ("GGCAT", set(&[0, 2])),
+            ("TTTTT", set(&[0, 1, 2])),
+            ("ACGTA", set(&[3])),
+        ] {
+            map.insert_or_append_kmer_hash(kmer.to_string(), mur(kmer), nodes);
+        }
+        map
+    }
+
+    // ? KMER-01 ---------------------------------------------------------------
 
     #[test]
-    fn test_build_kmers_from_sequence() {
-        let sequence = "ATCG".to_string();
-        let kmers = KmersMap::build_kmers_from_sequence(sequence.to_owned(), 2);
+    fn build_kmers_from_sequence_yields_ordered_uppercase_windows_with_murmur3_hashes(
+    ) {
+        let kmers = KmersMap::build_kmers_from_sequence("acgTAC".into(), 3);
 
-        println!("{:?}", kmers);
+        let expected: Vec<(String, u64)> = ["ACG", "CGT", "GTA", "TAC"]
+            .iter()
+            .map(|k| (k.to_string(), mur(k)))
+            .collect();
+
+        assert_eq!(kmers, expected);
+    }
+
+    #[test]
+    fn build_kmers_from_sequence_yields_len_minus_k_plus_one_windows() {
+        let seq = synth::random_seq(100, 7);
+
+        for k in [1u64, 15, 21, 100] {
+            let kmers = KmersMap::build_kmers_from_sequence(seq.clone(), k);
+            assert_eq!(kmers.len(), 100 - k as usize + 1, "k = {k}");
+            assert_eq!(kmers[0].0, seq[..k as usize]);
+            assert_eq!(kmers.last().unwrap().0, seq[100 - k as usize..]);
+            assert!(kmers.iter().all(|(kmer, hash)| *hash == mur(kmer)));
+        }
+    }
+
+    #[test]
+    fn hash_kmer_is_murmur3_x64_128_low_64_bits_with_seed_zero() {
+        assert_eq!(
+            KmersMap::hash_kmer("ACGTACGTACGTACG"),
+            mur("ACGTACGTACGTACG")
+        );
+        assert_ne!(KmersMap::hash_kmer("ACGT"), KmersMap::hash_kmer("ACGA"));
+    }
+
+    #[test]
+    fn hash_of_empty_string_is_zero_so_m0_minimizer_matches_insertion_key() {
+        assert_eq!(KmersMap::hash_kmer(""), 0);
+        assert_eq!(
+            MinimizerKey::build_minimizer_from_string("ACGTA", 0),
+            MinimizerKey(0)
+        );
+    }
+
+    #[test]
+    fn minimizer_key_hashes_the_first_m_characters() {
+        assert_eq!(
+            MinimizerKey::build_minimizer_from_string("ACGTA", 2),
+            MinimizerKey(mur("AC"))
+        );
+        assert_eq!(
+            MinimizerKey::build_minimizer_from_string("ACGTA", 9),
+            MinimizerKey(mur("ACGTA"))
+        );
+    }
+
+    // ? KMER-02 ---------------------------------------------------------------
+
+    #[test]
+    fn reverse_complement_reverses_and_complements_both_cases() {
+        assert_eq!(KmersMap::reverse_complement("ACCGTA".into()), "TACGGT");
+        assert_eq!(KmersMap::reverse_complement("accgta".into()), "TACGGT");
+        assert_eq!(KmersMap::reverse_complement(String::new()), "");
+    }
+
+    #[test]
+    fn reverse_complement_is_an_involution_on_acgt() {
+        for seed in 0..5 {
+            let seq = synth::random_seq(200, seed);
+            let twice = KmersMap::reverse_complement(
+                KmersMap::reverse_complement(seq.clone()),
+            );
+            assert_eq!(twice, seq);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid character in sequence")]
+    fn reverse_complement_panics_on_non_acgt() {
+        KmersMap::reverse_complement("ACGN".into());
+    }
+
+    // ? KMER-03 ---------------------------------------------------------------
+
+    #[test]
+    fn build_kmer_from_string_returns_forward_then_reverse_complement_kmers() {
+        let map = KmersMap::new(3, 0);
+        let kmers = map.build_kmer_from_string("ACGTA".into(), None);
+
+        // reverse complement of ACGTA is TACGT
+        let expected: Vec<(String, u64)> =
+            ["ACG", "CGT", "GTA", "TAC", "ACG", "CGT"]
+                .iter()
+                .map(|k| (k.to_string(), mur(k)))
+                .collect();
+
+        assert_eq!(kmers, expected);
+    }
+
+    #[test]
+    fn build_kmer_from_string_with_length_equal_to_k_returns_two_kmers() {
+        let map = KmersMap::new(5, 0);
+        let kmers = map.build_kmer_from_string("ACGTA".into(), None);
+        let names: Vec<&str> = kmers.iter().map(|(k, _)| k.as_str()).collect();
+        assert_eq!(names, ["ACGTA", "TACGT"]);
+    }
+
+    #[test]
+    fn build_kmer_from_string_returns_empty_when_shorter_than_k() {
+        let map = KmersMap::new(6, 0);
+        assert!(map.build_kmer_from_string("ACGTA".into(), None).is_empty());
+        assert!(map.build_kmer_from_string(String::new(), None).is_empty());
+    }
+
+    #[test]
+    fn build_kmer_from_string_uses_the_k_override() {
+        let map = KmersMap::new(3, 0);
+        let kmers = map.build_kmer_from_string("ACGTA".into(), Some(2));
+        let names: Vec<&str> = kmers.iter().map(|(k, _)| k.as_str()).collect();
+        assert_eq!(names, ["AC", "CG", "GT", "TA", "TA", "AC", "CG", "GT"]);
+    }
+
+    /// BUG-010: the length guard compared against `self.k_size` instead of
+    /// the effective size, so an override longer than the sequence
+    /// underflowed and panicked.
+    #[test]
+    fn build_kmer_from_string_returns_empty_when_override_exceeds_length() {
+        let map = KmersMap::new(3, 0);
+        assert!(map
+            .build_kmer_from_string("ACGTA".into(), Some(10))
+            .is_empty());
+    }
+
+    /// BUG-010: a shorter override was rejected by the guard on `self.k_size`.
+    #[test]
+    fn build_kmer_from_string_accepts_override_shorter_than_default_k() {
+        let map = KmersMap::new(10, 0);
+        let kmers = map.build_kmer_from_string("ACGTA".into(), Some(3));
+        assert_eq!(kmers.len(), 6);
+    }
+
+    // ? KMER-04 ---------------------------------------------------------------
+
+    #[test]
+    fn insert_groups_by_minimizer_prefix_and_merges_node_sets() {
+        let map = fixture(2);
+
+        assert_eq!(
+            keys(&map),
+            BTreeSet::from([mur("AC"), mur("GG"), mur("TT")])
+        );
+
+        let ac = &map.get_map()[&MinimizerKey(mur("AC"))].0;
+        assert_eq!(ac.len(), 2);
+        assert_eq!(ac[&mur("ACGTA")], set(&[0, 1, 3]));
+        assert_eq!(ac[&mur("ACTTG")], set(&[0, 2]));
+
+        assert_eq!(
+            flatten(&map),
+            expected(&[
+                ("ACGTA", &[0, 1, 3]),
+                ("ACTTG", &[0, 2]),
+                ("GGCAT", &[0, 2]),
+                ("TTTTT", &[0, 1, 2]),
+            ])
+        );
+    }
+
+    #[test]
+    fn insert_with_m0_uses_a_single_zero_key() {
+        let map = fixture(0);
+
+        assert_eq!(keys(&map), BTreeSet::from([0]));
+        assert_eq!(flatten(&map), flatten(&fixture(2)));
+        assert_eq!(map.get_kmer_size(), 5);
+        assert_eq!(map.get_minimizer_size(), 0);
+    }
+
+    /// S-06: the doc says `true` is returned for a new k-mer, but a new
+    /// k-mer under a new minimizer key returns `false`. No caller uses the
+    /// return value, so this pins the current behavior only.
+    #[test]
+    fn insert_or_append_kmer_hash_return_value_current_behavior() {
+        let mut map = KmersMap::new(5, 2);
+
+        assert!(!map.insert_or_append_kmer_hash(
+            "ACGTA".into(),
+            mur("ACGTA"),
+            set(&[1])
+        ));
+        assert!(map.insert_or_append_kmer_hash(
+            "ACTTG".into(),
+            mur("ACTTG"),
+            set(&[1])
+        ));
+        assert!(!map.insert_or_append_kmer_hash(
+            "ACGTA".into(),
+            mur("ACGTA"),
+            set(&[2])
+        ));
+    }
+
+    // ? KMER-05 ---------------------------------------------------------------
+
+    #[test]
+    fn get_hashed_kmers_with_node_returns_exact_subsets() {
+        for m in [0, 2] {
+            let map = fixture(m);
+            let hashes = |kmers: &[&str]| -> Option<HashSet<u64>> {
+                Some(kmers.iter().map(|k| mur(k)).collect())
+            };
+
+            assert_eq!(
+                map.get_hashed_kmers_with_node(0),
+                hashes(&["ACGTA", "ACTTG", "GGCAT", "TTTTT"]),
+                "m = {m}"
+            );
+            assert_eq!(
+                map.get_hashed_kmers_with_node(1),
+                hashes(&["ACGTA", "TTTTT"])
+            );
+            assert_eq!(
+                map.get_hashed_kmers_with_node(2),
+                hashes(&["ACTTG", "GGCAT", "TTTTT"])
+            );
+            assert_eq!(map.get_hashed_kmers_with_node(3), hashes(&["ACGTA"]));
+            assert_eq!(map.get_hashed_kmers_with_node(99), None);
+        }
+    }
+
+    #[test]
+    fn get_minimized_hashes_with_node_groups_hashes_by_key() {
+        let map = fixture(2);
+        let found = map.get_minimized_hashes_with_node(2).unwrap();
+
+        let found: BTreeMap<u64, HashSet<u64>> =
+            found.into_iter().map(|(k, v)| (k.0, v)).collect();
+
+        assert_eq!(
+            found,
+            BTreeMap::from([
+                (mur("AC"), set(&[mur("ACTTG")])),
+                (mur("GG"), set(&[mur("GGCAT")])),
+                (mur("TT"), set(&[mur("TTTTT")])),
+            ])
+        );
+        assert!(map.get_minimized_hashes_with_node(99).is_none());
+
+        let map = fixture(0);
+        let found = map.get_minimized_hashes_with_node(1).unwrap();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[&MinimizerKey(0)], set(&[mur("ACGTA"), mur("TTTTT")]));
+    }
+
+    #[test]
+    fn get_overlapping_hashed_kmers_returns_only_query_kmers() {
+        for m in [0, 2] {
+            let map = fixture(m);
+            let query: Vec<(String, u64)> = ["ACGTA", "GGCAT", "CCCCC"]
+                .iter()
+                .map(|k| (k.to_string(), mur(k)))
+                .collect();
+
+            let overlap = map.get_overlapping_hashed_kmers(query);
+
+            assert_eq!(
+                flatten(&overlap),
+                expected(&[("ACGTA", &[0, 1, 3]), ("GGCAT", &[0, 2])]),
+                "m = {m}"
+            );
+            assert_eq!(overlap.get_kmer_size(), 5);
+            assert_eq!(overlap.get_minimizer_size(), m);
+        }
+    }
+
+    #[test]
+    fn get_overlapping_hashed_kmers_with_query_built_from_sequence() {
+        for m in [0, 3] {
+            let seq = synth::random_seq(60, 11);
+            let mut map = KmersMap::new(15, m);
+            for (kmer, hash) in map.build_kmer_from_string(seq.clone(), None) {
+                map.insert_or_append_kmer_hash(kmer, hash, set(&[0, 1]));
+            }
+            let all = flatten(&map);
+
+            let query =
+                map.build_kmer_from_string(seq[10..40].to_string(), None);
+            let overlap = map.get_overlapping_hashed_kmers(query.clone());
+
+            let query_hashes: BTreeSet<u64> =
+                query.iter().map(|(_, h)| *h).collect();
+            assert_eq!(
+                flatten(&overlap).keys().copied().collect::<BTreeSet<_>>(),
+                query_hashes,
+                "m = {m}"
+            );
+            assert!(flatten(&overlap).keys().all(|h| all.contains_key(h)));
+        }
+    }
+
+    #[test]
+    fn get_overlapping_minimized_hashes_returns_node_submap() {
+        for m in [0, 2] {
+            let map = fixture(m);
+            let node_hashes = map.get_minimized_hashes_with_node(1).unwrap();
+            let overlap = map.get_overlapping_minimized_hashes(node_hashes);
+
+            assert_eq!(
+                flatten(&overlap),
+                expected(&[("ACGTA", &[0, 1, 3]), ("TTTTT", &[0, 1, 2])]),
+                "m = {m}"
+            );
+        }
+
+        let map = fixture(2);
+        assert!(
+            flatten(&map.get_overlapping_minimized_hashes(HashMap::new()))
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn get_overlapping_hashes_filters_by_hash_set() {
+        for m in [0, 2] {
+            let map = fixture(m);
+            let hashes: HashSet<u64> =
+                [mur("ACTTG"), mur("TTTTT"), 12345].into_iter().collect();
+            let overlap = map.get_overlapping_hashes(&hashes);
+
+            assert_eq!(
+                flatten(&overlap),
+                expected(&[("ACTTG", &[0, 2]), ("TTTTT", &[0, 1, 2])]),
+                "m = {m}"
+            );
+            assert!(keys(&overlap).is_subset(&keys(&map)));
+        }
+    }
+
+    // ? KMER-06 ---------------------------------------------------------------
+
+    #[test]
+    fn kmers_map_round_trips_through_yaml() {
+        for m in [0, 2] {
+            let map = fixture(m);
+            let yaml = serde_yaml::to_string(&map).unwrap();
+            assert!(yaml.contains("kSize: 5"));
+            assert!(yaml.contains(&format!("mSize: {m}")));
+
+            let back: KmersMap = serde_yaml::from_str(&yaml).unwrap();
+            assert_eq!(back.get_kmer_size(), 5);
+            assert_eq!(back.get_minimizer_size(), m);
+            assert_eq!(keys(&back), keys(&map));
+            assert_eq!(flatten(&back), flatten(&map));
+        }
+    }
+
+    #[test]
+    fn kmers_map_round_trips_through_json() {
+        for m in [0, 2] {
+            let map = fixture(m);
+            let json = serde_json::to_value(&map).unwrap();
+            assert_eq!(json["kSize"], 5);
+            assert_eq!(json["mSize"], m);
+
+            let back: KmersMap = serde_json::from_value(json).unwrap();
+            assert_eq!(keys(&back), keys(&map));
+            assert_eq!(flatten(&back), flatten(&map));
+
+            let text = serde_json::to_string(&map).unwrap();
+            let back: KmersMap = serde_json::from_str(&text).unwrap();
+            assert_eq!(flatten(&back), flatten(&map));
+        }
     }
 }

@@ -2,6 +2,9 @@ mod cmds;
 mod dtos;
 mod models;
 
+#[cfg(test)]
+mod tests;
+
 use anyhow::Result;
 use clap::Subcommand;
 use classeq_ports_lib::{expose_runtime_arguments, CliLauncher, LogFormat};

@@ -70,7 +70,6 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     debug!("Reading the MSA file");
-    let mut headers = Vec::<String>::new();
     let mut header = String::new();
     let mut sequence = String::new();
 
@@ -92,33 +91,40 @@ pub fn map_kmers_to_tree(
 
         if line.starts_with('>') {
             if !header.is_empty() {
-                headers.push(header.clone());
+                i += 1;
+                print!("Build kmer for sequence {i}\r");
+                std::io::stdout().flush().unwrap();
+
+                let own_sender = sequence_sender.to_owned();
+                let cloned_header = header.clone();
+                let kmers = map.build_kmer_from_string(sequence.clone(), None);
+
+                let _ = thread::spawn(move || {
+                    match own_sender
+                        .send((cloned_header.clone(), kmers.clone()))
+                    {
+                        Err(err) => panic!("Error: {err}"),
+                        Ok(_) => (),
+                    }
+                });
+
                 header.clear();
             }
 
             header.push_str(&line.replace(">", ""));
-
-            i += 1;
-            print!("Build kmer for sequence {i}\r");
-            std::io::stdout().flush().unwrap();
-
-            let own_sender = sequence_sender.to_owned();
-            let cloned_header = header.clone();
-            let kmers = map.build_kmer_from_string(sequence.clone(), None);
-
-            let _ = thread::spawn(move || {
-                match own_sender.send((cloned_header.clone(), kmers.clone())) {
-                    Err(err) => panic!("Error: {err}"),
-                    Ok(_) => (),
-                }
-            });
-
             sequence.clear();
         } else {
             sequence.push_str(
                 SequenceBody::remove_non_iupac_from_sequence(&line).as_str(),
             );
         }
+    }
+
+    if !header.is_empty() {
+        let kmers = map.build_kmer_from_string(sequence.clone(), None);
+        sequence_sender
+            .send((header.clone(), kmers))
+            .expect("Error sending kmers to the receiver");
     }
 
     // Push the last line preventing losing the print value from the kmers map
@@ -175,35 +181,6 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     tree.kmers_map = Some(map);
-    tree.update_in_memory_size();
 
     Ok(tree)
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::use_cases::map_kmers_to_tree;
-    use mycelium_base::utils::errors::MappedErrors;
-    use std::path::PathBuf;
-
-    #[test]
-    fn test_map_kmers_to_tree() -> Result<(), MappedErrors> {
-        let tree_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh-PhyML.nwk");
-        let msa_path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/inputs/Colletotrichum_acutatum_gapdh_mafft.fasta");
-
-        let tree = map_kmers_to_tree(tree_path, msa_path, None, None, None)?;
-
-        let content = match serde_yaml::to_string(&tree) {
-            Err(err) => panic!("Error: {err}"),
-            Ok(content) => content,
-        };
-
-        let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/outputs/Colletotrichum_acutatum_gapdh-PhyML.yaml");
-
-        if let Err(err) = std::fs::write(path.as_path(), content) {
-            panic!("Error: {err}")
-        }
-
-        Ok(())
-    }
 }

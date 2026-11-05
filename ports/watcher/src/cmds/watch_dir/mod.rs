@@ -1,5 +1,8 @@
 mod context;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{
     dtos::{
         log_writer::VectorWriter, placement_result::PlacementResult,
@@ -201,7 +204,7 @@ async fn scan_directories_in_background(
         );
 
         let writer = VectorWriter::new();
-        let (non_blocking, _guard) =
+        let (non_blocking, guard) =
             tracing_appender::non_blocking(writer.to_owned());
 
         let subscriber = fmt::Subscriber::builder()
@@ -213,6 +216,8 @@ async fn scan_directories_in_background(
         let response = with_default(subscriber, || {
             do_placement(path.to_owned(), &fs_config, &models_data, &span)
         });
+
+        drop(guard);
 
         let writer = writer.get_buffer();
 

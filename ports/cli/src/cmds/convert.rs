@@ -63,43 +63,26 @@ pub(crate) struct SerializeTreeArguments {
     pub(super) out_format: OutputFormat,
 }
 
-pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) {
+pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) -> Result<()> {
     let tree = match Tree::init_from_file(
         args.tree_file_path.as_path(),
         args.min_branch_support.unwrap_or(95.0),
     ) {
         Ok(tree) => tree,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            return;
-        }
+        Err(e) => return Err(anyhow::anyhow!("{e}")),
     };
 
     let content = match args.out_format {
-        OutputFormat::Jsonl => match serde_json::to_string_pretty(&tree) {
-            Err(err) => {
-                eprintln!("Error: {err}");
-                return;
-            }
-            Ok(content) => content,
-        },
-        OutputFormat::Yaml => match serde_yaml::to_string(&tree) {
-            Err(err) => {
-                eprintln!("Error: {err}");
-                return;
-            }
-            Ok(content) => content,
-        },
+        OutputFormat::Jsonl => serde_json::to_string_pretty(&tree)?,
+        OutputFormat::Yaml => serde_yaml::to_string(&tree)?,
     };
 
     match args.output_file_path {
-        Some(path) => {
-            if let Err(err) = std::fs::write(path.as_path(), content) {
-                eprintln!("Error: {err}")
-            }
-        }
+        Some(path) => std::fs::write(path.as_path(), content)?,
         None => println!("{}", content),
     }
+
+    Ok(())
 }
 
 // ? ---------------------------------------------------------------------------

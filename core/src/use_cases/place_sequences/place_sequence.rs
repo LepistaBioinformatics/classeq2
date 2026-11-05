@@ -74,9 +74,9 @@ pub(super) fn place_sequence(
         0.7
     };
 
-    let mut kmers_map = tree
+    let kmers_map = tree
         .kmers_map
-        .to_owned()
+        .as_ref()
         .expect("The tree does not have a kmers map.");
 
     // ? -----------------------------------------------------------------------
@@ -114,6 +114,12 @@ pub(super) fn place_sequence(
     // processed.
     //
     // ? -----------------------------------------------------------------------
+
+    let query_distinct_kmers = query_kmers
+        .iter()
+        .map(|(_, hash)| *hash)
+        .collect::<HashSet<u64>>()
+        .len();
 
     let query_kmers_map = kmers_map.get_overlapping_hashed_kmers(query_kmers);
 
@@ -229,7 +235,7 @@ pub(super) fn place_sequence(
     // return with `Unclassifiable` status.
     //
     let expected_min_clade_coverage =
-        (query_kmers_len as f64 * min_match_coverage).round();
+        (query_distinct_kmers as f64 * min_match_coverage).round();
 
     trace!(
         code = TelemetryCode::UCPLACE0008.to_string(),
@@ -604,48 +610,565 @@ pub(super) fn place_sequence(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::dtos::sequence::Sequence;
-    use std::path::PathBuf;
+    use crate::{
+        domain::dtos::{clade::NodeType, kmers_map::KmersMap},
+        synth,
+        use_cases::map_kmers_to_tree,
+    };
+    use tempfile::TempDir;
+    use uuid::Uuid;
 
-    #[test]
-    fn test_place_sequence() {
-        //let path = PathBuf::from("src/tests/data/colletotrichum-acutatom-complex/outputs/Colletotrichum_acutatum_gapdh-PhyML.yaml");
-        let path = PathBuf::from("/tmp/cls2.yaml");
+    const K: u64 = 15;
+    const L: usize = 800;
 
-        // Load the tree from file
-        let file = std::fs::File::open(path).unwrap();
-        let tree: Tree = serde_yaml::from_reader(file).unwrap();
+    fn build_tree(
+        topology: &synth::Topology,
+        records: &[(String, String)],
+        m: u64,
+    ) -> Tree {
+        let dir = TempDir::new().unwrap();
+        let tree_path = dir.path().join("tree.nwk");
+        let msa_path = dir.path().join("msa.fasta");
+        std::fs::write(&tree_path, synth::write_newick(topology)).unwrap();
+        std::fs::write(
+            &msa_path,
+            synth::write_fasta(records, 60, false, false),
+        )
+        .unwrap();
+        map_kmers_to_tree(tree_path, msa_path, Some(K), Some(m), None).unwrap()
+    }
 
-        // Col_orchidophilum
-        let query_sequence = Sequence::new(
-            "Col_orchidophilum",
-            "CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATGATGATATCACATCTGTCACGACAATACCAGCCTCATCGGCCACTGGGAAAGAAATGAGCTAGCACTCTCGATCCTGTGACCCAGGATACTGAAGCGGCTCGTCCCAATGGCATGATGTGA",
-        );
+    fn default_dataset(seed: u64) -> (Tree, Vec<(String, String)>) {
+        let topology = synth::default_topology();
+        let records = synth::evolve(&topology, L, seed);
+        (build_tree(&topology, &records, 4), records)
+    }
 
-        // Col_laticiphilum_CBS_129827
-        //let query_set = "\
-        //CCTTCATTGAGACCAAGTACGCTGTGAGTATCACCCCACTTTACCCCTCCATCATGATAT\
-        //CACGCCTACCACGATAACACCAGCTTCGTCGTTATCCACGGGGAAAAGAGTCAGAGCTAG\
-        //CACTCTCGACTCTTTTGCCCCAAGGTTTCGATTGGGCTTGTTGTAATGAAACGACGTGAC\
-        //ACAATCATGCAGAAACAGCCGAGACAAAATTTGCTGACAGACCATCCATCACAGGCCTAC\
-        //ATGCTCAAGTAC";
-
-        // A random sequence
-        // let invalid_query = "ASDFASDFASDFASDFASDFADSF";
-
-        match place_sequence(
-            &query_sequence.header().to_owned(),
-            &query_sequence.sequence().to_owned(),
-            &tree,
+    fn place(
+        tree: &Tree,
+        seq: &str,
+        max_iterations: Option<i32>,
+        coverage: Option<f64>,
+        remove_intersection: Option<bool>,
+    ) -> Result<PlacementStatus, MappedErrors> {
+        place_sequence(
+            &SequenceHeader::new("query"),
+            &SequenceBody::new(seq),
+            tree,
+            &max_iterations,
+            &coverage,
+            &remove_intersection,
             &None,
-            &None,
-            &None,
-            &None,
-        ) {
-            Err(err) => panic!("Error: {err}"),
-            Ok(response) => {
-                println!("{:?}", serde_json::to_string(&response).unwrap());
+        )
+    }
+
+    fn leaf_parent(tree: &Tree, name: &str) -> u64 {
+        tree.root
+            .get_leaves_with_paths(None)
+            .into_iter()
+            .find(|(clade, _)| clade.name.as_deref() == Some(name))
+            .unwrap()
+            .0
+            .parent
+            .unwrap()
+    }
+
+    fn identity_clade_id(status: &PlacementStatus) -> Option<u64> {
+        match status {
+            IdentityFound(test) => match &test.clade {
+                UntaggedParent::Record(clade) => Some(clade.id),
+                UntaggedParent::Id(id) => Some(*id),
+            },
+            _ => None,
+        }
+    }
+
+    fn reverse_complement(seq: &str) -> String {
+        seq.chars()
+            .rev()
+            .map(|c| match c {
+                'A' => 'T',
+                'T' => 'A',
+                'C' => 'G',
+                _ => 'C',
+            })
+            .collect()
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? Hand-built trees: exact control over which node each k-mer maps to
+    // ? -----------------------------------------------------------------------
+
+    fn clade(id: u64, parent: Option<u64>, children: Vec<Clade>) -> Clade {
+        let kind = match (parent, children.is_empty()) {
+            (None, _) => NodeType::Root,
+            (_, true) => NodeType::Leaf,
+            (_, false) => NodeType::Node,
+        };
+        Clade {
+            id,
+            parent,
+            kind,
+            name: None,
+            support: None,
+            length: None,
+            children: if children.is_empty() {
+                None
+            } else {
+                Some(children)
+            },
+        }
+    }
+
+    /// Internal node `id` under `parent` with two leaves `id+1` and `id+2`.
+    fn cherry(id: u64, parent: u64) -> Clade {
+        clade(
+            id,
+            Some(parent),
+            vec![
+                clade(id + 1, Some(id), vec![]),
+                clade(id + 2, Some(id), vec![]),
+            ],
+        )
+    }
+
+    /// Indexes both strands of every segment's k-mers under its node set.
+    fn hand_tree(root: Clade, segments: &[(&str, &[u64])]) -> Tree {
+        let mut map = KmersMap::new(K, 4);
+        for (seq, nodes) in segments {
+            for (kmer, hash) in
+                map.build_kmer_from_string(seq.to_string(), None)
+            {
+                map.insert_or_append_kmer_hash(
+                    kmer,
+                    hash,
+                    nodes.iter().copied().collect(),
+                );
             }
         }
+        let mut tree = Tree::new(Uuid::nil(), "hand".to_string(), 0.0, root);
+        tree.kmers_map = Some(map);
+        tree
+    }
+
+    fn distinct_kmers(seq: &str) -> usize {
+        KmersMap::new(K, 4)
+            .build_kmer_from_string(seq.to_string(), None)
+            .into_iter()
+            .map(|(_, hash)| hash)
+            .collect::<HashSet<_>>()
+            .len()
+    }
+
+    /// root(0) -> P(1) -> {X(2): leaves 3,4; Y(5): leaves 6,7}; root -> Z(8).
+    fn nested_root() -> Clade {
+        clade(
+            0,
+            None,
+            vec![
+                clade(1, Some(0), vec![cherry(2, 1), cherry(5, 1)]),
+                cherry(8, 0),
+            ],
+        )
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-01
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_query_shorter_than_k_returns_err_ucplace0005() {
+        let (tree, records) = default_dataset(1);
+        let query = &records[0].1[..K as usize - 1];
+
+        let err = place(&tree, query, None, None, None).unwrap_err();
+
+        assert!(err.has_str_code("UCPLACE0005"), "{err}");
+    }
+
+    #[test]
+    fn place_query_of_exactly_k_has_two_kmers_and_is_not_rejected() {
+        let (tree, records) = default_dataset(1);
+        let query = &records[0].1[..K as usize];
+
+        match place(&tree, query, None, None, None) {
+            Err(err) => assert!(!err.has_str_code("UCPLACE0005"), "{err}"),
+            Ok(_) => (),
+        }
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-02
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_unrelated_query_returns_unclassifiable() {
+        let (tree, _) = default_dataset(1);
+
+        let status =
+            place(&tree, &synth::random_seq(L, 999), None, None, None).unwrap();
+
+        assert!(matches!(status, Unclassifiable(_)), "{status:?}");
+    }
+
+    #[test]
+    fn place_query_with_kmers_not_mapped_to_root_returns_unclassifiable() {
+        let query = synth::random_seq(200, 3);
+        let tree = hand_tree(nested_root(), &[(&query, &[2])]);
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        assert!(
+            matches!(&status, Unclassifiable(msg) if msg.contains("no overlapping kmers")),
+            "{status:?}"
+        );
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-03
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_mutated_leaf_returns_identity_found_at_its_clade() {
+        let (tree, records) = default_dataset(1);
+
+        for (i, (name, seq)) in records.iter().enumerate() {
+            let query = synth::mutate(seq, 10, 100 + i as u64);
+            let status = place(&tree, &query, None, None, None).unwrap();
+
+            assert_eq!(
+                identity_clade_id(&status),
+                Some(leaf_parent(&tree, name)),
+                "{name}: {status:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn place_reverse_complement_fragment_returns_identity_found_at_its_clade() {
+        let (tree, records) = default_dataset(2);
+        let (name, seq) = &records[5];
+        let query = reverse_complement(&synth::fragment(seq, 200, 250));
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        assert_eq!(identity_clade_id(&status), Some(leaf_parent(&tree, name)));
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-04
+    // ? -----------------------------------------------------------------------
+
+    fn tied_tree() -> (Tree, String) {
+        let query = synth::random_seq(200, 4);
+        let tree = hand_tree(
+            nested_root(),
+            &[(&query[..100], &[0, 1, 2]), (&query[100..], &[0, 1, 5])],
+        );
+        (tree, query)
+    }
+
+    #[test]
+    #[ignore = "BUG-020: Inconclusive is unreachable; one-vs-rest union allows at most one proposal"]
+    fn place_equidistant_query_returns_inconclusive_with_both_clades() {
+        let (tree, query) = tied_tree();
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        match status {
+            Inconclusive(tests, _) => {
+                let ids: HashSet<u64> = tests
+                    .iter()
+                    .map(|t| match &t.clade {
+                        UntaggedParent::Id(id) => *id,
+                        UntaggedParent::Record(c) => c.id,
+                    })
+                    .collect();
+                assert_eq!(ids, HashSet::from([2, 5]));
+            }
+            other => panic!("expected Inconclusive, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn place_equidistant_query_current_behavior() {
+        let (tree, query) = tied_tree();
+
+        for remove_intersection in [false, true] {
+            let status =
+                place(&tree, &query, None, None, Some(remove_intersection))
+                    .unwrap();
+
+            assert_eq!(
+                status,
+                MaxResolutionReached(1, "LCA Accepted".to_string()),
+                "remove_intersection={remove_intersection}"
+            );
+        }
+    }
+
+    #[test]
+    fn place_equidistant_query_at_root_level_current_behavior() {
+        let query = synth::random_seq(200, 5);
+        let root = clade(0, None, vec![cherry(1, 0), cherry(4, 0)]);
+        let tree = hand_tree(
+            root,
+            &[(&query[..100], &[0, 1]), (&query[100..], &[0, 4])],
+        );
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        assert!(
+            matches!(&status, Unclassifiable(msg) if msg.contains("Tree introspection not possible")),
+            "{status:?}"
+        );
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-05
+    // ? -----------------------------------------------------------------------
+
+    /// `root_fraction` of the query k-mers map to root and X(1); the rest map
+    /// to X(1) only.
+    fn partial_root_tree(root_len: usize) -> (Tree, String) {
+        let query = synth::random_seq(400, 6);
+        let root = clade(0, None, vec![cherry(1, 0)]);
+        let tree = hand_tree(
+            root,
+            &[(&query[..root_len], &[0, 1]), (&query[root_len..], &[1])],
+        );
+        (tree, query)
+    }
+
+    #[test]
+    fn place_coverage_below_default_threshold_returns_unclassifiable() {
+        let (tree, query) = partial_root_tree(240);
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        assert!(
+            matches!(&status, Unclassifiable(msg) if msg.starts_with("Insufficient kmers coverage")),
+            "{status:?}"
+        );
+    }
+
+    #[test]
+    fn place_coverage_above_default_threshold_is_placed() {
+        let (tree, query) = partial_root_tree(320);
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        assert_eq!(identity_clade_id(&status), Some(1), "{status:?}");
+    }
+
+    #[test]
+    fn place_coverage_threshold_is_configurable() {
+        let (tree, query) = partial_root_tree(240);
+
+        let status = place(&tree, &query, None, Some(0.5), None).unwrap();
+
+        assert_eq!(identity_clade_id(&status), Some(1), "{status:?}");
+    }
+
+    #[test]
+    fn place_coverage_is_clamped_to_unit_interval() {
+        let (tree, records) = default_dataset(1);
+        let expected = Some(leaf_parent(&tree, &records[0].0));
+
+        for coverage in [5.0, -3.0] {
+            let status =
+                place(&tree, &records[0].1, None, Some(coverage), None)
+                    .unwrap();
+            assert_eq!(identity_clade_id(&status), expected, "{coverage}");
+        }
+
+        let (tree, query) = partial_root_tree(240);
+        let status = place(&tree, &query, None, Some(-3.0), None).unwrap();
+        assert_eq!(identity_clade_id(&status), Some(1), "{status:?}");
+    }
+
+    #[test]
+    fn place_query_with_half_unrelated_kmers_is_below_coverage() {
+        let (tree, records) = default_dataset(1);
+        let query = format!(
+            "{}{}",
+            &records[0].1[..L / 2],
+            synth::random_seq(L / 2, 77)
+        );
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+
+        assert!(matches!(status, Unclassifiable(_)), "{status:?}");
+    }
+
+    #[test]
+    fn place_query_with_half_unrelated_kmers_is_placed_below_its_coverage() {
+        let (tree, records) = default_dataset(1);
+        let query = format!(
+            "{}{}",
+            &records[0].1[..L / 2],
+            synth::random_seq(L / 2, 77)
+        );
+
+        let status = place(&tree, &query, None, Some(0.45), None).unwrap();
+
+        assert_eq!(
+            identity_clade_id(&status),
+            Some(leaf_parent(&tree, &records[0].0)),
+            "{status:?}"
+        );
+    }
+
+    #[test]
+    fn place_identical_query_passes_full_coverage() {
+        let (tree, records) = default_dataset(1);
+
+        let status =
+            place(&tree, &records[0].1, None, Some(1.0), None).unwrap();
+
+        assert_eq!(
+            identity_clade_id(&status),
+            Some(leaf_parent(&tree, &records[0].0)),
+            "{status:?}"
+        );
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-06
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_max_iterations_exhaustion_returns_err_ucplace0010() {
+        let (tree, query) = tied_tree();
+
+        for max_iterations in [0, 1] {
+            let err = place(&tree, &query, Some(max_iterations), None, None)
+                .unwrap_err();
+            assert!(err.has_str_code("UCPLACE0010"), "{max_iterations}: {err}");
+        }
+
+        assert!(place(&tree, &query, Some(2), None, None).is_ok());
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-07
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_remove_intersection_drops_shared_kmers_from_one_and_rest() {
+        let query = synth::random_seq(220, 7);
+        let (a, b, c) = (&query[..120], &query[120..180], &query[180..]);
+        let root = clade(0, None, vec![cherry(1, 0), cherry(4, 0)]);
+        let tree =
+            hand_tree(root, &[(a, &[0, 1]), (b, &[0, 1, 4]), (c, &[0, 4])]);
+        let (na, nb, nc) =
+            (distinct_kmers(a), distinct_kmers(b), distinct_kmers(c));
+
+        let counts = |remove_intersection| match place(
+            &tree,
+            &query,
+            None,
+            None,
+            Some(remove_intersection),
+        )
+        .unwrap()
+        {
+            IdentityFound(test) => (
+                identity_clade_id(&IdentityFound(test.clone())),
+                test.one,
+                test.rest,
+            ),
+            other => panic!("{other:?}"),
+        };
+
+        assert_eq!(
+            counts(false),
+            (Some(1), (na + nb) as i32, (nb + nc) as i32)
+        );
+        assert_eq!(counts(true), (Some(1), na as i32, nc as i32));
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-08
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    #[should_panic(expected = "The tree does not have a kmers map.")]
+    fn place_without_kmers_map_panics() {
+        let (mut tree, records) = default_dataset(1);
+        tree.kmers_map = None;
+
+        let _ = place(&tree, &records[0].1, None, None, None);
+    }
+
+    #[test]
+    fn place_root_without_children_returns_err() {
+        let query = synth::random_seq(200, 8);
+        let tree = hand_tree(clade(0, None, vec![]), &[(&query, &[0])]);
+
+        let err = place(&tree, &query, None, None, None).unwrap_err();
+
+        assert!(
+            err.msg().contains("root node does not have children"),
+            "{err}"
+        );
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? PLACE-09 (S-12)
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_query_identical_to_root_leaf_child_current_behavior() {
+        let topology = synth::node(
+            vec![
+                synth::node(
+                    vec![synth::leaf("A1", 0.01), synth::leaf("A2", 0.01)],
+                    Some(99.0),
+                    0.08,
+                ),
+                synth::leaf("C", 0.09),
+            ],
+            None,
+            0.0,
+        );
+        let records = synth::evolve(&topology, L, 9);
+        let tree = build_tree(&topology, &records, 4);
+        let c_seq = &records.iter().find(|(n, _)| n == "C").unwrap().1;
+
+        let status = place(&tree, c_seq, None, None, None).unwrap();
+
+        // Leaf C is filtered out of the sibling set, so node (A1,A2) is the
+        // only candidate, gets `rest: 0`, and wins on shared conserved k-mers.
+        match &status {
+            IdentityFound(test) => {
+                assert_eq!(
+                    identity_clade_id(&status),
+                    Some(leaf_parent(&tree, "A1"))
+                );
+                assert!(test.one > 0);
+                assert_eq!(test.rest, 0);
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? Minimizer size zero
+    // ? -----------------------------------------------------------------------
+
+    #[test]
+    fn place_with_minimizer_size_zero_finds_identity() {
+        let topology = synth::default_topology();
+        let records = synth::evolve(&topology, L, 1);
+        let tree = build_tree(&topology, &records, 0);
+
+        let status = place(&tree, &records[0].1, None, None, None).unwrap();
+
+        assert_eq!(
+            identity_clade_id(&status),
+            Some(leaf_parent(&tree, &records[0].0)),
+            "{status:?}"
+        );
     }
 }

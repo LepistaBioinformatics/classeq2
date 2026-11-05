@@ -49,3 +49,8 @@ zerovec-derive.workspace = true
 [[bin]]
 name = "cls-watcher"
 path = "src/main.rs"
+
+
+[dev-dependencies]
+
+tempfile = "3"
