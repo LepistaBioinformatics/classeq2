@@ -13,33 +13,43 @@ should contain all sequences that are used to build the reference tree.
 
 ## 2.1 Root the Reference Tree
 
-Case you don't have rooted reference tree, you should root it before build the
-database. To root the reference tree, you can use the Python script
-`root_tree.py` available in the `scripts` directory. The script requires the
-reference tree in Newick format as input. The script uses the midpoint rooting
-method to root the tree. The output is the rooted tree in Newick format. The
-script can be used as follows:
+Classeq places sequences by descending the reference tree from its root, so
+the tree must be rooted. Most tree inference programs (PhyML, RAxML, IQ-TREE,
+FastTree) write unrooted trees, with three branches at the top level. `cls
+build-db` rejects such a tree with an error that points to the command below.
+
+Root the tree with `cls root-tree`. It keeps leaf names, branch lengths and
+branch supports, and moves each support with its branch when the root changes.
 
 ```bash
-python \ 
-    scripts/root_tree.py \ 
-    reference_tree.nwk \ 
-    rooted_reference_tree.nwk
+# Midpoint rooting (default): the root is placed at the middle of the longest
+# leaf-to-leaf path.
+cls root-tree reference_tree.nwk -o rooted_reference_tree.nwk
+
+# Outgroup rooting: the root is placed on the branch that separates these
+# leaves from all the others. The outgroup must form a clade.
+cls root-tree reference_tree.nwk -o rooted_reference_tree.nwk \
+    --outgroup Outgroup_1,Outgroup_2
 ```
 
-If you prefer to use Docker, you can use the following command to root the
-reference tree:
+Without `-o` the rooted tree is written to stdout, and the input can be read
+from stdin with `-`. Use `--keep-if-rooted` to leave trees that are already
+rooted unchanged.
+
+Alternatively, `cls build-db` can root the tree in memory with
+`--root midpoint` or `--root outgroup --outgroup <LEAVES>`. A tree that is
+already rooted is then used as is.
+
+If you prefer to use Docker:
 
 ```bash
 docker run \
-    -it --rm \ 
-    -u $( id -u ${USER} ):$( id -g ${USER} ) \ 
-    -v ${PWD}:/data \ 
-    -w /data \ 
-    --entrypoint root_tree.py \ 
-    sgelias/classeq-cli \ 
-    reference_tree.nwk \ 
-    rooted_reference_tree.nwk
+    -it --rm \
+    -u $( id -u ${USER} ):$( id -g ${USER} ) \
+    -v ${PWD}:/data \
+    -w /data \
+    sgelias/classeq-cli \
+    root-tree reference_tree.nwk -o rooted_reference_tree.nwk
 ```
 
 ## 2.2 Build the Database
