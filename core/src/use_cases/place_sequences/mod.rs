@@ -241,7 +241,7 @@ pub fn place_sequences(
 
                     let output_content = match output_format {
                         OutputFormat::Yaml => {
-                            let content = serde_yaml::to_string(&output)
+                            let content = serde_saphyr::to_string(&output)
                                 .expect("Error serializing YAML response");
 
                             format!("---\n{content}")

@@ -141,7 +141,7 @@ pub(crate) fn place_sequences_cmd(
 
         if let Some(path) = args.annotations_file_path {
             let content: Vec<Annotation> =
-                serde_yaml::from_reader(std::fs::File::open(path)?)?;
+                serde_saphyr::from_reader(std::fs::File::open(path)?)?;
 
             if !content.is_empty() {
                 tree.annotations = Some(content);

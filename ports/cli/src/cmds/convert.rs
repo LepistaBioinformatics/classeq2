@@ -74,7 +74,7 @@ pub(crate) fn serialize_tree_cmd(args: SerializeTreeArguments) -> Result<()> {
 
     let content = match args.out_format {
         OutputFormat::Jsonl => serde_json::to_string_pretty(&tree)?,
-        OutputFormat::Yaml => serde_yaml::to_string(&tree)?,
+        OutputFormat::Yaml => serde_saphyr::to_string(&tree)?,
     };
 
     match args.output_file_path {
@@ -154,22 +154,22 @@ pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
         DatabaseOutputFormat::Zstd => {
             output_file_path.set_extension("cls");
             let writer = File::create(output_file_path)?;
-            let writer = zstd::Encoder::new(writer, 0)?.auto_finish();
+            let mut writer = zstd::Encoder::new(writer, 0)?.auto_finish();
 
             if args.only_tree.unwrap_or(false) {
-                serde_yaml::to_writer(writer, &tree_content.root)?;
+                serde_saphyr::to_io_writer(&mut writer, &tree_content.root)?;
             } else {
-                serde_yaml::to_writer(writer, &tree_content)?;
+                serde_saphyr::to_io_writer(&mut writer, &tree_content)?;
             };
         }
         DatabaseOutputFormat::Yaml => {
             output_file_path.set_extension("cls.yaml");
-            let writer = File::create(output_file_path)?;
+            let mut writer = File::create(output_file_path)?;
 
             if args.only_tree.unwrap_or(false) {
-                serde_yaml::to_writer(writer, &tree_content.root)?;
+                serde_saphyr::to_io_writer(&mut writer, &tree_content.root)?;
             } else {
-                serde_yaml::to_writer(writer, &tree_content)?;
+                serde_saphyr::to_io_writer(&mut writer, &tree_content)?;
             };
         }
         DatabaseOutputFormat::Json => {

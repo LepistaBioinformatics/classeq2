@@ -320,7 +320,7 @@ pub(crate) async fn configure_placement_analysis(
     })
     .join(fs_config.to_owned().config_file_name);
 
-    let config_file = match std::fs::File::create(config_file_path) {
+    let mut config_file = match std::fs::File::create(config_file_path) {
         Ok(file) => file,
         Err(err) => {
             error!("{:?}", err);
@@ -328,7 +328,7 @@ pub(crate) async fn configure_placement_analysis(
         }
     };
 
-    if let Err(err) = serde_yaml::to_writer(config_file, &analysis_config) {
+    if let Err(err) = serde_saphyr::to_io_writer(&mut config_file, &analysis_config) {
         error!("{:?}", err);
         return HttpResponse::InternalServerError().finish();
     };

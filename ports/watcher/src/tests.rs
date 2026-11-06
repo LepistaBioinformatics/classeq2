@@ -24,8 +24,8 @@ fn execution_msg_writes_yaml_by_default() {
 
     ExecutionMsg::write_file(&path, "done: \"ok\"", None).unwrap();
 
-    let yaml: serde_yaml::Value =
-        serde_yaml::from_str(&std::fs::read_to_string(&path).unwrap())
+    let yaml: serde_json::Value =
+        serde_saphyr::from_str(&std::fs::read_to_string(&path).unwrap())
             .unwrap();
     assert_eq!(yaml["msg"], "done: \"ok\"");
 }

@@ -45,10 +45,10 @@ fn convert_tree_prints_yaml_to_stdout_by_default() {
         .stdout
         .clone();
 
-    let value: serde_yaml::Value = serde_yaml::from_slice(&output).unwrap();
+    let value: serde_json::Value = serde_saphyr::from_slice(&output).unwrap();
     assert_eq!(value["name"].as_str(), Some("tree.nwk"));
     assert_eq!(value["minBranchSupport"].as_f64(), Some(95.0));
-    let root: Clade = serde_yaml::from_value(value["root"].clone()).unwrap();
+    let root: Clade = serde_json::from_value(value["root"].clone()).unwrap();
     assert_eq!(root.kind, NodeType::Root);
     assert_eq!(count_nodes(&root), 6);
 }
@@ -193,7 +193,7 @@ fn convert_database_round_trips_full_database_in_all_formats() {
     convert_db(&db, &dir.path().join("as-json"), "json", false);
 
     let yaml_path = dir.path().join("as-yaml.cls.yaml");
-    assert!(serde_yaml::from_str::<serde_yaml::Value>(
+    assert!(serde_saphyr::from_str::<serde_json::Value>(
         &std::fs::read_to_string(&yaml_path).unwrap()
     )
     .is_ok());
@@ -230,7 +230,7 @@ fn convert_database_only_tree_writes_root_clade_in_all_formats() {
     convert_db(&db, &dir.path().join("t"), "json", true);
     convert_db(&db, &dir.path().join("t"), "zstd", true);
 
-    let from_yaml: Clade = serde_yaml::from_str(
+    let from_yaml: Clade = serde_saphyr::from_str(
         &std::fs::read_to_string(dir.path().join("t.cls.yaml")).unwrap(),
     )
     .unwrap();
@@ -242,7 +242,7 @@ fn convert_database_only_tree_writes_root_clade_in_all_formats() {
         std::fs::read(dir.path().join("t.cls")).unwrap().as_slice(),
     )
     .unwrap();
-    let from_zstd: Clade = serde_yaml::from_slice(&decoded).unwrap();
+    let from_zstd: Clade = serde_saphyr::from_slice(&decoded).unwrap();
 
     assert_eq!(from_yaml, original.root);
     assert_eq!(from_json, original.root);

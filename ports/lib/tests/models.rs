@@ -40,7 +40,7 @@ workDir: 019051d9-4c7a-7b2d-9dd1-66ef92236fd8
 
 #[test]
 fn file_system_config_deserializes_from_settings_shape() {
-    let config: FileSystemConfig = serde_yaml::from_str(FS_YAML).unwrap();
+    let config: FileSystemConfig = serde_saphyr::from_str(FS_YAML).unwrap();
 
     assert_eq!(config.serve_directory, "tests/data");
     assert_eq!(config.public_directory, "public");
@@ -58,12 +58,12 @@ fn file_system_config_deserializes_from_settings_shape() {
 fn file_system_config_rejects_missing_field() {
     let partial = FS_YAML.replace("errorFileName: \"error.yaml\"", "");
 
-    assert!(serde_yaml::from_str::<FileSystemConfig>(&partial).is_err());
+    assert!(serde_saphyr::from_str::<FileSystemConfig>(&partial).is_err());
 }
 
 #[test]
 fn models_config_deserializes_with_optional_fields() {
-    let config: ModelsConfig = serde_yaml::from_str(MODELS_YAML).unwrap();
+    let config: ModelsConfig = serde_saphyr::from_str(MODELS_YAML).unwrap();
     let models = config.get_models();
 
     assert_eq!(models.len(), 2);
@@ -90,8 +90,8 @@ fn models_config_deserializes_with_optional_fields() {
 
 #[test]
 fn models_config_serialization_hides_paths() {
-    let config: ModelsConfig = serde_yaml::from_str(MODELS_YAML).unwrap();
-    let value = serde_yaml::to_value(&config).unwrap();
+    let config: ModelsConfig = serde_saphyr::from_str(MODELS_YAML).unwrap();
+    let value = serde_json::to_value(&config).unwrap();
     let first = &value[0];
 
     assert!(first.get("modelPath").is_none());
@@ -105,7 +105,7 @@ fn models_config_rejects_invalid_uuid() {
     let invalid = MODELS_YAML
         .replace("ce47d8bc-2885-3d2c-8247-5b8c8b28fefe", "not-a-uuid");
 
-    assert!(serde_yaml::from_str::<ModelsConfig>(&invalid).is_err());
+    assert!(serde_saphyr::from_str::<ModelsConfig>(&invalid).is_err());
 }
 
 #[test]
@@ -149,8 +149,8 @@ fn placement_config_reads_optional_fields_and_jsonl_format() {
 
 #[test]
 fn placement_config_serialization_skips_absent_options() {
-    let config: PlacementConfig = serde_yaml::from_str(PLACEMENT_YAML).unwrap();
-    let value = serde_yaml::to_value(&config).unwrap();
+    let config: PlacementConfig = serde_saphyr::from_str(PLACEMENT_YAML).unwrap();
+    let value = serde_json::to_value(&config).unwrap();
 
     assert!(value.get("description").is_none());
     assert!(value.get("overwrite").is_none());
@@ -171,13 +171,13 @@ fn placement_config_errors_on_missing_file() {
 #[test]
 fn log_format_deserializes_camel_case_values() {
     assert!(matches!(
-        serde_yaml::from_str::<LogFormat>("ansi").unwrap(),
+        serde_saphyr::from_str::<LogFormat>("ansi").unwrap(),
         LogFormat::Ansi
     ));
     assert!(matches!(
-        serde_yaml::from_str::<LogFormat>("jsonl").unwrap(),
+        serde_saphyr::from_str::<LogFormat>("jsonl").unwrap(),
         LogFormat::Jsonl
     ));
-    assert!(serde_yaml::from_str::<LogFormat>("Ansi").is_err());
-    assert!(serde_yaml::from_str::<LogFormat>("text").is_err());
+    assert!(serde_saphyr::from_str::<LogFormat>("Ansi").is_err());
+    assert!(serde_saphyr::from_str::<LogFormat>("text").is_err());
 }

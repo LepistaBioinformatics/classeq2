@@ -374,7 +374,7 @@ fn do_placement(
     if let Some(path) = database_config.annotations_path() {
         if let Ok(file) = std::fs::File::open(path) {
             let content: Option<Vec<Annotation>> =
-                match serde_yaml::from_reader(file) {
+                match serde_saphyr::from_reader(file) {
                     Ok(content) => Some(content),
                     Err(err) => {
                         warn!(

@@ -107,7 +107,7 @@ fn yaml_records(path: &Path) -> HashMap<String, Value> {
         .split("---\n")
         .filter(|doc| !doc.trim().is_empty())
         .map(|doc| {
-            let value: Value = serde_yaml::from_str(doc).unwrap();
+            let value: Value = serde_saphyr::from_str(doc).unwrap();
             (value["query"].as_str().unwrap().to_string(), value)
         })
         .collect()

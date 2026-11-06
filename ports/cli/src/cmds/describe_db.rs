@@ -83,7 +83,7 @@ pub(crate) fn describe_database_cmd(args: Arguments) -> Result<()> {
             println!("{}", serde_json::to_string_pretty(&stats)?);
         }
         DatabaseDescriptionOutputFormat::Yaml => {
-            println!("{}", serde_yaml::to_string(&stats)?);
+            println!("{}", serde_saphyr::to_string(&stats)?);
         }
         DatabaseDescriptionOutputFormat::Tsv => {
             for (k, v) in stats {
