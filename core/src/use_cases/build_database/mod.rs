@@ -1,5 +1,6 @@
-use crate::domain::dtos::{
-    kmers_map::KmersMap, sequence::SequenceBody, tree::Tree,
+use crate::domain::{
+    dtos::{kmers_map::KmersMap, sequence::SequenceBody, tree::Tree},
+    rooting::RootingMethod,
 };
 
 use mycelium_base::utils::errors::MappedErrors;
@@ -22,13 +23,33 @@ use tracing::debug;
 /// A tree with the kmers map attached to it. A kmer map is a KmersMap struct
 /// that contains a mapping of kmers to a set of nodes along the tree.
 ///
-#[tracing::instrument(name = "Building Classeq database")]
 pub fn map_kmers_to_tree(
     tree_path: PathBuf,
     msa_path: PathBuf,
     k_size: Option<u64>,
     m_size: Option<u64>,
     min_branch_support: Option<f64>,
+) -> Result<Tree, MappedErrors> {
+    map_kmers_to_tree_with_rooting(
+        tree_path,
+        msa_path,
+        k_size,
+        m_size,
+        min_branch_support,
+        None,
+    )
+}
+
+/// Same as [`map_kmers_to_tree`], rooting the reference tree in memory with
+/// `rooting` when it is not rooted.
+#[tracing::instrument(name = "Building Classeq database")]
+pub fn map_kmers_to_tree_with_rooting(
+    tree_path: PathBuf,
+    msa_path: PathBuf,
+    k_size: Option<u64>,
+    m_size: Option<u64>,
+    min_branch_support: Option<f64>,
+    rooting: Option<RootingMethod>,
 ) -> Result<Tree, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Initialize and Validate arguments
@@ -53,7 +74,11 @@ pub fn map_kmers_to_tree(
     // ? -----------------------------------------------------------------------
 
     debug!("Reading the phylogenetic tree");
-    let mut tree = Tree::init_from_file(&tree_path, min_branch_support)?;
+    let mut tree = Tree::init_from_file_with_rooting(
+        &tree_path,
+        min_branch_support,
+        rooting.as_ref(),
+    )?;
 
     // ? -----------------------------------------------------------------------
     // ? Initialize mappings

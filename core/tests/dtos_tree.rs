@@ -1,13 +1,17 @@
 mod common;
 
 use classeq_core::{
-    domain::dtos::{
-        clade::{Clade, NodeType},
-        kmers_map::KmersMap,
-        tree::Tree,
+    domain::{
+        dtos::{
+            clade::{Clade, NodeType},
+            kmers_map::KmersMap,
+            tree::Tree,
+        },
+        rooting::RootingMethod,
     },
     use_cases::map_kmers_to_tree,
 };
+use mycelium_base::utils::errors::MappedErrors;
 use common::{synth, write_inputs};
 use std::{
     collections::{BTreeMap, BTreeSet, HashSet},
@@ -266,37 +270,142 @@ fn sanitize_preserves_leaf_lengths_and_names() {
 
 // ? TREE-03 -------------------------------------------------------------------
 
-#[test]
-#[should_panic(expected = "Tree file format is not supported")]
-fn init_from_file_panics_on_unsupported_extension() {
+fn load_err(file_name: &str, newick: &str) -> MappedErrors {
     let dir = TempDir::new().unwrap();
-    let _ = Tree::init_from_file(&write(&dir, "tree.txt", DECIMAL), 0.0);
+    Tree::init_from_file(&write(&dir, file_name, newick), 0.0).unwrap_err()
+}
+
+fn assert_code(err: &MappedErrors, code: &str, text: &str) {
+    assert!(err.has_str_code(code), "{err}");
+    assert!(err.msg().contains(text), "{err}");
 }
 
 #[test]
-#[should_panic(expected = "Could not get extension")]
-fn init_from_file_panics_without_extension() {
+fn init_from_file_rejects_unsupported_extension() {
+    let err = load_err("tree.txt", DECIMAL);
+    assert_code(&err, "UCTREE0007", "Tree file format is not supported");
+}
+
+#[test]
+fn init_from_file_rejects_path_without_extension() {
+    let err = load_err("tree", DECIMAL);
+    assert_code(&err, "UCTREE0007", "Tree file format is not supported");
+}
+
+/// 004-tree-rooting CHECK-01: an unrooted tree is an error with a hint, not
+/// a panic.
+#[test]
+fn init_from_file_rejects_unrooted_tree_with_a_hint() {
+    let err = load_err("tree.nwk", "(A:0.1,B:0.1,C:0.1);");
+    assert_code(&err, "UCTREE0002", "not rooted (the root has 3 children)");
+    assert!(err.msg().contains("cls root-tree"), "{err}");
+}
+
+#[test]
+fn init_from_file_rejects_tree_marked_unrooted_even_if_binary() {
+    let err = load_err("tree.nwk", "[&U]((A:0.1,B:0.1):0.1,C:0.1);");
+    assert_code(&err, "UCTREE0001", "[&U]");
+}
+
+#[test]
+fn init_from_file_accepts_tree_marked_rooted() {
+    let tree = load("[&R]((A:0.1,B:0.1)90:0.1,C:0.1);", 0.0);
+    assert_eq!(tree.root.children.as_ref().unwrap().len(), 2);
+    let leaves: BTreeSet<String> = all_clades(&tree.root)
+        .into_iter()
+        .filter_map(|c| c.name.clone())
+        .collect();
+    assert_eq!(leaves, BTreeSet::from(["A", "B", "C"].map(String::from)));
+}
+
+#[test]
+fn init_from_file_rejects_root_with_a_single_child() {
+    let err = load_err("tree.nwk", "((A:0.1,B:0.1)90:0.1);");
+    assert_code(&err, "UCTREE0003", "single child");
+}
+
+#[test]
+fn init_from_file_reports_missing_file() {
     let dir = TempDir::new().unwrap();
-    let _ = Tree::init_from_file(&write(&dir, "tree", DECIMAL), 0.0);
+    let err =
+        Tree::init_from_file(&dir.path().join("missing.nwk"), 0.0).unwrap_err();
+    assert_code(&err, "UCTREE0007", "Could not read file");
 }
 
 #[test]
-#[should_panic(expected = "Tree is not rooted")]
-fn init_from_file_panics_on_unrooted_tree() {
-    load("(A:0.1,B:0.1,C:0.1);", 0.0);
+fn init_from_file_reports_malformed_newick() {
+    let err = load_err("tree.nwk", "((A,B)");
+    assert_code(&err, "UCTREE0007", "Could not parse tree");
 }
 
+/// 004-tree-rooting CHECK-05: `build-db --root` roots an unrooted tree in
+/// memory, keeping supports so that `min_branch_support` still applies.
 #[test]
-#[should_panic(expected = "Could not read file")]
-fn init_from_file_panics_on_missing_file() {
+fn init_from_file_with_rooting_roots_an_unrooted_tree() {
     let dir = TempDir::new().unwrap();
-    let _ = Tree::init_from_file(&dir.path().join("missing.nwk"), 0.0);
+    let path = write(
+        &dir,
+        "tree.nwk",
+        "(A:0.1,B:0.2,((C:0.3,D:0.4)90:0.5,(E:0.05,F:0.05)40:0.6)80:0.7);",
+    );
+
+    let tree = Tree::init_from_file_with_rooting(
+        &path,
+        50.0,
+        Some(&RootingMethod::Midpoint),
+    )
+    .unwrap();
+
+    assert_eq!(tree.root.children.as_ref().unwrap().len(), 2);
+    let supports: Vec<f64> = all_clades(&tree.root)
+        .into_iter()
+        .filter_map(|c| c.support)
+        .collect();
+    assert!(supports.contains(&90.0), "{supports:?}");
+    assert!(supports.contains(&80.0), "{supports:?}");
+    // The (E,F) node has support 40 < 50, so it is collapsed.
+    assert!(!supports.contains(&40.0), "{supports:?}");
 }
 
 #[test]
-#[should_panic(expected = "Could not parse tree")]
-fn init_from_file_panics_on_malformed_newick() {
-    load("((A,B)", 0.0);
+fn init_from_file_with_rooting_keeps_an_already_rooted_tree() {
+    let dir = TempDir::new().unwrap();
+    let path = write(&dir, "tree.nwk", INTEGER);
+
+    let rooted = Tree::init_from_file_with_rooting(
+        &path,
+        0.0,
+        Some(&RootingMethod::Midpoint),
+    )
+    .unwrap();
+    let plain = Tree::init_from_file(&path, 0.0).unwrap();
+
+    assert_eq!(rooted.root, plain.root);
+}
+
+#[test]
+fn init_from_file_with_outgroup_rooting() {
+    let dir = TempDir::new().unwrap();
+    let path = write(&dir, "tree.nwk", "(A:1,B:1,(C:1,D:1)90:2);");
+
+    let tree = Tree::init_from_file_with_rooting(
+        &path,
+        0.0,
+        Some(&RootingMethod::Outgroup(vec!["C".into(), "D".into()])),
+    )
+    .unwrap();
+
+    let root_children = tree.root.children.as_ref().unwrap();
+    assert_eq!(root_children.len(), 2);
+    assert!(root_children.iter().all(|c| c.support == Some(90.0)));
+}
+
+/// 004-tree-rooting CHECK-03 (D5): a root that becomes a polytomy after
+/// collapsing low-support branches is accepted (with a warning).
+#[test]
+fn root_polytomy_after_collapsing_is_accepted() {
+    let tree = load("((A:0.1,B:0.1)30:0.1,(C:0.1,D:0.1)90:0.1);", 50.0);
+    assert_eq!(tree.root.children.as_ref().unwrap().len(), 3);
 }
 
 // ? TREE-04 -------------------------------------------------------------------

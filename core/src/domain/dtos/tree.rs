@@ -1,9 +1,17 @@
-use super::{annotation::Annotation, clade::Clade, kmers_map::KmersMap};
+use super::{
+    annotation::Annotation, clade::Clade, kmers_map::KmersMap,
+    telemetry_code::TelemetryCode,
+};
+use crate::domain::rooting::{
+    parse_newick, root_newick, split_rooting_annotation, RootingFlag,
+    RootingMethod,
+};
 
-use mycelium_base::utils::errors::MappedErrors;
+use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use phylotree::tree::Tree as PhyloTree;
 use serde::{Deserialize, Serialize};
 use std::{ffi::OsStr, fs::read_to_string, path::Path};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -138,21 +146,82 @@ impl Tree {
         tree_path: &Path,
         min_branch_support: f64,
     ) -> Result<Tree, MappedErrors> {
-        assert!(
-            vec!["nwk", "newick", "tree"].contains(
-                &tree_path
-                    .extension()
-                    .and_then(OsStr::to_str)
-                    .expect("Could not get extension")
-            ),
-            "Tree file format is not supported"
+        Self::init_from_file_with_rooting(tree_path, min_branch_support, None)
+    }
+
+    /// Create a new Tree from a Newick file, optionally rooting it first.
+    ///
+    /// Without `rooting`, the tree must already be rooted: an unrooted tree
+    /// (a root with three or more children, or a `[&U]` annotation) is an
+    /// error that suggests `cls root-tree`. With `rooting`, an unrooted tree
+    /// is rooted in memory with the given method, and a tree that is already
+    /// rooted is used as is.
+    pub fn init_from_file_with_rooting(
+        tree_path: &Path,
+        min_branch_support: f64,
+        rooting: Option<&RootingMethod>,
+    ) -> Result<Tree, MappedErrors> {
+        let fail = |code: TelemetryCode, msg: String| {
+            use_case_err(msg).with_code(code.to_string().as_str()).as_error()
+        };
+
+        match tree_path.extension().and_then(OsStr::to_str) {
+            Some("nwk" | "newick" | "tree") => (),
+            _ => {
+                return fail(
+                    TelemetryCode::UCTREE0007,
+                    format!(
+                        "Tree file format is not supported: {path}. Use a \
+                        Newick file with extension .nwk, .newick or .tree.",
+                        path = tree_path.display()
+                    ),
+                )
+            }
+        }
+
+        let newick_content = match read_to_string(tree_path) {
+            Ok(content) => content,
+            Err(err) => {
+                return fail(
+                    TelemetryCode::UCTREE0007,
+                    format!(
+                        "Could not read file {path}: {err}",
+                        path = tree_path.display()
+                    ),
+                )
+            }
+        };
+
+        let hint = format!(
+            "Root it first, e.g. \"cls root-tree {path} -o rooted.nwk\", or \
+            pass --root to build-db.",
+            path = tree_path.display()
         );
 
-        let newick_content =
-            read_to_string(tree_path).expect("Could not read file");
+        let newick_content = match rooting {
+            Some(method) => {
+                info!(
+                    "Rooting the reference tree in memory ({method:?}) if it \
+                    is not rooted"
+                );
+                root_newick(&newick_content, method, true)?
+            }
+            None => {
+                let (flag, content) = split_rooting_annotation(&newick_content);
+                if flag == Some(RootingFlag::Unrooted) {
+                    return fail(
+                        TelemetryCode::UCTREE0001,
+                        format!(
+                            "The reference tree is marked as unrooted ([&U]). \
+                            {hint}"
+                        ),
+                    );
+                }
+                content
+            }
+        };
 
-        let phylo_tree = PhyloTree::from_newick(&newick_content.as_str())
-            .expect("Could not parse tree");
+        let phylo_tree = parse_newick(&newick_content)?;
 
         let root_name = (if let Some(name) = tree_path.file_name() {
             Some(
@@ -165,23 +234,58 @@ impl Tree {
         })
         .unwrap_or("UnnamedTree".to_string());
 
-        if !phylo_tree.is_rooted().unwrap_or(false) {
-            panic!("Tree is not rooted");
-        }
-
-        let root_tree = match phylo_tree.get_root() {
-            Err(err) => panic!("Could not get root: {err}"),
-            Ok(root) => phylo_tree.get(&root).expect("Could not get root"),
+        let root_tree = match phylo_tree
+            .get_root()
+            .ok()
+            .and_then(|root| phylo_tree.get(&root).ok())
+        {
+            Some(root) => root,
+            None => {
+                return fail(
+                    TelemetryCode::UCTREE0007,
+                    "Could not get the tree root".to_string(),
+                )
+            }
         };
 
-        if !root_tree.is_root() {
-            panic!("Root node is not a root");
+        match root_tree.children.len() {
+            2 => (),
+            0 | 1 => {
+                return fail(
+                    TelemetryCode::UCTREE0003,
+                    format!(
+                        "The tree root has a single child or none, so the \
+                        tree has no rooted split. {hint}"
+                    ),
+                )
+            }
+            count => {
+                return fail(
+                    TelemetryCode::UCTREE0002,
+                    format!(
+                        "The reference tree is not rooted (the root has \
+                        {count} children). {hint}"
+                    ),
+                )
+            }
         }
 
         let children = Self::get_children_nodes(&phylo_tree, &root_tree.id);
 
         let sanitized_root =
             Tree::sanitize(Clade::new_root(0.0, children), min_branch_support)?;
+
+        let root_children =
+            sanitized_root.children.as_ref().map_or(0, |c| c.len());
+        if root_children > 2 {
+            warn!(
+                code = TelemetryCode::UCTREE0004.to_string(),
+                "Collapsing branches with support below {min_branch_support} \
+                turned the tree root into a polytomy with {root_children} \
+                children. Placement reports a tie between root children as \
+                Unclassifiable."
+            );
+        }
 
         let mut new_tree = Tree::new(
             Uuid::new_v3(&Uuid::NAMESPACE_DNS, &*root_name.as_bytes()),
