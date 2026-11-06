@@ -40,42 +40,41 @@ The help command can be used to show the available options and arguments for the
 The default output format of the CLI is a YAML file containing the placed
 sequences. As an example, the output file can be as follows:
 
+Placement descends the tree from the root. At each node, every child, leaves
+included, is scored by the number of query k-mers indexed under it (with
+`--remove-intersection`, only the k-mers that no sibling shares). A unique best
+child is selected and the descent continues below it. In each placement record,
+`one` is the score of the selected clade and `rest` is the score of its
+strongest sibling.
+
 ```yaml
 # Every placement is an object tagged by `status`: IdentityFound,
 # MaxResolutionReached, Inconclusive or Unclassifiable.
 
 # Example of fully classified sequence
 #
-# Occurs when the query sequence is placed at the terminal node of the reference
-# tree. The placement is considered fully resolved.
+# Occurs when the descent ends at a leaf of the reference tree: at every level
+# one child scored strictly higher than all of its siblings.
 ---
 query: NC_014639_Bacillus_atrophaeus_1942_complete
 code: IdentityFound
 placement:
   status: IdentityFound
   clade:
-    id: 61
-    parent: 60
-    kind: NODE
-    support: 72.0
-    length: 0.000619153
-    children:
-    - id: 62
-      parent: 61
-      kind: LEAF
-      name: NZ_JALAVT010000005_Bacillus_atrophaeus_strain_TP10S1NI5
-      length: 1e-6
-    - id: 63
-      parent: 61
-      kind: LEAF
-      name: NZ_JALAPU010000003_Bacillus_atrophaeus_strain_TP8F7aA3
-      length: 0.00123804
+    id: 62
+    parent: 61
+    kind: LEAF
+    name: NZ_JALAVT010000005_Bacillus_atrophaeus_strain_TP10S1NI5
+    length: 1e-6
   one: 3754
-  rest: 0
+  rest: 3101
 
 # Example of partially classified sequence
 #
-# Occurs when the sequence is placed in a internal node of the reference tree.
+# Occurs when no child of the current node carries any evidence for the query,
+# which in practice happens only with --remove-intersection, when every
+# matching k-mer is shared between siblings. The sequence is placed at that
+# internal node.
 ---
 query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'MaxResolutionReached: LCA Accepted'
@@ -86,8 +85,10 @@ placement:
 
 # Example of inconclusive sequence
 #
-# Occurs when more than one internal node is proposed as the placement of the
-# query sequence. Each proposal carries the clade id and its k-mer counts.
+# Occurs when two or more children of an internal node tie for the best score.
+# Each proposal carries the clade id and its k-mer counts; for tied proposals
+# `one` equals `rest`. The parent of the proposals is the deepest node the
+# query can be placed at with confidence.
 ---
 query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'Inconclusive: Multiple proposals'
@@ -96,18 +97,19 @@ placement:
   proposals:
   - clade: 96
     one: 1520
-    rest: 1210
+    rest: 1520
   - clade: 97
     one: 1520
-    rest: 1210
+    rest: 1520
   message: Multiple proposals
 
 # Example of Unclassifiable sequence
 #
 # Occurs when the query sequence has no overlapping kmers with the reference
-# tree OR the fraction of the query k-mers found in the tree is below the
-# minimum match coverage (controlled by the -m option, default 0.7). The
-# placement field is omitted and the reason is reported in `code`.
+# tree, when the fraction of the query k-mers found in the tree is below the
+# minimum match coverage (controlled by the -m option, default 0.7), or when
+# the children of the root tie for the best score. The placement field is
+# omitted and the reason is reported in `code`.
 ---
 query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'Unclassifiable: Query sequence has no overlapping kmers with the reference tree'

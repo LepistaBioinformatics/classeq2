@@ -3,6 +3,7 @@ mod common;
 use classeq_core::{
     domain::dtos::{
         annotation::{Annotation, Tag},
+        clade::Clade,
         file_or_stdin::FileOrStdin,
         output_format::OutputFormat,
         tree::Tree,
@@ -47,7 +48,7 @@ impl Dataset {
         &self.records.iter().find(|(n, _)| n == name).unwrap().1
     }
 
-    fn leaf_parent(&self, name: &str) -> u64 {
+    fn leaf(&self, name: &str) -> Clade {
         self.tree
             .root
             .get_leaves_with_paths(None)
@@ -55,8 +56,14 @@ impl Dataset {
             .find(|(clade, _)| clade.name.as_deref() == Some(name))
             .unwrap()
             .0
-            .parent
-            .unwrap()
+    }
+
+    fn leaf_id(&self, name: &str) -> u64 {
+        self.leaf(name).id
+    }
+
+    fn leaf_parent(&self, name: &str) -> u64 {
+        self.leaf(name).parent.unwrap()
     }
 
     fn write_queries(&self, queries: &[(&str, String)]) -> PathBuf {
@@ -158,7 +165,7 @@ fn assert_mixed_records(data: &Dataset, records: &HashMap<String, Value>) {
         assert_eq!(record["placement"]["status"], "IdentityFound");
         assert_eq!(
             record["placement"]["clade"]["id"].as_u64(),
-            Some(data.leaf_parent(leaf)),
+            Some(data.leaf_id(leaf)),
             "{record}"
         );
     }

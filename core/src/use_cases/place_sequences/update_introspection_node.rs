@@ -1,7 +1,7 @@
 use super::_dtos::IntrospectionUpdateResponse;
 use crate::domain::dtos::{
-    adherence_test::AdherenceTest, clade::Clade,
-    placement_response::PlacementStatus::*, telemetry_code::TelemetryCode,
+    adherence_test::AdherenceTest, placement_response::PlacementStatus::*,
+    telemetry_code::TelemetryCode,
 };
 
 use mycelium_base::{
@@ -27,53 +27,23 @@ pub(super) fn update_introspection_node(
     };
 
     //
-    // 🌿 1st children update
+    // 🌿 children update: every child competes at the next level, leaves
+    // included (003-placement-algorithm, BUG-027).
     //
     let children = match parent.to_owned().children {
-        Some(children) => {
-            let non_leaf_children = children
-                .iter()
-                .filter_map(|record| {
-                    if record.is_leaf() {
-                        return None;
-                    }
-
-                    Some(record.to_owned())
-                })
-                .collect::<Vec<Clade>>();
-
-            //
-            // ✅ Case no children clades exits, the search loop is
-            // finished with a conclusive identity.
-            //
-            if non_leaf_children.is_empty() {
-                trace!(
-                    code = TelemetryCode::UCPLACE0016.to_string(),
-                    "Conclusive identity found at clade {clade_id}",
-                    clade_id = parent.id
-                );
-
-                return Ok(IntrospectionUpdateResponse::Return(IdentityFound(
-                    adherence.to_owned(),
-                )));
-            }
-
-            //
-            // 🟢 Case the clade contain children ones, the search loop
-            // continues.
-            //
+        Some(children) if !children.is_empty() => {
             trace!(
                 code = TelemetryCode::UCPLACE0017.to_string(),
                 "One proposal found. Clade {parent} selected",
                 parent = parent.id
             );
 
-            non_leaf_children
+            children
         }
-        None => {
+        _ => {
             //
-            // ✅ Case no children clades exits, the search loop is
-            // finished with a conclusive identity.
+            // ✅ The selected clade is a leaf: the search loop is finished
+            // with a conclusive identity.
             //
             trace!(
                 code = TelemetryCode::UCPLACE0016.to_string(),
@@ -93,7 +63,7 @@ pub(super) fn update_introspection_node(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::dtos::clade::NodeType;
+    use crate::domain::dtos::clade::{Clade, NodeType};
 
     fn clade(id: u64, kind: NodeType, children: Option<Vec<Clade>>) -> Clade {
         Clade {
@@ -143,12 +113,8 @@ mod tests {
     }
 
     #[test]
-    fn update_with_only_leaf_children_returns_identity_found() {
-        let test = test_for(UntaggedParent::Record(clade(
-            1,
-            NodeType::Node,
-            Some(vec![leaf(2), leaf(3)]),
-        )));
+    fn update_with_leaf_returns_identity_found() {
+        let test = test_for(UntaggedParent::Record(leaf(2)));
 
         match update_introspection_node(&test).unwrap() {
             IntrospectionUpdateResponse::Return(status) => {
@@ -161,7 +127,24 @@ mod tests {
     }
 
     #[test]
-    fn update_with_internal_children_continues_with_non_leaf_children_only() {
+    fn update_with_only_leaf_children_continues_with_the_leaves() {
+        let parent =
+            clade(1, NodeType::Node, Some(vec![leaf(2), leaf(3)]));
+        let test = test_for(UntaggedParent::Record(parent.clone()));
+
+        match update_introspection_node(&test).unwrap() {
+            IntrospectionUpdateResponse::Continue(new_parent, children) => {
+                assert_eq!(new_parent, parent);
+                assert_eq!(children, vec![leaf(2), leaf(3)]);
+            }
+            IntrospectionUpdateResponse::Return(status) => {
+                panic!("expected Continue, got {status:?}")
+            }
+        }
+    }
+
+    #[test]
+    fn update_with_mixed_children_continues_with_all_children() {
         let internal = clade(3, NodeType::Node, Some(vec![leaf(4), leaf(5)]));
         let parent =
             clade(1, NodeType::Node, Some(vec![leaf(2), internal.clone()]));
@@ -170,7 +153,7 @@ mod tests {
         match update_introspection_node(&test).unwrap() {
             IntrospectionUpdateResponse::Continue(new_parent, children) => {
                 assert_eq!(new_parent, parent);
-                assert_eq!(children, vec![internal]);
+                assert_eq!(children, vec![leaf(2), internal]);
             }
             IntrospectionUpdateResponse::Return(status) => {
                 panic!("expected Continue, got {status:?}")
