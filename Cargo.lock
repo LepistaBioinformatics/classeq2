@@ -1055,7 +1055,6 @@ dependencies = [
  "futures",
  "futures-util",
  "mycelium-base",
- "mycelium-config",
  "serde 1.0.229",
  "serde-saphyr",
  "serde_json",
@@ -1153,7 +1152,6 @@ dependencies = [
  "classeq-core",
  "classeq-ports-lib",
  "ctrlc",
- "mycelium-config",
  "rand",
  "rayon",
  "serde 1.0.229",
@@ -2513,17 +2511,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mycelium-config"
-version = "5.0.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6de89647f741692c8d011be82b0047899b36461ec1f01f730d05938a2f952867"
-dependencies = [
- "mycelium-base",
- "serde 1.0.229",
- "serde_yaml",
-]
-
-[[package]]
 name = "needletail"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3533,19 +3520,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_yaml"
-version = "0.9.34+deprecated"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a8b1a1a2ebf674015cc02edccce75287f1a0130d394307b36743c2f5d504b47"
-dependencies = [
- "indexmap",
- "itoa",
- "ryu",
- "serde 1.0.229",
- "unsafe-libyaml",
-]
-
-[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4409,12 +4383,6 @@ name = "unicode_categories"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39ec24b3121d976906ece63c9daad25b85969647682eee313cb5779fdd69e14e"
-
-[[package]]
-name = "unsafe-libyaml"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
 
 [[package]]
 name = "untrusted"

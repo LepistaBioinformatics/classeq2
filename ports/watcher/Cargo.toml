@@ -23,7 +23,6 @@ apalis.workspace = true
 apalis-core.workspace = true
 clap.workspace = true
 chrono.workspace = true
-mycelium-config.workspace = true
 rayon.workspace = true
 serde.workspace = true
 serde_json.workspace = true
