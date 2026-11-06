@@ -48,6 +48,7 @@ child is selected and the descent continues below it. In each placement record,
 strongest sibling.
 
 ```yaml
+# Ids and k-mer counts below are illustrative.
 # Every placement is an object tagged by `status`: IdentityFound,
 # MaxResolutionReached, Inconclusive or Unclassifiable.
 
