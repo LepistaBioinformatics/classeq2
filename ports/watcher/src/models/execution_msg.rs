@@ -36,7 +36,7 @@ impl ExecutionMsg {
                     }
                 }
             }
-            false => match serde_yaml::to_string(&ExecutionMsg {
+            false => match serde_saphyr::to_string(&ExecutionMsg {
                 msg: msg.to_owned(),
             }) {
                 Ok(content) => match std::fs::write(path, content) {

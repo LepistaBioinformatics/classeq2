@@ -841,11 +841,11 @@ mod tests {
     fn kmers_map_round_trips_through_yaml() {
         for m in [0, 2] {
             let map = fixture(m);
-            let yaml = serde_yaml::to_string(&map).unwrap();
+            let yaml = serde_saphyr::to_string(&map).unwrap();
             assert!(yaml.contains("kSize: 5"));
             assert!(yaml.contains(&format!("mSize: {m}")));
 
-            let back: KmersMap = serde_yaml::from_str(&yaml).unwrap();
+            let back: KmersMap = serde_saphyr::from_str(&yaml).unwrap();
             assert_eq!(back.get_kmer_size(), 5);
             assert_eq!(back.get_minimizer_size(), m);
             assert_eq!(keys(&back), keys(&map));

@@ -420,10 +420,10 @@ fn tree_without_kmers_map_round_trips_through_yaml_and_json() {
         serde_json::from_str(&serde_json::to_string(&tree).unwrap()).unwrap();
     assert_eq!(serde_json::to_value(&from_json).unwrap(), original);
 
-    let yaml = serde_yaml::to_string(&tree).unwrap();
+    let yaml = serde_saphyr::to_string(&tree).unwrap();
     assert!(yaml.contains("kmersMap: null"));
     assert!(!yaml.contains("annotations"));
-    let from_yaml: Tree = serde_yaml::from_str(&yaml).unwrap();
+    let from_yaml: Tree = serde_saphyr::from_str(&yaml).unwrap();
     assert_eq!(serde_json::to_value(&from_yaml).unwrap(), original);
 
     let dir = TempDir::new().unwrap();
@@ -478,8 +478,8 @@ fn tree_with_kmers_map_round_trips_through_yaml_and_json() {
                 .unwrap();
         assert_same_tree(&tree, &from_json);
 
-        let yaml = serde_yaml::to_string(&tree).unwrap();
-        let from_yaml: Tree = serde_yaml::from_str(&yaml).unwrap();
+        let yaml = serde_saphyr::to_string(&tree).unwrap();
+        let from_yaml: Tree = serde_saphyr::from_str(&yaml).unwrap();
         assert_same_tree(&tree, &from_yaml);
 
         let path = write(&dir, "db.yaml", &yaml);
@@ -514,7 +514,7 @@ fn tree_with_legacy_in_memory_size_key_still_deserializes() {
 
     let from_json: Tree = serde_json::from_value(value.clone()).unwrap();
     let from_yaml: Tree =
-        serde_yaml::from_str(&serde_yaml::to_string(&value).unwrap()).unwrap();
+        serde_saphyr::from_str(&serde_saphyr::to_string(&value).unwrap()).unwrap();
 
     for loaded in [from_json, from_yaml] {
         assert_eq!(loaded.id, tree.id);

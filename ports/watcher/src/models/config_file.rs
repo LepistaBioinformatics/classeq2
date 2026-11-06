@@ -24,7 +24,7 @@ pub(crate) struct ConfigFile {
 impl ConfigFile {
     pub(crate) fn from_file(file: &PathBuf) -> Result<Self> {
         let content = std::fs::read_to_string(file)?;
-        let config: ConfigFile = serde_yaml::from_str(&content)?;
+        let config: ConfigFile = serde_saphyr::from_str(&content)?;
         Ok(config)
     }
 }

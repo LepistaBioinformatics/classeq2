@@ -82,7 +82,7 @@ fn describe_db_yaml_and_tsv_match_json() {
     let json = describe_json(&db);
 
     let yaml: BTreeMap<String, String> =
-        serde_yaml::from_str(&describe(&db, "yaml")).unwrap();
+        serde_saphyr::from_str(&describe(&db, "yaml")).unwrap();
 
     let tsv: BTreeMap<String, String> = describe(&db, "tsv")
         .lines()

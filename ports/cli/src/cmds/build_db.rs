@@ -71,8 +71,8 @@ pub(crate) fn build_database_cmd(
     output_file_path.set_extension("cls");
 
     let writer = File::create(output_file_path)?;
-    let writer = zstd::Encoder::new(writer, 0)?.auto_finish();
-    serde_yaml::to_writer(writer, &tree)?;
+    let mut writer = zstd::Encoder::new(writer, 0)?.auto_finish();
+    serde_saphyr::to_io_writer(&mut writer, &tree)?;
 
     Ok(())
 }

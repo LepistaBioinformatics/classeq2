@@ -127,15 +127,15 @@ fn status_identity_found_with_record_serializes_the_clade_object() {
 #[test]
 fn status_yaml_shapes() {
     assert_eq!(
-        serde_yaml::to_string(&identity_found_by_id()).unwrap(),
+        serde_saphyr::to_string(&identity_found_by_id()).unwrap(),
         "status: IdentityFound\nclade: 2\none: 10\nrest: 3\n"
     );
     assert_eq!(
-        serde_yaml::to_string(&max_resolution()).unwrap(),
+        serde_saphyr::to_string(&max_resolution()).unwrap(),
         "status: MaxResolutionReached\nclade: 7\nmessage: LCA Accepted\n"
     );
     assert_eq!(
-        serde_yaml::to_string(&inconclusive()).unwrap(),
+        serde_saphyr::to_string(&inconclusive()).unwrap(),
         "status: Inconclusive\n\
          proposals:\n\
          - clade: 2\n  \
@@ -147,7 +147,7 @@ fn status_yaml_shapes() {
          message: Multiple proposals\n"
     );
     assert_eq!(
-        serde_yaml::to_string(&unclassifiable()).unwrap(),
+        serde_saphyr::to_string(&unclassifiable()).unwrap(),
         "status: Unclassifiable\nmessage: no kmers\n"
     );
 }
@@ -189,8 +189,8 @@ fn status_every_variant_round_trips_through_json() {
 #[test]
 fn status_every_variant_round_trips_through_yaml() {
     for status in every_status() {
-        let yaml = serde_yaml::to_string(&status).unwrap();
-        let back: Result<PlacementStatus, _> = serde_yaml::from_str(&yaml);
+        let yaml = serde_saphyr::to_string(&status).unwrap();
+        let back: Result<PlacementStatus, _> = serde_saphyr::from_str(&yaml);
         assert_eq!(back.ok(), Some(status.clone()), "{yaml}");
     }
 }
@@ -239,25 +239,46 @@ fn response_json_shape() {
     );
 }
 
-/// serde_yaml writes annotation tags as YAML tags (`!Taxid 5`), unlike JSON.
+/// Annotation tags are written as single-key maps (`Taxid: 5`), the same
+/// shape as JSON. serde_yaml (up to v0.11) wrote YAML tags (`!Taxid 5`).
 #[test]
 fn response_yaml_shape() {
     assert_eq!(
-        serde_yaml::to_string(&annotated_response()).unwrap(),
+        serde_saphyr::to_string(&annotated_response()).unwrap(),
         "query: q1\n\
          code: IdentityFound\n\
          annotations:\n\
          - clade: 0\n\
          - clade: 2\n  \
            meta:\n  \
-           - !Taxid 5\n  \
-           - !SciName Genus species\n  \
-           - !Rank species\n\
+           - Taxid: 5\n  \
+           - SciName: Genus species\n  \
+           - Rank: species\n\
          placement:\n  \
            status: IdentityFound\n  \
            clade: 2\n  \
            one: 10\n  \
            rest: 3\n"
+    );
+}
+
+/// Annotation files written by hand or by v0.11 and earlier use YAML tags;
+/// they must keep loading.
+#[test]
+fn annotations_read_both_yaml_tags_and_maps() {
+    let tagged: Vec<Annotation> = serde_saphyr::from_str(
+        "- clade: 2\n  meta:\n  - !Taxid 5\n  - !SciName Genus species\n  - !Note |\n    multi\n    line\n",
+    )
+    .unwrap();
+    let mapped: Vec<Annotation> = serde_saphyr::from_str(
+        "- clade: 2\n  meta:\n  - Taxid: 5\n  - SciName: Genus species\n  - Note: \"multi\\nline\\n\"\n",
+    )
+    .unwrap();
+
+    assert_eq!(tagged, mapped);
+    assert_eq!(
+        tagged[0].meta.as_ref().unwrap()[0],
+        Tag::Taxid(5)
     );
 }
 

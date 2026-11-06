@@ -76,7 +76,7 @@ impl Env {
         Response = ServiceResponse<impl MessageBody>,
         Error = actix_web::Error,
     > {
-        let models: ModelsConfig = serde_yaml::from_str(&format!(
+        let models: ModelsConfig = serde_saphyr::from_str(&format!(
             "- id: {MODEL_ID}\n  name: bsub-gyrb\n  gene: gyrB\n  modelPath: /nonexistent/model.cls\n"
         ))
         .unwrap();
@@ -146,7 +146,7 @@ fn api_config_from_file_parses_camel_case_yaml() {
         &path,
         format!(
             "fs:\n{fs}server:\n  address: 0.0.0.0\n  port: 8080\n  workers: 2\nmodels:\n  - id: {MODEL_ID}\n    name: m\n    modelPath: /m.cls\n",
-            fs = serde_yaml::to_string(&env.fs)
+            fs = serde_saphyr::to_string(&env.fs)
                 .unwrap()
                 .lines()
                 .map(|l| format!("  {l}\n"))

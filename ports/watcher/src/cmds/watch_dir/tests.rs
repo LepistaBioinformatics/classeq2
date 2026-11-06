@@ -42,7 +42,7 @@ fn fs_config(tmp: &TempDir) -> FileSystemConfig {
 }
 
 fn models_config(model_path: &Path) -> ModelsConfig {
-    serde_yaml::from_str(&format!(
+    serde_saphyr::from_str(&format!(
         "- id: {MODEL_ID}\n  name: bsub-gyrb\n  modelPath: {model}\n  annotationsPath: {ann}\n",
         model = model_path.display(),
         ann = repo_root()
@@ -69,12 +69,12 @@ fn copy_dir(src: &Path, dst: &Path) {
     }
 }
 
-fn set_config_field(config: &Path, key: &str, value: serde_yaml::Value) {
-    let mut yaml: serde_yaml::Value =
-        serde_yaml::from_str(&std::fs::read_to_string(config).unwrap())
+fn set_config_field(config: &Path, key: &str, value: serde_json::Value) {
+    let mut yaml: serde_json::Value =
+        serde_saphyr::from_str(&std::fs::read_to_string(config).unwrap())
             .unwrap();
     yaml[key] = value;
-    std::fs::write(config, serde_yaml::to_string(&yaml).unwrap()).unwrap();
+    std::fs::write(config, serde_saphyr::to_string(&yaml).unwrap()).unwrap();
 }
 
 /// Copies the pending part (config and input) of the fixture work dir into the
@@ -95,8 +95,8 @@ fn pending_work_dir(fs: &FileSystemConfig, id: &str) -> PathBuf {
 }
 
 fn read_msg(path: &Path) -> String {
-    let yaml: serde_yaml::Value =
-        serde_yaml::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let yaml: serde_json::Value =
+        serde_saphyr::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     yaml["msg"].as_str().unwrap().to_string()
 }
 

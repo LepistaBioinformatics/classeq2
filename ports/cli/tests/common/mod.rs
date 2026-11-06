@@ -120,15 +120,11 @@ pub fn write_queries(path: &Path, records: &[(String, String)]) {
 
 /// Parses a multi-document YAML placement output, keyed by query.
 pub fn read_yaml_results(path: &Path) -> HashMap<String, serde_json::Value> {
-    use serde::Deserialize;
-
     let content = std::fs::read_to_string(path).unwrap();
-    serde_yaml::Deserializer::from_str(&content)
-        .map(|doc| {
-            let value = serde_yaml::Value::deserialize(doc).unwrap();
-            let value = serde_json::to_value(value).unwrap();
-            (value["query"].as_str().unwrap().to_string(), value)
-        })
+    serde_saphyr::from_multiple::<serde_json::Value>(&content)
+        .unwrap()
+        .into_iter()
+        .map(|value| (value["query"].as_str().unwrap().to_string(), value))
         .collect()
 }
 

@@ -37,7 +37,7 @@ pub struct PlacementConfig {
 impl PlacementConfig {
     pub fn from_yaml_file(file: &PathBuf) -> Result<Self> {
         let content = std::fs::read_to_string(file)?;
-        let config: PlacementConfig = serde_yaml::from_str(&content)?;
+        let config: PlacementConfig = serde_saphyr::from_str(&content)?;
         Ok(config)
     }
 }

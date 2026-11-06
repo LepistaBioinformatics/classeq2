@@ -109,12 +109,23 @@ impl Tree {
         }
     }
 
+    /// YAML parser options for databases. The default parser budget is
+    /// sized for configuration files and rejects real databases, so it is
+    /// disabled here.
+    pub fn yaml_options() -> serde_saphyr::Options {
+        let mut options = serde_saphyr::Options::default();
+        options.budget = None;
+        options.emit_comments = false;
+        options
+    }
+
     pub fn from_yaml_file(file_path: &Path) -> Result<Tree, MappedErrors> {
         let file_content =
             read_to_string(file_path).expect("Could not read file");
 
         let tree: Tree =
-            serde_yaml::from_str(&file_content).expect("Could not parse tree");
+            serde_saphyr::from_str_with_options(&file_content, Self::yaml_options())
+                .expect("Could not parse tree");
 
         Ok(tree)
     }

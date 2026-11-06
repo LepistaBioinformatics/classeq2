@@ -243,8 +243,8 @@ fn place_adds_annotations_in_yaml() {
 
     let content =
         std::fs::read_to_string(s.dir.path().join("out.yaml")).unwrap();
-    assert!(content.contains("!Taxid 1"), "{content}");
-    assert!(content.contains("!Note clade A"), "{content}");
+    assert!(content.contains("Taxid: 1"), "{content}");
+    assert!(content.contains("Note: clade A"), "{content}");
     assert!(!content.contains("clade B"), "{content}");
 
     let results = read_yaml_results(&s.dir.path().join("out.yaml"));

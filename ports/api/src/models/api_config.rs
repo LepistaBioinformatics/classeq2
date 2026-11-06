@@ -31,7 +31,7 @@ impl ApiConfig {
             Err(e) => return Err(creation_err(e)),
         };
 
-        let config: ApiConfig = match serde_yaml::from_str(&content) {
+        let config: ApiConfig = match serde_saphyr::from_str(&content) {
             Ok(config) => config,
             Err(e) => return Err(creation_err(e)),
         };
