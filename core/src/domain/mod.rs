@@ -6,3 +6,7 @@
 /// any dependencies.
 ///
 pub mod dtos;
+
+/// Rooting of phylogenetic trees: midpoint and outgroup rooting, Newick
+/// writing and the detection of rooting annotations.
+pub mod rooting;
