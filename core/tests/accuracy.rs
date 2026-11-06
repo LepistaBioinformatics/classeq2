@@ -255,3 +255,174 @@ fn accuracy_reads_from_leaves_next_to_clades() {
     assert!(rate >= 0.95, "accuracy {rate:.4} below 0.95: {tally:?}");
     assert_eq!(tally.wrong, 0, "{tally:?}");
 }
+
+// ? ---------------------------------------------------------------------------
+// ? ACC-03: queries from taxa missing from the reference
+// ? ---------------------------------------------------------------------------
+
+/// Outcome of each read from a held-out leaf Y whose sister in the full tree
+/// is the cherry `(X1,X2)`.
+#[derive(Default, Debug)]
+struct LeaveOutTally {
+    /// `IdentityFound` at X1 or X2: more specific than the data supports.
+    over_resolved: usize,
+    /// Placed at the cherry `(X1,X2)`, the closest node the reference has.
+    cherry: usize,
+    /// `Inconclusive` between X1 and X2.
+    inconclusive: usize,
+    /// Placed at a higher ancestor of the cherry.
+    ancestor: usize,
+    wrong: usize,
+    unplaced: usize,
+}
+
+/// Full tree `((X1,X2),Y)` and `((W1,W2),Z)` with short branches; the
+/// reference drops Y and Z, so `(X1,X2)` and `(W1,W2)` hang from the root.
+fn leave_out_topologies() -> (synth::Topology, synth::Topology) {
+    let cherry = |p: &str, stem: f64| {
+        synth::node(
+            vec![
+                synth::leaf(&format!("{p}1"), 0.005),
+                synth::leaf(&format!("{p}2"), 0.005),
+            ],
+            Some(99.0),
+            stem,
+        )
+    };
+    let full = synth::node(
+        vec![
+            synth::node(
+                vec![cherry("X", 0.005), synth::leaf("Y", 0.01)],
+                Some(99.0),
+                0.02,
+            ),
+            synth::node(
+                vec![cherry("W", 0.005), synth::leaf("Z", 0.01)],
+                Some(99.0),
+                0.02,
+            ),
+        ],
+        None,
+        0.0,
+    );
+    let reference = synth::node(
+        vec![cherry("X", 0.025), cherry("W", 0.025)],
+        None,
+        0.0,
+    );
+    (full, reference)
+}
+
+fn run_leave_out_seed(seed: u64, tally: &mut LeaveOutTally) {
+    let dir = TempDir::new().unwrap();
+    let (full, reference) = leave_out_topologies();
+    let records = synth::evolve(&full, L, seed);
+    let (held_out, kept): (Vec<_>, Vec<_>) = records
+        .into_iter()
+        .partition(|(name, _)| name == "Y" || name == "Z");
+
+    let (tree_path, msa_path) = write_inputs(
+        &dir,
+        &synth::write_newick(&reference),
+        &synth::write_fasta(&kept, 60, false, false),
+    );
+    let tree =
+        map_kmers_to_tree(tree_path, msa_path, Some(K), Some(4), None).unwrap();
+
+    let leaves: HashMap<String, (u64, u64)> = tree
+        .root
+        .get_leaves_with_paths(None)
+        .into_iter()
+        .map(|(clade, _)| {
+            (clade.name.unwrap(), (clade.id, clade.parent.unwrap()))
+        })
+        .collect();
+    let sister = |held: &str| if held == "Y" { "X" } else { "W" };
+
+    let mut rng = synth::Rng::new(seed * 7000);
+    let mut queries = Vec::new();
+    for (name, seq) in &held_out {
+        for i in 0..READS_PER_LEAF * 4 {
+            let start = rng.below(L - READ_LEN);
+            let read = synth::mutate(
+                &synth::fragment(seq, start, READ_LEN),
+                2,
+                rng.next_u64(),
+            );
+            queries.push((format!("{name}|{i}"), read));
+        }
+    }
+
+    let query_path = dir.path().join("queries.fasta");
+    std::fs::write(&query_path, synth::write_fasta(&queries, 0, false, false))
+        .unwrap();
+    let out = dir.path().join("out");
+
+    place_sequences(
+        FileOrStdin::from_file(query_path.to_str().unwrap()),
+        &tree,
+        &out,
+        &None,
+        &Some(MIN_MATCH_COVERAGE),
+        &false,
+        &OutputFormat::Jsonl,
+        &None,
+        &None,
+    )
+    .unwrap();
+
+    let placed: HashMap<String, Value> =
+        std::fs::read_to_string(out.with_extension("jsonl"))
+            .unwrap()
+            .lines()
+            .map(|line| {
+                let value: Value = serde_json::from_str(line).unwrap();
+                (value["query"].as_str().unwrap().to_string(), value)
+            })
+            .collect();
+
+    for (query, _) in &queries {
+        let held = query.split('|').next().unwrap();
+        let p = sister(held);
+        let (x1, cherry) = leaves[&format!("{p}1")];
+        let (x2, _) = leaves[&format!("{p}2")];
+        match self::placed(placed.get(query)) {
+            Placed::Clade(id) if id == x1 || id == x2 => {
+                tally.over_resolved += 1
+            }
+            Placed::Clade(id) if id == cherry => tally.cherry += 1,
+            Placed::Clade(id) if id == tree.root.id => tally.ancestor += 1,
+            Placed::Clade(_) => tally.wrong += 1,
+            Placed::Inconclusive(ids)
+                if ids.iter().all(|id| *id == x1 || *id == x2) =>
+            {
+                tally.inconclusive += 1
+            }
+            Placed::Inconclusive(_) => tally.wrong += 1,
+            Placed::None => tally.unplaced += 1,
+        }
+    }
+}
+
+/// Reports how often a read from a taxon missing from the reference is
+/// placed more specifically than the reference supports. Not an accuracy
+/// gate: it documents the resolution policy (003-placement-algorithm).
+#[test]
+fn accuracy_reads_from_taxa_missing_from_the_reference() {
+    let mut tally = LeaveOutTally::default();
+
+    for seed in SEEDS {
+        run_leave_out_seed(seed, &mut tally);
+    }
+
+    eprintln!("ACC-03: {tally:?}");
+
+    let total = tally.over_resolved
+        + tally.cherry
+        + tally.inconclusive
+        + tally.ancestor
+        + tally.wrong
+        + tally.unplaced;
+    assert_eq!(total, SEEDS.len() * 2 * READS_PER_LEAF * 4);
+    assert_eq!(tally.wrong, 0, "{tally:?}");
+}
