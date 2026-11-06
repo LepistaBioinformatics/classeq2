@@ -23,6 +23,9 @@ enum Opts {
 
     /// Describe the database
     DescribeDb(cmds::describe_db::Arguments),
+
+    /// Root a Newick tree (midpoint or outgroup)
+    RootTree(cmds::root_tree::Arguments),
 }
 
 fn main() -> Result<()> {
@@ -121,6 +124,9 @@ fn main() -> Result<()> {
         )?,
         DescribeDb(db_args) => {
             cmds::describe_db::describe_database_cmd(db_args)?;
+        }
+        RootTree(root_args) => {
+            cmds::root_tree::root_tree_cmd(root_args)?;
         }
     }
 

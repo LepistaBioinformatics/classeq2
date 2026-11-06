@@ -1,6 +1,8 @@
-use anyhow::Result;
+use super::root_tree::{rooting_method, RootingMethodArg};
+
+use anyhow::{anyhow, Result};
 use clap::Parser;
-use classeq_core::use_cases::map_kmers_to_tree;
+use classeq_core::use_cases::map_kmers_to_tree_with_rooting;
 use std::{fs::File, path::PathBuf};
 
 #[derive(Parser, Debug)]
@@ -39,6 +41,18 @@ pub(crate) struct Arguments {
     /// The minimum branch support value to consider a branch in the tree.
     #[arg(short = 's', long, default_value = "70")]
     pub(super) min_branch_support: Option<f64>,
+
+    /// Root the tree in memory if it is not rooted
+    ///
+    /// Without this flag an unrooted tree is an error. A tree that is already
+    /// rooted is used as is.
+    #[arg(long, value_enum)]
+    pub(super) root: Option<RootingMethodArg>,
+
+    /// Outgroup leaf names for --root outgroup (repeat the flag or separate
+    /// names with commas)
+    #[arg(long, value_delimiter = ',')]
+    pub(super) outgroup: Vec<String>,
 }
 
 pub(crate) fn build_database_cmd(
@@ -56,13 +70,17 @@ pub(crate) fn build_database_cmd(
         panic!("Error creating thread pool: {err}");
     };
 
-    let tree = map_kmers_to_tree(
+    let rooting = rooting_method(args.root, args.outgroup)?;
+
+    let tree = map_kmers_to_tree_with_rooting(
         args.tree_file_path,
         args.msa_file_path,
         args.k_size,
         args.m_size,
         args.min_branch_support,
-    )?;
+        rooting,
+    )
+    .map_err(|err| anyhow!("{}", err.msg()))?;
 
     let mut output_file_path = args
         .output_file_path
