@@ -103,6 +103,11 @@ CLI:
 | TRACE     | UCPLACE0006, UCPLACE0007 | Measure the time to match the query kmers with the database kmers |
 | TRACE     | UCPLACE0010 | Emitted at all introspection loop iterations |
 
+Queries with no k-mer in the reference tree are reported as `Unclassifiable` in
+the placement output. The matching `UCPLACE0006` record is logged at the DEBUG
+level, so the default INFO log does not grow with the number of unrelated
+queries. The watcher rotates its log file (`--log-file`) daily.
+
 For a detailed information about the telemetry codes, you can see the
 aforementioned telemetry codes files.
 

@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
         Some(file) => {
             let log_file = PathBuf::from(file);
 
-            let file_appender = tracing_appender::rolling::minutely(
+            let file_appender = tracing_appender::rolling::daily(
                 log_file.parent().unwrap(),
                 log_file.file_name().unwrap(),
             );

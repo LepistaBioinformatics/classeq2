@@ -17,7 +17,7 @@ use mycelium_base::{
     utils::errors::{use_case_err, MappedErrors},
 };
 use std::collections::HashSet;
-use tracing::{debug_span, info, trace, trace_span, Span};
+use tracing::{debug, debug_span, trace, trace_span, Span};
 
 /// Place a sequence in the tree.
 ///
@@ -132,7 +132,7 @@ pub(super) fn place_sequence(
             query = header
         );
 
-        info!(code = TelemetryCode::UCPLACE0006.to_string(), msg);
+        debug!(code = TelemetryCode::UCPLACE0006.to_string(), msg);
 
         return Ok(Unclassifiable(msg));
     }
