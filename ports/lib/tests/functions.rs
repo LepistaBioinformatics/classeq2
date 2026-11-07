@@ -47,10 +47,36 @@ fn load_database_reads_shipped_zstd_fixture() {
     assert_eq!(tree.root.kind, NodeType::Root);
     assert_eq!(tree.min_branch_support, 70.0);
 
-    let kmers_map = tree.kmers_map.expect("fixture must carry a kmers map");
-    assert_eq!(kmers_map.get_kmer_size(), 35);
-    assert_eq!(kmers_map.get_minimizer_size(), 4);
-    assert!(!kmers_map.get_map().is_empty());
+    // The loader freezes the legacy k-mer map into the index and drops it.
+    assert!(tree.kmers_map.is_none());
+    let index = tree.index.expect("fixture must carry k-mers");
+    assert_eq!(index.k_size(), 35);
+    assert_eq!(index.m_size(), 4);
+    assert!(index.n_kmers() > 0);
+}
+
+/// 005-placement-performance FMT-05: a v2 binary copy of the fixture loads
+/// with the same tree and the same k-mers.
+#[test]
+fn load_database_reads_binary_database() {
+    let legacy = load_database(fixture("bsub-gyrb-k35.cls")).unwrap();
+    let index = legacy.index.as_ref().unwrap();
+
+    let dir = TempDir::new().unwrap();
+    let path = dir.path().join("db.cls");
+    index
+        .write(&legacy, std::fs::File::create(&path).unwrap())
+        .unwrap();
+
+    let binary = load_database(path).unwrap();
+
+    assert_eq!(binary.id, legacy.id);
+    assert_eq!(binary.root, legacy.root);
+    assert!(binary.kmers_map.is_none());
+    assert_eq!(
+        canonical(&binary.index.unwrap().thaw().unwrap()),
+        canonical(&index.thaw().unwrap())
+    );
 }
 
 /// BUG-013: the fixture predates the removal of `inMemorySize`.
@@ -59,7 +85,8 @@ fn load_database_reads_shipped_zstd_fixture() {
 /// the same tree, k-mer map included.
 #[test]
 fn shipped_zstd_fixture_round_trips_through_the_current_serializer() {
-    let original = load_database(fixture("bsub-gyrb-k35.cls")).unwrap();
+    let mut original = load_database(fixture("bsub-gyrb-k35.cls")).unwrap();
+    original.kmers_map = Some(original.index.take().unwrap().thaw().unwrap());
 
     let dir = TempDir::new().unwrap();
     let path = dir.path().join("rewritten.cls");
@@ -70,7 +97,8 @@ fn shipped_zstd_fixture_round_trips_through_the_current_serializer() {
     serde_saphyr::to_io_writer(&mut writer, &original).unwrap();
     drop(writer);
 
-    let reloaded = load_database(path).unwrap();
+    let mut reloaded = load_database(path).unwrap();
+    reloaded.kmers_map = Some(reloaded.index.take().unwrap().thaw().unwrap());
 
     assert!(original.kmers_map.is_some());
     assert_eq!(canonical(&reloaded), canonical(&original));
@@ -96,7 +124,7 @@ fn load_database_reads_zstd_written_to_disk() {
     let tree = load_database(path).unwrap();
 
     assert_eq!(tree.id.to_string(), FIXTURE_ID);
-    assert!(tree.kmers_map.is_some());
+    assert!(tree.index.is_some());
 }
 
 #[test]
@@ -109,13 +137,13 @@ fn load_database_falls_back_to_plain_yaml() {
 
     assert_eq!(tree.id.to_string(), FIXTURE_ID);
     assert_eq!(
-        tree.kmers_map.unwrap().get_map().len(),
+        tree.index.unwrap().bucket_sizes().unwrap(),
         load_database(fixture("bsub-gyrb-k35.cls"))
             .unwrap()
-            .kmers_map
+            .index
             .unwrap()
-            .get_map()
-            .len()
+            .bucket_sizes()
+            .unwrap()
     );
 }
 
