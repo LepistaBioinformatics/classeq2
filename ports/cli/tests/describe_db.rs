@@ -195,3 +195,24 @@ fn describe_db_fails_on_tree_only_export() {
         .failure()
         .stderr(predicate::str::contains("Error loading database"));
 }
+
+/// 005-placement-performance FMT-05: the legacy and binary copies of the
+/// same database describe identically.
+#[test]
+fn describe_db_is_identical_for_legacy_and_binary_copies() {
+    let dir = TempDir::new().unwrap();
+    let SyntheticDb { db, .. } = build_synthetic_db(dir.path(), 55);
+
+    cls()
+        .args(["convert", "database", "-f", "zstd", "-d"])
+        .arg(&db)
+        .arg("-o")
+        .arg(dir.path().join("legacy"))
+        .assert()
+        .success();
+
+    assert_eq!(
+        describe_json(&db),
+        describe_json(&dir.path().join("legacy.cls"))
+    );
+}

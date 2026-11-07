@@ -61,8 +61,8 @@ pub(crate) struct Arguments {
 
     /// Remove intersection
     ///
-    /// If true, calculate the one-vs-rest difference without the shared kmers.
-    /// Otherwise, calculate the one-vs-rest difference with the shared kmers.
+    /// If true, each clade is scored only by the query kmers that none of its
+    /// siblings share. Otherwise, by all query kmers indexed under the clade.
     #[arg(short, long, action=ArgAction::SetTrue)]
     pub(super) remove_intersection: Option<bool>,
 

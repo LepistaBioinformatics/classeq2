@@ -6,8 +6,5 @@ mod build_database;
 /// from a phylogenetic tree.
 mod place_sequences;
 
-/// Elements of shared module are restricted to be used only in this crate.
-mod shared;
-
 pub use build_database::*;
 pub use place_sequences::*;

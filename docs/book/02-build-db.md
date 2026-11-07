@@ -61,8 +61,8 @@ The first two arguments are positional and required. The first argument is the
 rooted reference tree, and the second argument is the reference multi sequence
 FASTA file. The `-o` option is optional and defines file name of the database
 output. Case the option is not provided, the output file name is
-`classeq-database.cls`, and uses the
-([Zstandard](https://github.com/facebook/zstd)) format as default.
+`classeq-database.cls`. The database is written in the binary format described
+in [2.5](#25-binary-database-layout).
 
 ### Additional options
 
@@ -74,22 +74,31 @@ and `-m` options, respectively.
 remove branches with low phylogenetic signal. The `-s` option allows you to
 change the threshold used to remove branches. The default value is 70.
 
+**Database format**: `--format binary` (the default) writes the binary
+database. `--format legacy` writes the
+[Zstandard](https://github.com/facebook/zstd)-compressed YAML database of
+earlier versions. Use it only when an older `cls` must read the database:
+older versions cannot read the binary format, while the current version reads
+both.
+
 ## 2.3 Database conversion and description
 
 The database is stored in a binary file with the `.cls` extension. The database
-can be converted to a YAML, a human-readable format using the CLI command `cls
-convert database`. The command requires the database file as input and outputs
-the database in a desired format. The command can be used as follows:
+can be converted to YAML, a human-readable format, using the CLI command `cls
+convert database`. The command reads a database in any format and writes it in
+the format given by `-f`: `yaml` (the default), `json`, `zstd` (the legacy
+format) or `binary`. The command can be used as follows:
 
 ```bash
 cls convert database \ 
-    cls-database-name.cls \ 
-    -o cls-database-name.yml
+    -d cls-database-name.cls \ 
+    -f yaml \ 
+    -o cls-database-name
 ```
 
-You can convert from YAML to binary using the command `cls convert database` as
-well. The command requires the database file in YAML format as input and outputs
-the database in binary format.
+Use `-f binary` to convert a legacy database to the binary format. Converting
+a legacy database and building the same tree and sequences with `build-db`
+give byte-identical files.
 
 In addition, you can describe the database using the CLI command `cls
 describe-db`. The command requires the database file as input and outputs the
@@ -127,12 +136,11 @@ SmallestMinimizer: '86'
 MinimizerAvgKmers: '396'
 ```
 
-## 2.4 Output format
+## 2.4 YAML format
 
-The default artifact format of the database is a binary file with the `.cls`.
-Such a file is a compressed file using the Zstandard algorithm. However, whe
-converted to a default format, the database is a standard YAML file. The YAML
-file contains the following information:
+When converted to YAML, the database is a standard YAML file. The legacy
+`.cls` format is the same YAML compressed with Zstandard. The YAML file
+contains the following information:
 
 ```yaml
 # The unique identifier of the database
@@ -196,6 +204,31 @@ The most important parts of the database are the `root` and `kmersMap` fields.
 The `root` field contains the sanitized reference tree in a YAML format. The
 `kmersMap` field include all mapped minimizers and kmers from the reference
 tree, used during predictions.
+
+## 2.5 Binary database layout
+
+The binary database holds the same content as the YAML file, laid out so that
+`cls` maps the file into memory instead of parsing it, in the spirit of the
+NCBI BLAST and Kraken 2 databases. Opening a database therefore takes
+milliseconds whatever its size, and the operating system loads only the
+pages that placement reads. **Do not modify a database file while `cls` reads
+it.**
+
+All integers are little-endian, and every section starts at a multiple of 8
+bytes.
+
+| Section | Content |
+|---|---|
+| Header (128 bytes) | The magic `CLSQIDX\x02`, the layout version, the widths of the node ids (2 or 4 bytes) and of the posting offsets (4 or 8 bytes), the k-mer and minimizer sizes, the counts, the section offsets and a CRC32 of the tree section. |
+| Tree | The tree as JSON, without the k-mers. |
+| Buckets | One `(minimizer hash, first k-mer)` pair per minimizer, sorted by hash, plus a final pair whose first k-mer is the k-mer count. |
+| K-mers | The k-mer hashes, sorted within each minimizer. |
+| Posting offsets | Where the node ids of each k-mer start, plus a final offset equal to the number of node ids. |
+| Postings | The tree nodes of each k-mer, sorted. Node ids take 2 bytes when the tree has fewer than 65,536 nodes, and 4 bytes otherwise. |
+
+`cls` checks the header, the section bounds and the tree checksum when it
+opens a database, and checks every offset when it reads one. A damaged file
+gives an error, never a crash.
 
 ---
 
