@@ -97,6 +97,39 @@ pub(crate) enum TelemetryCode {
     ///
     UCPLACE0019,
     // ? -----------------------------------------------------------------------
+    // ? Reserved codes to tree parsing and rooting
+    // ? -----------------------------------------------------------------------
+    //
+    /// The tree carries an explicit `[&U]` (unrooted) annotation
+    ///
+    UCTREE0001,
+    //
+    /// The tree root has three or more children, so the tree is unrooted
+    ///
+    UCTREE0002,
+    //
+    /// The tree root has a single child or none
+    ///
+    UCTREE0003,
+    //
+    /// Collapsing low-support branches turned the root into a polytomy
+    /// (warning)
+    ///
+    UCTREE0004,
+    //
+    /// Midpoint rooting is not possible for the given tree
+    ///
+    UCTREE0005,
+    //
+    /// Outgroup rooting is not possible for the given tree and outgroup
+    ///
+    UCTREE0006,
+    //
+    /// The tree file could not be read, has an unsupported extension, or is
+    /// not valid Newick
+    ///
+    UCTREE0007,
+    // ? -----------------------------------------------------------------------
 }
 
 impl Display for TelemetryCode {

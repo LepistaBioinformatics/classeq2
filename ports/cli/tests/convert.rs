@@ -100,7 +100,10 @@ fn convert_tree_fails_on_unrooted_tree() {
         .arg(&path)
         .assert()
         .failure()
-        .stderr(predicate::str::contains("Tree is not rooted"));
+        .stderr(
+            predicate::str::contains("not rooted (the root has 3 children)")
+                .and(predicate::str::contains("panicked").not()),
+        );
 }
 
 #[test]
