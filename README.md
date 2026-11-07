@@ -13,3 +13,7 @@ usage, and API documentation. This book is a work in progress, and we are
 constantly updating it.
 
 [▶️ 📚 Book](/docs/README.md)
+
+## License
+
+Classeq is licensed under the [Apache License, Version 2.0](LICENSE).
