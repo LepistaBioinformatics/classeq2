@@ -78,6 +78,37 @@ impl FileOrStdin {
         chan: std::sync::mpsc::Sender<Sequence>,
     ) -> Result<(), StdinError> {
         let reader = self.into_chunked_reader()?;
+
+        Self::parse_sequences(reader, |sequence| {
+            chan.send(sequence).unwrap();
+        })
+    }
+
+    /// Open the source, so a missing file is reported before any output
+    /// is created. The reader is then given to `send_sequences`.
+    pub fn open_reader(
+        &self,
+    ) -> Result<impl std::io::BufRead + Send + 'static, StdinError> {
+        self.into_chunked_reader()
+    }
+
+    /// Parse the sequences of an opened source into a bounded channel. The
+    /// parser blocks while the channel is full, so memory stays bounded
+    /// whatever the input size (005-placement-performance, design D5).
+    pub fn send_sequences(
+        reader: impl BufRead,
+        chan: std::sync::mpsc::SyncSender<Sequence>,
+    ) -> Result<(), StdinError> {
+        Self::parse_sequences(reader, |sequence| {
+            // The receiver only hangs up when placement stops early.
+            let _ = chan.send(sequence);
+        })
+    }
+
+    fn parse_sequences(
+        reader: impl BufRead,
+        mut emit: impl FnMut(Sequence),
+    ) -> Result<(), StdinError> {
         let mut header = String::new();
         let mut sequence = String::new();
 
@@ -90,8 +121,7 @@ impl FileOrStdin {
 
             if line.starts_with('>') {
                 if !header.is_empty() {
-                    chan.send(Sequence::new(header.clone(), sequence.clone()))
-                        .unwrap();
+                    emit(Sequence::new(header.clone(), sequence.clone()));
                     sequence.clear();
                 } else if !sequence.is_empty() {
                     return Err(StdinError::FromStr(
@@ -115,7 +145,7 @@ impl FileOrStdin {
         }
 
         if !header.is_empty() && !sequence.is_empty() {
-            chan.send(Sequence::new(header, sequence)).unwrap();
+            emit(Sequence::new(header, sequence));
         };
 
         Ok(())
@@ -178,8 +208,11 @@ impl FileOrStdin {
         Ok(sequences)
     }
 
-    fn into_chunked_reader(&self) -> Result<impl std::io::BufRead, StdinError> {
-        let input: Box<dyn std::io::Read + 'static> = match &self.source {
+    fn into_chunked_reader(
+        &self,
+    ) -> Result<impl std::io::BufRead + Send + 'static, StdinError> {
+        let input: Box<dyn std::io::Read + Send + 'static> = match &self.source
+        {
             Source::Stdin => Box::new(std::io::stdin()),
             Source::Arg(filepath) => {
                 let f = std::fs::File::open(filepath)?;

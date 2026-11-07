@@ -1,7 +1,11 @@
-use anyhow::Result;
+use crate::dtos::output_format::DatabaseFormat;
+
+use anyhow::{anyhow, Result};
 use clap::Parser;
-use classeq_core::use_cases::map_kmers_to_tree;
-use std::{fs::File, path::PathBuf};
+use classeq_core::{
+    domain::dtos::kmer_index::KmerIndex, use_cases::map_kmers_to_tree,
+};
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -39,6 +43,13 @@ pub(crate) struct Arguments {
     /// The minimum branch support value to consider a branch in the tree.
     #[arg(short = 's', long, default_value = "70")]
     pub(super) min_branch_support: Option<f64>,
+
+    /// Database format
+    ///
+    /// `binary` writes the v2 binary database. `legacy` writes the
+    /// zstd-compressed YAML database that earlier versions of cls read.
+    #[arg(long, value_enum, default_value = "binary")]
+    pub(super) format: DatabaseFormat,
 }
 
 pub(crate) fn build_database_cmd(
@@ -56,7 +67,7 @@ pub(crate) fn build_database_cmd(
         panic!("Error creating thread pool: {err}");
     };
 
-    let tree = map_kmers_to_tree(
+    let mut tree = map_kmers_to_tree(
         args.tree_file_path,
         args.msa_file_path,
         args.k_size,
@@ -71,8 +82,23 @@ pub(crate) fn build_database_cmd(
     output_file_path.set_extension("cls");
 
     let writer = File::create(output_file_path)?;
-    let mut writer = zstd::Encoder::new(writer, 0)?.auto_finish();
-    serde_saphyr::to_io_writer(&mut writer, &tree)?;
+
+    match args.format {
+        DatabaseFormat::Binary => {
+            let map = tree.kmers_map.take().ok_or_else(|| {
+                anyhow!("The tree does not have a kmers map.")
+            })?;
+
+            let index = KmerIndex::freeze(&map);
+            drop(map);
+
+            index.write(&tree, BufWriter::new(writer))?;
+        }
+        DatabaseFormat::Legacy => {
+            let mut writer = zstd::Encoder::new(writer, 0)?.auto_finish();
+            serde_saphyr::to_io_writer(&mut writer, &tree)?;
+        }
+    }
 
     Ok(())
 }

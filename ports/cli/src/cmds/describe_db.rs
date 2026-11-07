@@ -33,48 +33,28 @@ pub(crate) fn describe_database_cmd(args: Arguments) -> Result<()> {
     stats.insert("Name", name.to_owned());
     stats.insert("MinBranchSupport", min_branch_support);
 
-    if let Some(kmers_map) = &tree.kmers_map {
-        let minimized_kmers =
-            kmers_map.get_map().into_iter().map(|(_, v)| v.0.len());
+    if let Some(index) = &tree.index {
+        let sizes = index.bucket_sizes()?;
+        let kmers = sizes.iter().sum::<u64>();
 
-        stats.insert("KmerSize", kmers_map.get_kmer_size().to_string());
-        stats.insert(
-            "kmerCount",
-            minimized_kmers.to_owned().sum::<usize>().to_string(),
-        );
-
-        stats.insert(
-            "MinimizerSize",
-            kmers_map.get_minimizer_size().to_string(),
-        );
-
-        stats.insert("MinimizerCount", kmers_map.get_map().len().to_string());
+        stats.insert("KmerSize", index.k_size().to_string());
+        stats.insert("kmerCount", kmers.to_string());
+        stats.insert("MinimizerSize", index.m_size().to_string());
+        stats.insert("MinimizerCount", sizes.len().to_string());
         stats.insert(
             "MinimizerAvgKmers",
-            minimized_kmers
-                .to_owned()
-                .sum::<usize>()
-                .checked_div(kmers_map.get_map().len())
+            kmers
+                .checked_div(sizes.len() as u64)
                 .unwrap_or_default()
                 .to_string(),
         );
-
         stats.insert(
             "LargestMinimizer",
-            minimized_kmers
-                .to_owned()
-                .max()
-                .unwrap_or_default()
-                .to_string(),
+            sizes.iter().max().copied().unwrap_or_default().to_string(),
         );
-
         stats.insert(
             "SmallestMinimizer",
-            minimized_kmers
-                .to_owned()
-                .min()
-                .unwrap_or_default()
-                .to_string(),
+            sizes.iter().min().copied().unwrap_or_default().to_string(),
         );
     }
 

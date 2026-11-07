@@ -20,6 +20,23 @@ pub(crate) enum DatabaseOutputFormat {
     /// No compression will be applied to the file. The file will be saved in
     /// JSON format.
     Json,
+
+    /// Binary format
+    ///
+    /// The v2 binary database written by `build-db`. It is read without
+    /// parsing, so it loads much faster than the other formats. Versions of
+    /// cls that predate it cannot read it.
+    Binary,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, clap::ValueEnum)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum DatabaseFormat {
+    /// The v2 binary database
+    Binary,
+
+    /// The zstd-compressed YAML database read by earlier versions of cls
+    Legacy,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, clap::ValueEnum)]

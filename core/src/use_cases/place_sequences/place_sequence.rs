@@ -5,6 +5,7 @@ use super::{
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
     clade::Clade,
+    kmer_index::{KmerIndex, MatchSet},
     placement_response::PlacementStatus::{self, *},
     sequence::{SequenceBody, SequenceHeader},
     telemetry_code::TelemetryCode,
@@ -14,10 +15,6 @@ use crate::domain::dtos::{
 use mycelium_base::{
     dtos::UntaggedParent,
     utils::errors::{use_case_err, MappedErrors},
-};
-use rayon::iter::{
-    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge,
-    ParallelIterator,
 };
 use std::collections::HashSet;
 use tracing::{debug_span, info, trace, trace_span, Span};
@@ -43,6 +40,7 @@ pub(super) fn place_sequence(
     header: &SequenceHeader,
     sequence: &SequenceBody,
     tree: &Tree,
+    index: &KmerIndex,
     max_iterations: &Option<i32>,
     min_match_coverage: &Option<f64>,
     remove_intersection: &Option<bool>,
@@ -74,18 +72,12 @@ pub(super) fn place_sequence(
         0.7
     };
 
-    let kmers_map = tree
-        .kmers_map
-        .as_ref()
-        .expect("The tree does not have a kmers map.");
-
     // ? -----------------------------------------------------------------------
     // ? Build and validate query kmers
     // ? -----------------------------------------------------------------------
 
     let time = std::time::Instant::now();
-    let query_kmers =
-        kmers_map.build_kmer_from_string(sequence.seq().to_string(), None);
+    let query_kmers = index.query_kmers(sequence.seq());
 
     Span::current()
         .record("query.kmers.count", &Some(query_kmers.len() as i32));
@@ -107,11 +99,11 @@ pub(super) fn place_sequence(
     );
 
     // ? -----------------------------------------------------------------------
-    // ? Sub-sampling kmers_map from the query_kmers
+    // ? Look up the query kmers
     //
-    // Here the kmers_map is sub-sampled to only contain the kmers present in
-    // the query sequence. This is done to reduce the number of kmers to be
-    // processed.
+    // Each distinct query k-mer is looked up once in the index. Only the
+    // posting lists of the k-mers found are kept (005-placement-performance,
+    // design D4).
     //
     // ? -----------------------------------------------------------------------
 
@@ -121,19 +113,20 @@ pub(super) fn place_sequence(
         .collect::<HashSet<u64>>()
         .len();
 
-    let query_kmers_map = kmers_map.get_overlapping_hashed_kmers(query_kmers);
+    let view = index.view();
 
-    let query_kmers_len = query_kmers_map
-        .get_map()
-        .values()
-        .par_bridge()
-        .map(|i| i.0.len())
-        .sum::<usize>();
+    let mut matches = match MatchSet::find(&view, &query_kmers) {
+        Ok(matches) => matches,
+        Err(err) => {
+            return use_case_err(format!("Could not read the database: {err}"))
+                .as_error()
+        }
+    };
 
     Span::current()
-        .record("query.kmers.treeMatches", &Some(query_kmers_len as i32));
+        .record("query.kmers.treeMatches", &Some(matches.len() as i32));
 
-    if query_kmers_len == 0 {
+    if matches.is_empty() {
         let msg = format!(
             "Query sequence {query:?} may not be related to the phylogeny",
             query = header
@@ -150,37 +143,26 @@ pub(super) fn place_sequence(
     );
 
     // ? -----------------------------------------------------------------------
-    // ? Build the root kmers map
+    // ? Keep the matches indexed under the root
     //
-    // The root kmers map is built using the kmers from the root node. This map
-    // is used to evaluate the adherence of the query sequence to the root node.
+    // The root matches are used to evaluate the adherence of the query
+    // sequence to the root node.
     //
     // ? -----------------------------------------------------------------------
 
     let time = std::time::Instant::now();
 
-    let introspection_kmers = match query_kmers_map
-        .get_minimized_hashes_with_node(tree.root.id)
-    {
-        None => {
-            let msg = "Query sequence has no overlapping kmers with the \
-                reference tree";
-            trace!(code = TelemetryCode::UCPLACE0007.to_string(), msg);
-            return Ok(Unclassifiable(msg.to_string()));
-        }
-        Some(kmers) => query_kmers_map.get_overlapping_minimized_hashes(kmers),
-    };
+    matches.retain_containing(tree.root.id);
 
-    Span::current().record(
-        "subject.kmers.queryMatches",
-        &Some(
-            introspection_kmers
-                .get_map()
-                .into_iter()
-                .map(|(_, v)| v.0.len() as i32)
-                .sum::<i32>(),
-        ),
-    );
+    if matches.is_empty() {
+        let msg = "Query sequence has no overlapping kmers with the \
+            reference tree";
+        trace!(code = TelemetryCode::UCPLACE0007.to_string(), msg);
+        return Ok(Unclassifiable(msg.to_string()));
+    }
+
+    Span::current()
+        .record("subject.kmers.queryMatches", &Some(matches.len() as i32));
 
     Span::current().record(
         "subject.kmers.buildTime",
@@ -202,7 +184,7 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
-    let mut children = if let Some(children) = tree.root.to_owned().children {
+    let mut children: &[Clade] = if let Some(children) = &tree.root.children {
         children
     } else {
         return use_case_err(
@@ -223,7 +205,7 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
-    let mut parent = tree.root.to_owned();
+    let mut parent: &Clade = &tree.root;
 
     Span::current()
         .record("subject.kmers.children", &Some(children.len() as i32));
@@ -244,11 +226,7 @@ pub(super) fn place_sequence(
         expected = expected_min_clade_coverage
     );
 
-    let introspection_coverage = introspection_kmers
-        .get_map()
-        .into_par_iter()
-        .map(|i| i.1 .0.len())
-        .sum::<usize>();
+    let introspection_coverage = matches.len();
 
     if introspection_coverage < expected_min_clade_coverage as usize {
         let msg =
@@ -319,44 +297,15 @@ pub(super) fn place_sequence(
         let adherence_tests = {
             let scoring_time = std::time::Instant::now();
 
-            let children_kmers = children
-                .par_iter()
-                .map(|record| {
-                    (
-                        introspection_kmers
-                            .get_hashed_kmers_with_node(record.id)
-                            .unwrap_or_default(),
-                        record,
-                    )
-                })
-                .collect::<Vec<(HashSet<u64>, &Clade)>>();
+            let child_ids =
+                children.iter().map(|child| child.id).collect::<Vec<u64>>();
 
-            let scores = children_kmers
+            let scores = matches.scores(&child_ids, remove_intersection);
+
+            let adherence_tests = children
                 .iter()
                 .enumerate()
-                .map(|(index, (kmers, _))| {
-                    if !remove_intersection {
-                        return kmers.len();
-                    }
-
-                    kmers
-                        .iter()
-                        .filter(|kmer| {
-                            !children_kmers.iter().enumerate().any(
-                                |(other, (other_kmers, _))| {
-                                    other != index
-                                        && other_kmers.contains(kmer)
-                                },
-                            )
-                        })
-                        .count()
-                })
-                .collect::<Vec<usize>>();
-
-            let adherence_tests = children_kmers
-                .iter()
-                .enumerate()
-                .map(|(index, (_, clade))| {
+                .map(|(index, clade)| {
                     let strongest_sibling = scores
                         .iter()
                         .enumerate()
@@ -373,13 +322,9 @@ pub(super) fn place_sequence(
                         rest = strongest_sibling,
                     );
 
-                    AdherenceTest {
-                        clade: UntaggedParent::Record((*clade).to_owned()),
-                        one: scores[index] as i32,
-                        rest: strongest_sibling as i32,
-                    }
+                    (clade, scores[index] as i32, strongest_sibling as i32)
                 })
-                .collect::<Vec<AdherenceTest>>();
+                .collect::<Vec<(&Clade, i32, i32)>>();
 
             trace!(
                 code = TelemetryCode::UCPLACE0012.to_string(),
@@ -394,12 +339,12 @@ pub(super) fn place_sequence(
         // ? -------------------------------------------------------------------
         // ? PHASE 2: Keep the children with the top score
         // ? -------------------------------------------------------------------
-        let top = adherence_tests.iter().map(|test| test.one).max().unwrap_or(0);
+        let top = adherence_tests.iter().map(|test| test.1).max().unwrap_or(0);
 
-        let mut winners = adherence_tests
+        let winners = adherence_tests
             .into_iter()
-            .filter(|test| top > 0 && test.one == top)
-            .collect::<Vec<AdherenceTest>>();
+            .filter(|test| top > 0 && test.1 == top)
+            .collect::<Vec<(&Clade, i32, i32)>>();
 
         trace!(
             code = TelemetryCode::UCPLACE0014.to_string(),
@@ -438,27 +383,25 @@ pub(super) fn place_sequence(
         //
         // 🟢 or ✅ A unique best child: descend into it.
         //
-        if winners.len() == 1 {
-            let adherence = winners.remove(0);
-
+        if let [(clade, one, rest)] = winners[..] {
             //
             // 🍁 clade update
             // 🌿 children update
             //
-            (parent, children) = match update_introspection_node(&adherence)? {
-                Return(status) => return Ok(status),
-                Continue(new_parent, new_children) => (new_parent, new_children),
-            };
+            (parent, children) =
+                match update_introspection_node(clade, one, rest) {
+                    Return(status) => return Ok(status),
+                    Continue(new_parent, new_children) => {
+                        (new_parent, new_children)
+                    }
+                };
 
             continue;
         }
 
         let tied_ids = winners
             .iter()
-            .map(|test| match &test.clade {
-                UntaggedParent::Record(clade) => clade.id,
-                UntaggedParent::Id(id) => *id,
-            })
+            .map(|(clade, _, _)| clade.id)
             .collect::<Vec<u64>>();
 
         trace!(
@@ -490,10 +433,10 @@ pub(super) fn place_sequence(
         return Ok(Inconclusive(
             winners
                 .into_iter()
-                .zip(tied_ids)
-                .map(|(test, id)| AdherenceTest {
-                    clade: UntaggedParent::Id(id),
-                    ..test
+                .map(|(clade, one, rest)| AdherenceTest {
+                    clade: UntaggedParent::Id(clade.id),
+                    one,
+                    rest,
                 })
                 .collect(),
             "Multiple proposals".to_string(),
@@ -545,10 +488,13 @@ mod tests {
         coverage: Option<f64>,
         remove_intersection: Option<bool>,
     ) -> Result<PlacementStatus, MappedErrors> {
+        let index = KmerIndex::freeze(tree.kmers_map.as_ref().unwrap());
+
         place_sequence(
             &SequenceHeader::new("query"),
             &SequenceBody::new(seq),
             tree,
+            &index,
             &max_iterations,
             &coverage,
             &remove_intersection,
@@ -822,7 +768,10 @@ mod tests {
         let root = clade(0, None, vec![cherry(1, 0)]);
         let tree = hand_tree(
             root,
-            &[(&query[..root_len], &[0, 1, 2]), (&query[root_len..], &[1, 2])],
+            &[
+                (&query[..root_len], &[0, 1, 2]),
+                (&query[root_len..], &[1, 2]),
+            ],
         );
         (tree, query)
     }
@@ -984,15 +933,6 @@ mod tests {
     // ? -----------------------------------------------------------------------
 
     #[test]
-    #[should_panic(expected = "The tree does not have a kmers map.")]
-    fn place_without_kmers_map_panics() {
-        let (mut tree, records) = default_dataset(1);
-        tree.kmers_map = None;
-
-        let _ = place(&tree, &records[0].1, None, None, None);
-    }
-
-    #[test]
     fn place_root_without_children_returns_err() {
         let query = synth::random_seq(200, 8);
         let tree = hand_tree(clade(0, None, vec![]), &[(&query, &[0])]);
@@ -1032,7 +972,10 @@ mod tests {
 
         match &status {
             IdentityFound(test) => {
-                assert_eq!(identity_clade_id(&status), Some(leaf_id(&tree, "C")));
+                assert_eq!(
+                    identity_clade_id(&status),
+                    Some(leaf_id(&tree, "C"))
+                );
                 assert!(test.rest > 0, "(A1,A2) shares conserved k-mers");
                 assert!(test.one > test.rest);
             }

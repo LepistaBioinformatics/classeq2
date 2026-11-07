@@ -157,6 +157,27 @@ JSONL file, allowing users to see the telemetry codes in a more user-friendly
 way. But for now, you can use the `jq` command to analyze the telemetry codes in
 the JSONL file.
 
+## Placement benchmarks
+
+The `scripts/perf` directory holds the tools used to measure placement:
+
+- `cargo run --release -p classeq-core --example gen_corpus -- <leaves>
+  <length> <seed> <out-dir> [queries]` writes a seeded synthetic corpus
+  (`ref.nwk`, `ref.fasta` and `queries.fasta`). The same arguments always give
+  the same files.
+- `bench.sh LABEL CLS DB QUERIES THREADS RUNS OUT_TSV` times `cls place` with
+  GNU time and appends the wall time, the peak memory and the per-query times
+  of each run to a TSV file; `summarize.py OUT_TSV` prints them as a table.
+- `equivalence.sh BASE_CLS CORPUS_DIR QUERIES [CAND_CLS]` checks that two
+  `cls` builds place every query identically, on the legacy database and on
+  binary databases written by `build-db` and by `convert`.
+- `perf.Dockerfile` builds an image with `perf`, `hyperfine` and GNU time.
+  Profiling in it needs `--cap-add PERFMON --cap-add SYS_ADMIN
+  --security-opt seccomp=unconfined` and the root user.
+
+`cargo bench -p classeq-core --bench placement` runs the Criterion
+micro-benchmark of `place_sequences` on an in-memory synthetic database.
+
 ---
 
 [◀️ Prev | Place Sequence Using API](/docs/book/05-submit-placement-to-api.md)
