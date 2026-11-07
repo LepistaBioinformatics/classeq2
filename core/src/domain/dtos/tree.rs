@@ -1,6 +1,6 @@
 use super::{
-    annotation::Annotation, clade::Clade, kmers_map::KmersMap,
-    telemetry_code::TelemetryCode,
+    annotation::Annotation, clade::Clade, kmer_index::KmerIndex,
+    kmers_map::KmersMap, telemetry_code::TelemetryCode,
 };
 use crate::domain::rooting::{
     parse_newick, root_newick, split_rooting_annotation, RootingFlag,
@@ -10,7 +10,7 @@ use crate::domain::rooting::{
 use mycelium_base::utils::errors::{use_case_err, MappedErrors};
 use phylotree::tree::Tree as PhyloTree;
 use serde::{Deserialize, Serialize};
-use std::{ffi::OsStr, fs::read_to_string, path::Path};
+use std::{ffi::OsStr, fs::read_to_string, path::Path, sync::Arc};
 use tracing::{info, warn};
 use uuid::Uuid;
 
@@ -50,8 +50,14 @@ pub struct Tree {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<Vec<Annotation>>,
 
+    /// The k-mers as built, or as read from a legacy database. Loaders
+    /// freeze it into `index` and drop it.
     //#[serde(skip_serializing_if = "Option::is_none")]
     pub kmers_map: Option<KmersMap>,
+
+    /// The index placement reads (005-placement-performance, design D2).
+    #[serde(skip)]
+    pub index: Option<Arc<KmerIndex>>,
 }
 
 impl Tree {
@@ -73,6 +79,15 @@ impl Tree {
             root,
             annotations: None,
             kmers_map: None,
+            index: None,
+        }
+    }
+
+    /// Freeze `kmers_map` into `index` and drop the map, so the k-mers are
+    /// not held twice.
+    pub fn freeze_kmers_map(&mut self) {
+        if let Some(map) = self.kmers_map.take() {
+            self.index = Some(Arc::new(KmerIndex::freeze(&map)));
         }
     }
 

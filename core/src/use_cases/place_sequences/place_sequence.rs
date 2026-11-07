@@ -5,6 +5,7 @@ use super::{
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
     clade::Clade,
+    kmer_index::{KmerIndex, MatchSet},
     placement_response::PlacementStatus::{self, *},
     sequence::{SequenceBody, SequenceHeader},
     telemetry_code::TelemetryCode,
@@ -15,11 +16,7 @@ use mycelium_base::{
     dtos::UntaggedParent,
     utils::errors::{use_case_err, MappedErrors},
 };
-use rayon::iter::{
-    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge,
-    ParallelIterator,
-};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use tracing::{debug_span, info, trace, trace_span, Span};
 
 /// Place a sequence in the tree.
@@ -43,6 +40,7 @@ pub(super) fn place_sequence(
     header: &SequenceHeader,
     sequence: &SequenceBody,
     tree: &Tree,
+    index: &KmerIndex,
     max_iterations: &Option<i32>,
     min_match_coverage: &Option<f64>,
     remove_intersection: &Option<bool>,
@@ -74,18 +72,12 @@ pub(super) fn place_sequence(
         0.7
     };
 
-    let kmers_map = tree
-        .kmers_map
-        .as_ref()
-        .expect("The tree does not have a kmers map.");
-
     // ? -----------------------------------------------------------------------
     // ? Build and validate query kmers
     // ? -----------------------------------------------------------------------
 
     let time = std::time::Instant::now();
-    let query_kmers =
-        kmers_map.build_kmer_from_string(sequence.seq().to_string(), None);
+    let query_kmers = index.query_kmers(sequence.seq());
 
     Span::current()
         .record("query.kmers.count", &Some(query_kmers.len() as i32));
@@ -107,11 +99,11 @@ pub(super) fn place_sequence(
     );
 
     // ? -----------------------------------------------------------------------
-    // ? Sub-sampling kmers_map from the query_kmers
+    // ? Look up the query kmers
     //
-    // Here the kmers_map is sub-sampled to only contain the kmers present in
-    // the query sequence. This is done to reduce the number of kmers to be
-    // processed.
+    // Each distinct query k-mer is looked up once in the index. Only the
+    // posting lists of the k-mers found are kept (005-placement-performance,
+    // design D4).
     //
     // ? -----------------------------------------------------------------------
 
@@ -121,19 +113,20 @@ pub(super) fn place_sequence(
         .collect::<HashSet<u64>>()
         .len();
 
-    let query_kmers_map = kmers_map.get_overlapping_hashed_kmers(query_kmers);
+    let view = index.view();
 
-    let query_kmers_len = query_kmers_map
-        .get_map()
-        .values()
-        .par_bridge()
-        .map(|i| i.0.len())
-        .sum::<usize>();
+    let mut matches = match MatchSet::find(&view, &query_kmers) {
+        Ok(matches) => matches,
+        Err(err) => {
+            return use_case_err(format!("Could not read the database: {err}"))
+                .as_error()
+        }
+    };
 
     Span::current()
-        .record("query.kmers.treeMatches", &Some(query_kmers_len as i32));
+        .record("query.kmers.treeMatches", &Some(matches.len() as i32));
 
-    if query_kmers_len == 0 {
+    if matches.is_empty() {
         let msg = format!(
             "Query sequence {query:?} may not be related to the phylogeny",
             query = header
@@ -150,37 +143,26 @@ pub(super) fn place_sequence(
     );
 
     // ? -----------------------------------------------------------------------
-    // ? Build the root kmers map
+    // ? Keep the matches indexed under the root
     //
-    // The root kmers map is built using the kmers from the root node. This map
-    // is used to evaluate the adherence of the query sequence to the root node.
+    // The root matches are used to evaluate the adherence of the query
+    // sequence to the root node.
     //
     // ? -----------------------------------------------------------------------
 
     let time = std::time::Instant::now();
 
-    let introspection_kmers = match query_kmers_map
-        .get_minimized_hashes_with_node(tree.root.id)
-    {
-        None => {
-            let msg = "Query sequence has no overlapping kmers with the \
-                reference tree";
-            trace!(code = TelemetryCode::UCPLACE0007.to_string(), msg);
-            return Ok(Unclassifiable(msg.to_string()));
-        }
-        Some(kmers) => query_kmers_map.get_overlapping_minimized_hashes(kmers),
-    };
+    matches.retain_containing(tree.root.id);
 
-    Span::current().record(
-        "subject.kmers.queryMatches",
-        &Some(
-            introspection_kmers
-                .get_map()
-                .into_iter()
-                .map(|(_, v)| v.0.len() as i32)
-                .sum::<i32>(),
-        ),
-    );
+    if matches.is_empty() {
+        let msg = "Query sequence has no overlapping kmers with the \
+            reference tree";
+        trace!(code = TelemetryCode::UCPLACE0007.to_string(), msg);
+        return Ok(Unclassifiable(msg.to_string()));
+    }
+
+    Span::current()
+        .record("subject.kmers.queryMatches", &Some(matches.len() as i32));
 
     Span::current().record(
         "subject.kmers.buildTime",
@@ -202,7 +184,7 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
-    let mut children = if let Some(children) = tree.root.to_owned().children {
+    let mut children: &[Clade] = if let Some(children) = &tree.root.children {
         children
     } else {
         return use_case_err(
@@ -223,7 +205,7 @@ pub(super) fn place_sequence(
     //
     // ? -----------------------------------------------------------------------
 
-    let mut parent = tree.root.to_owned();
+    let mut parent: &Clade = &tree.root;
 
     Span::current()
         .record("subject.kmers.children", &Some(children.len() as i32));
@@ -244,11 +226,7 @@ pub(super) fn place_sequence(
         expected = expected_min_clade_coverage
     );
 
-    let introspection_coverage = introspection_kmers
-        .get_map()
-        .into_par_iter()
-        .map(|i| i.1 .0.len())
-        .sum::<usize>();
+    let introspection_coverage = matches.len();
 
     if introspection_coverage < expected_min_clade_coverage as usize {
         let msg =
@@ -307,303 +285,162 @@ pub(super) fn place_sequence(
         }
 
         // ? -------------------------------------------------------------------
-        // ? PHASE 1: Generate clade proposals for the current level
+        // ? PHASE 1: Score the children of the current clade
         //
-        // Clade proposals include all possible clades that a given query
-        // sequence can be placed. The clade proposals are generated by
-        // comparing the query sequence to the sibling clades.
+        // Every child competes, leaves included. A child's score is the
+        // number of query k-mers indexed under it or, with
+        // `remove_intersection`, only those not indexed under any sibling.
+        // Each child is then compared with its strongest sibling
+        // (003-placement-algorithm).
         //
         // ? -------------------------------------------------------------------
-        let clade_proposals = {
-            let children_lengths_time = std::time::Instant::now();
+        let adherence_tests = {
+            let scoring_time = std::time::Instant::now();
 
-            //
-            // Aggregate children kmer lengths. This action is necessary to
-            // determine the adherence of the query sequence to the sibling
-            // clades.
-            //
-            let mut children_kmers = children
-                .par_iter()
-                .filter_map(|record| {
-                    if record.is_leaf() {
-                        return None;
-                    }
+            let child_ids =
+                children.iter().map(|child| child.id).collect::<Vec<u64>>();
 
-                    match introspection_kmers
-                        .get_hashed_kmers_with_node(record.id)
-                    {
-                        None => None,
-                        Some(kmers) => Some((kmers, record)),
-                    }
-                })
-                .collect::<Vec<(HashSet<u64>, &Clade)>>();
+            let scores = matches.scores(&child_ids, remove_intersection);
 
-            children_kmers.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
-
-            trace!(
-                code = TelemetryCode::UCPLACE0012.to_string(),
-                "Level clades (runtime {time}): {lengths}",
-                time = format!("{:?}", children_lengths_time.elapsed()),
-                lengths = children_kmers
-                    .to_owned()
-                    .iter()
-                    .map(|(kmers, clade)| {
-                        format!("{} ({})", clade.id, kmers.len())
-                    })
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            );
-
-            let clade_proposals_time = std::time::Instant::now();
-
-            let clade_proposals = children_kmers
-                .to_owned()
-                .into_iter()
-                .par_bridge()
-                .filter_map(|(kmers, clade)| {
-                    let rest: Vec<_> = children_kmers
-                        .par_iter()
-                        .filter_map(|(rest_kmers, nested_clade)| {
-                            if nested_clade.id == clade.id {
-                                return None;
-                            }
-
-                            Some(rest_kmers.to_owned())
-                        })
-                        .collect();
-
-                    if rest.is_empty() {
-                        return Some(AdherenceTest {
-                            clade: UntaggedParent::Record(clade.to_owned()),
-                            one: kmers.len() as i32,
-                            rest: 0,
-                        });
-                    }
-
-                    let rest_len = rest
+            let adherence_tests = children
+                .iter()
+                .enumerate()
+                .map(|(index, clade)| {
+                    let strongest_sibling = scores
                         .iter()
-                        .map(|i| i.to_owned())
-                        .flatten()
-                        .collect::<HashSet<u64>>();
-
-                    let (one_kmers, rest_kmers) = match remove_intersection {
-                        true => (
-                            kmers
-                                .difference(&rest_len)
-                                .map(|i| *i)
-                                .collect::<HashSet<_>>(),
-                            rest_len
-                                .difference(&kmers)
-                                .map(|i| *i)
-                                .collect::<HashSet<_>>(),
-                        ),
-                        false => (kmers.to_owned(), rest_len.to_owned()),
-                    };
+                        .enumerate()
+                        .filter(|(other, _)| *other != index)
+                        .map(|(_, score)| *score)
+                        .max()
+                        .unwrap_or(0);
 
                     trace!(
                         code = TelemetryCode::UCPLACE0013.to_string(),
-                        "Clade {id}: one {one_kmers} vs rest {rest_kmers}",
+                        "Clade {id}: one {one} vs strongest sibling {rest}",
                         id = clade.id,
-                        one_kmers = one_kmers.len(),
-                        rest_kmers = rest_kmers.len(),
+                        one = scores[index],
+                        rest = strongest_sibling,
                     );
 
-                    Some(AdherenceTest {
-                        clade: UntaggedParent::Record(clade.to_owned()),
-                        one: one_kmers.len() as i32,
-                        rest: rest_kmers.len() as i32,
-                    })
+                    (clade, scores[index] as i32, strongest_sibling as i32)
                 })
-                .filter_map(|adherence| {
-                    if adherence.one > adherence.rest as i32 {
-                        Some(adherence.to_owned())
-                    } else {
-                        None
-                    }
-                })
-                .collect::<Vec<AdherenceTest>>();
+                .collect::<Vec<(&Clade, i32, i32)>>();
 
             trace!(
-                code = TelemetryCode::UCPLACE0014.to_string(),
-                "Available proposals (runtime {time}): {proposals}",
-                time = format!("{:?}", clade_proposals_time.elapsed()),
-                proposals = clade_proposals.len()
+                code = TelemetryCode::UCPLACE0012.to_string(),
+                "Level clades scored (runtime {time:?}): {count}",
+                time = scoring_time.elapsed(),
+                count = adherence_tests.len()
             );
 
-            clade_proposals
+            adherence_tests
         };
 
         // ? -------------------------------------------------------------------
-        // ? PHASE 2: Evaluate proposals
-        //
-        // The algorithm evaluates the proposals and decide the next step.
-        //
+        // ? PHASE 2: Keep the children with the top score
         // ? -------------------------------------------------------------------
-        {
-            // ? ---------------------------------------------------------------
-            // ? Case 1: No proposals
-            // ? Events: 🔴
-            //
-            // If none of the proposed clades have a higher adherence than the
-            // sibling clades, the search are considered maxed out, than, the
-            // query sequence is placed at the current clade.
-            //
-            // ? ---------------------------------------------------------------
-            if clade_proposals.is_empty() {
-                if iteration == 1 {
-                    let msg = "Tree introspection not possible. Query \
-                        sequence has no overlapping kmers with the reference \
-                        tree";
-                    trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
-                    return Ok(Unclassifiable(msg.to_string()));
-                }
+        let top = adherence_tests.iter().map(|test| test.1).max().unwrap_or(0);
 
-                trace!(
-                    code = TelemetryCode::UCPLACE0015.to_string(),
-                    "No proposals found. Max resolution reached at clade {clade_id}",
-                    clade_id = parent.id
-                );
+        let winners = adherence_tests
+            .into_iter()
+            .filter(|test| top > 0 && test.1 == top)
+            .collect::<Vec<(&Clade, i32, i32)>>();
 
-                return Ok(MaxResolutionReached(
-                    parent.id,
-                    "LCA Accepted".to_string(),
-                ));
+        trace!(
+            code = TelemetryCode::UCPLACE0014.to_string(),
+            "Available proposals: {proposals}",
+            proposals = winners.len()
+        );
+
+        // ? -------------------------------------------------------------------
+        // ? PHASE 3: Decide
+        // ? -------------------------------------------------------------------
+
+        //
+        // 🔴 No child carries evidence: stop at the current clade.
+        //
+        if winners.is_empty() {
+            if iteration == 1 {
+                let msg = "Tree introspection not possible. Query \
+                    sequence has no overlapping kmers with the reference \
+                    tree";
+                trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
+                return Ok(Unclassifiable(msg.to_string()));
             }
 
-            // ? ---------------------------------------------------------------
-            // ? Case 2: One clade proposal
-            // ? Events: 🟢 or ✅
+            trace!(
+                code = TelemetryCode::UCPLACE0015.to_string(),
+                "No proposals found. Max resolution reached at clade {clade_id}",
+                clade_id = parent.id
+            );
+
+            return Ok(MaxResolutionReached(
+                parent.id,
+                "LCA Accepted".to_string(),
+            ));
+        }
+
+        //
+        // 🟢 or ✅ A unique best child: descend into it.
+        //
+        if let [(clade, one, rest)] = winners[..] {
             //
-            // If only one clade has a higher adherence than the sibling clades,
-            // the query sequence is placed at the current clade.
+            // 🍁 clade update
+            // 🌿 children update
             //
-            // ? ---------------------------------------------------------------
-            if clade_proposals.len() == 1 {
-                let adherence: AdherenceTest = match clade_proposals.first() {
-                    Some(adherence) => adherence.to_owned(),
-                    None => {
-                        return use_case_err(
-                            "The filtered proposals list is empty. This is \
-                            unexpected.",
-                        )
-                        .as_error();
+            (parent, children) =
+                match update_introspection_node(clade, one, rest) {
+                    Return(status) => return Ok(status),
+                    Continue(new_parent, new_children) => {
+                        (new_parent, new_children)
                     }
                 };
 
-                //
-                // 🍁 1st clade update
-                // 🌿 1st children update
-                //
-                (parent, children) =
-                    match update_introspection_node(&adherence)? {
-                        //
-                        // ✅ Return a status if the search loop is finished with
-                        // a conclusive identity.
-                        //
-                        Return(status) => {
-                            return Ok(status);
-                        }
-                        //
-                        // 🟢 Continue the search loop with the new parent and
-                        // children
-                        //
-                        Continue(a, b) => (a, b),
-                    };
-
-                continue;
-            }
-
-            // ? ---------------------------------------------------------------
-            // ? Case 3: No proposals
-            // ? Events: ✅ or 🟢
-            //
-            // If more than one clade has a higher adherence than the sibling
-            // clades, the search is considered inconclusive. The query sequence
-            // is placed at the current clade.
-            //
-            // ? ---------------------------------------------------------------
-            if clade_proposals.len() > 1 {
-                trace!(
-                    code = TelemetryCode::UCPLACE0018.to_string(),
-                    "Multiple proposals found. Clade {parent} selected",
-                    parent = parent.id
-                );
-
-                let fold_proposals = clade_proposals.iter().fold(
-                    HashMap::<i32, Vec<AdherenceTest>>::new(),
-                    |mut acc, a| {
-                        acc.entry(a.one - a.rest)
-                            .or_insert(vec![])
-                            .push(a.to_owned());
-
-                        acc
-                    },
-                );
-
-                let max_diff_key = fold_proposals.keys().max().unwrap();
-                let max_diff_value = fold_proposals.get(max_diff_key).unwrap();
-
-                if max_diff_value.len() == 1 {
-                    let adherence: &AdherenceTest = match max_diff_value.first()
-                    {
-                        Some(adherence) => adherence,
-                        None => {
-                            return use_case_err(
-                                "The filtered proposals list is empty. This is \
-                                unexpected."
-                            ).as_error();
-                        }
-                    };
-
-                    //
-                    // 🍁 2nd clade update
-                    // 🌿 2nd children update
-                    //
-                    (parent, children) =
-                        match update_introspection_node(&adherence)? {
-                            //
-                            // ✅ Return a status if the search loop is finished
-                            // with a conclusive identity.
-                            //
-                            Return(status) => {
-                                return Ok(status);
-                            }
-                            //
-                            // 🟢 Continue the search loop with the new parent
-                            // and children
-                            //
-                            Continue(a, b) => (a, b),
-                        };
-
-                    continue;
-                }
-
-                //
-                // 🔴 Case more than one proposals has the same probability,
-                // return all proposals.
-                //
-                trace!(
-                    code = TelemetryCode::UCPLACE0019.to_string(),
-                    "Inconclusive identity found at clade",
-                );
-
-                return Ok(Inconclusive(
-                    clade_proposals
-                        .iter()
-                        .map(|item| AdherenceTest {
-                            clade: match &item.clade {
-                                UntaggedParent::Record(clade) => {
-                                    UntaggedParent::Id(clade.id.to_owned())
-                                }
-                                id => id.to_owned(),
-                            },
-                            ..item.to_owned()
-                        })
-                        .collect(),
-                    "Multiple proposals".to_string(),
-                ));
-            }
+            continue;
         }
+
+        let tied_ids = winners
+            .iter()
+            .map(|(clade, _, _)| clade.id)
+            .collect::<Vec<u64>>();
+
+        trace!(
+            code = TelemetryCode::UCPLACE0018.to_string(),
+            "Multiple proposals found: {tied_ids:?}"
+        );
+
+        //
+        // 🔴 A tie among the root's children: the query cannot be placed.
+        //
+        if iteration == 1 {
+            let msg = format!(
+                "Tie between root children {tied_ids:?} with {top} matching \
+                kmers each"
+            );
+            trace!(code = TelemetryCode::UCPLACE0019.to_string(), msg);
+            return Ok(Unclassifiable(msg));
+        }
+
+        //
+        // 🔴 A tie below the root: report every tied clade.
+        //
+        trace!(
+            code = TelemetryCode::UCPLACE0019.to_string(),
+            "Inconclusive identity among clades {tied_ids:?} under clade {parent}",
+            parent = parent.id
+        );
+
+        return Ok(Inconclusive(
+            winners
+                .into_iter()
+                .map(|(clade, one, rest)| AdherenceTest {
+                    clade: UntaggedParent::Id(clade.id),
+                    one,
+                    rest,
+                })
+                .collect(),
+            "Multiple proposals".to_string(),
+        ));
     }
 }
 
@@ -651,10 +488,13 @@ mod tests {
         coverage: Option<f64>,
         remove_intersection: Option<bool>,
     ) -> Result<PlacementStatus, MappedErrors> {
+        let index = KmerIndex::freeze(tree.kmers_map.as_ref().unwrap());
+
         place_sequence(
             &SequenceHeader::new("query"),
             &SequenceBody::new(seq),
             tree,
+            &index,
             &max_iterations,
             &coverage,
             &remove_intersection,
@@ -662,15 +502,14 @@ mod tests {
         )
     }
 
-    fn leaf_parent(tree: &Tree, name: &str) -> u64 {
+    fn leaf_id(tree: &Tree, name: &str) -> u64 {
         tree.root
             .get_leaves_with_paths(None)
             .into_iter()
             .find(|(clade, _)| clade.name.as_deref() == Some(name))
             .unwrap()
             .0
-            .parent
-            .unwrap()
+            .id
     }
 
     fn identity_clade_id(status: &PlacementStatus) -> Option<u64> {
@@ -838,7 +677,7 @@ mod tests {
 
             assert_eq!(
                 identity_clade_id(&status),
-                Some(leaf_parent(&tree, name)),
+                Some(leaf_id(&tree, name)),
                 "{name}: {status:?}"
             );
         }
@@ -852,7 +691,7 @@ mod tests {
 
         let status = place(&tree, &query, None, None, None).unwrap();
 
-        assert_eq!(identity_clade_id(&status), Some(leaf_parent(&tree, name)));
+        assert_eq!(identity_clade_id(&status), Some(leaf_id(&tree, name)));
     }
 
     // ? -----------------------------------------------------------------------
@@ -868,30 +707,9 @@ mod tests {
         (tree, query)
     }
 
+    /// BUG-020: a tie between sibling clades is reported, not hidden.
     #[test]
-    #[ignore = "BUG-020: Inconclusive is unreachable; one-vs-rest union allows at most one proposal"]
     fn place_equidistant_query_returns_inconclusive_with_both_clades() {
-        let (tree, query) = tied_tree();
-
-        let status = place(&tree, &query, None, None, None).unwrap();
-
-        match status {
-            Inconclusive(tests, _) => {
-                let ids: HashSet<u64> = tests
-                    .iter()
-                    .map(|t| match &t.clade {
-                        UntaggedParent::Id(id) => *id,
-                        UntaggedParent::Record(c) => c.id,
-                    })
-                    .collect();
-                assert_eq!(ids, HashSet::from([2, 5]));
-            }
-            other => panic!("expected Inconclusive, got {other:?}"),
-        }
-    }
-
-    #[test]
-    fn place_equidistant_query_current_behavior() {
         let (tree, query) = tied_tree();
 
         for remove_intersection in [false, true] {
@@ -899,16 +717,31 @@ mod tests {
                 place(&tree, &query, None, None, Some(remove_intersection))
                     .unwrap();
 
-            assert_eq!(
-                status,
-                MaxResolutionReached(1, "LCA Accepted".to_string()),
-                "remove_intersection={remove_intersection}"
-            );
+            match status {
+                Inconclusive(tests, msg) => {
+                    let ids: HashSet<u64> = tests
+                        .iter()
+                        .map(|t| match &t.clade {
+                            UntaggedParent::Id(id) => *id,
+                            UntaggedParent::Record(c) => c.id,
+                        })
+                        .collect();
+                    assert_eq!(ids, HashSet::from([2, 5]));
+                    assert!(tests.iter().all(|t| t.one == t.rest));
+                    assert_eq!(msg, "Multiple proposals");
+                }
+                other => panic!(
+                    "remove_intersection={remove_intersection}: expected \
+                    Inconclusive, got {other:?}"
+                ),
+            }
         }
     }
 
+    /// A tie among the root's children is `Unclassifiable` (user decision,
+    /// 003-placement-algorithm).
     #[test]
-    fn place_equidistant_query_at_root_level_current_behavior() {
+    fn place_equidistant_query_at_root_returns_unclassifiable_tie() {
         let query = synth::random_seq(200, 5);
         let root = clade(0, None, vec![cherry(1, 0), cherry(4, 0)]);
         let tree = hand_tree(
@@ -919,7 +752,7 @@ mod tests {
         let status = place(&tree, &query, None, None, None).unwrap();
 
         assert!(
-            matches!(&status, Unclassifiable(msg) if msg.contains("Tree introspection not possible")),
+            matches!(&status, Unclassifiable(msg) if msg.starts_with("Tie between root children")),
             "{status:?}"
         );
     }
@@ -935,7 +768,10 @@ mod tests {
         let root = clade(0, None, vec![cherry(1, 0)]);
         let tree = hand_tree(
             root,
-            &[(&query[..root_len], &[0, 1]), (&query[root_len..], &[1])],
+            &[
+                (&query[..root_len], &[0, 1, 2]),
+                (&query[root_len..], &[1, 2]),
+            ],
         );
         (tree, query)
     }
@@ -958,7 +794,7 @@ mod tests {
 
         let status = place(&tree, &query, None, None, None).unwrap();
 
-        assert_eq!(identity_clade_id(&status), Some(1), "{status:?}");
+        assert_eq!(identity_clade_id(&status), Some(2), "{status:?}");
     }
 
     #[test]
@@ -967,13 +803,13 @@ mod tests {
 
         let status = place(&tree, &query, None, Some(0.5), None).unwrap();
 
-        assert_eq!(identity_clade_id(&status), Some(1), "{status:?}");
+        assert_eq!(identity_clade_id(&status), Some(2), "{status:?}");
     }
 
     #[test]
     fn place_coverage_is_clamped_to_unit_interval() {
         let (tree, records) = default_dataset(1);
-        let expected = Some(leaf_parent(&tree, &records[0].0));
+        let expected = Some(leaf_id(&tree, &records[0].0));
 
         for coverage in [5.0, -3.0] {
             let status =
@@ -984,7 +820,7 @@ mod tests {
 
         let (tree, query) = partial_root_tree(240);
         let status = place(&tree, &query, None, Some(-3.0), None).unwrap();
-        assert_eq!(identity_clade_id(&status), Some(1), "{status:?}");
+        assert_eq!(identity_clade_id(&status), Some(2), "{status:?}");
     }
 
     #[test]
@@ -1014,7 +850,7 @@ mod tests {
 
         assert_eq!(
             identity_clade_id(&status),
-            Some(leaf_parent(&tree, &records[0].0)),
+            Some(leaf_id(&tree, &records[0].0)),
             "{status:?}"
         );
     }
@@ -1028,7 +864,7 @@ mod tests {
 
         assert_eq!(
             identity_clade_id(&status),
-            Some(leaf_parent(&tree, &records[0].0)),
+            Some(leaf_id(&tree, &records[0].0)),
             "{status:?}"
         );
     }
@@ -1058,7 +894,11 @@ mod tests {
     fn place_remove_intersection_drops_shared_kmers_from_one_and_rest() {
         let query = synth::random_seq(220, 7);
         let (a, b, c) = (&query[..120], &query[120..180], &query[180..]);
-        let root = clade(0, None, vec![cherry(1, 0), cherry(4, 0)]);
+        let root = clade(
+            0,
+            None,
+            vec![clade(1, Some(0), vec![]), clade(4, Some(0), vec![])],
+        );
         let tree =
             hand_tree(root, &[(a, &[0, 1]), (b, &[0, 1, 4]), (c, &[0, 4])]);
         let (na, nb, nc) =
@@ -1093,15 +933,6 @@ mod tests {
     // ? -----------------------------------------------------------------------
 
     #[test]
-    #[should_panic(expected = "The tree does not have a kmers map.")]
-    fn place_without_kmers_map_panics() {
-        let (mut tree, records) = default_dataset(1);
-        tree.kmers_map = None;
-
-        let _ = place(&tree, &records[0].1, None, None, None);
-    }
-
-    #[test]
     fn place_root_without_children_returns_err() {
         let query = synth::random_seq(200, 8);
         let tree = hand_tree(clade(0, None, vec![]), &[(&query, &[0])]);
@@ -1118,8 +949,9 @@ mod tests {
     // ? PLACE-09 (S-12)
     // ? -----------------------------------------------------------------------
 
+    /// BUG-027: a leaf next to an internal clade is a placement candidate.
     #[test]
-    fn place_query_identical_to_root_leaf_child_current_behavior() {
+    fn place_query_identical_to_leaf_next_to_clade_is_placed_at_that_leaf() {
         let topology = synth::node(
             vec![
                 synth::node(
@@ -1138,16 +970,14 @@ mod tests {
 
         let status = place(&tree, c_seq, None, None, None).unwrap();
 
-        // Leaf C is filtered out of the sibling set, so node (A1,A2) is the
-        // only candidate, gets `rest: 0`, and wins on shared conserved k-mers.
         match &status {
             IdentityFound(test) => {
                 assert_eq!(
                     identity_clade_id(&status),
-                    Some(leaf_parent(&tree, "A1"))
+                    Some(leaf_id(&tree, "C"))
                 );
-                assert!(test.one > 0);
-                assert_eq!(test.rest, 0);
+                assert!(test.rest > 0, "(A1,A2) shares conserved k-mers");
+                assert!(test.one > test.rest);
             }
             other => panic!("{other:?}"),
         }
@@ -1167,7 +997,7 @@ mod tests {
 
         assert_eq!(
             identity_clade_id(&status),
-            Some(leaf_parent(&tree, &records[0].0)),
+            Some(leaf_id(&tree, &records[0].0)),
             "{status:?}"
         );
     }

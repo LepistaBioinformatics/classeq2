@@ -218,3 +218,93 @@ pub fn write_fasta(
 
     out
 }
+
+/// A uniform `[0, 1)` draw.
+fn unit(rng: &mut Rng) -> f64 {
+    (rng.next_u64() >> 11) as f64 / (1u64 << 53) as f64
+}
+
+/// A seeded Yule tree with `n_leaves` leaves named `L00001`, `L00002`... in
+/// topology order. A random leaf splits in two until there are `n_leaves`
+/// leaves. Branch lengths are exponential with mean 0.02, capped at 0.1, and
+/// every internal node has support 99.
+pub fn yule(n_leaves: usize, seed: u64) -> Topology {
+    let mut rng = Rng::new(seed);
+    let mut nodes: Vec<(Vec<usize>, f64)> = vec![(vec![], 0.0)];
+    let mut leaves = vec![0];
+
+    while leaves.len() < n_leaves.max(2) {
+        let node = leaves.remove(rng.below(leaves.len()));
+
+        for _ in 0..2 {
+            let length = (-0.02 * (1.0 - unit(&mut rng)).ln()).min(0.1);
+            let child = nodes.len();
+            nodes.push((vec![], (length * 1e5).round() / 1e5));
+            nodes[node].0.push(child);
+            leaves.push(child);
+        }
+    }
+
+    fn build(
+        nodes: &[(Vec<usize>, f64)],
+        at: usize,
+        count: &mut usize,
+    ) -> Topology {
+        let (children, length) = &nodes[at];
+
+        if children.is_empty() {
+            *count += 1;
+            return leaf(&format!("L{count:05}"), *length);
+        }
+
+        node(
+            children
+                .iter()
+                .map(|child| build(nodes, *child, count))
+                .collect(),
+            Some(99.0),
+            *length,
+        )
+    }
+
+    build(&nodes, 0, &mut 0)
+}
+
+/// The benchmark query mix (005-placement-performance): 40% 150 bp fragments
+/// of a leaf with 3 substitutions, 40% full-length leaves with 10
+/// substitutions, and 20% random 150 bp sequences. Headers name the kind and
+/// the source leaf, e.g. `q00001_frag_L00042`.
+pub fn queries(
+    records: &[(String, String)],
+    count: usize,
+    seed: u64,
+) -> Vec<(String, String)> {
+    let mut rng = Rng::new(seed);
+
+    (0..count)
+        .map(|i| {
+            let draw = unit(&mut rng);
+            let (name, seq) = &records[rng.below(records.len())];
+
+            if draw < 0.4 && seq.len() > 150 {
+                let start = rng.below(seq.len() - 150);
+                let query = mutate(
+                    fragment(seq, start, 150).as_str(),
+                    3,
+                    rng.next_u64(),
+                );
+                (format!("q{i:05}_frag_{name}"), query)
+            } else if draw < 0.8 {
+                (
+                    format!("q{i:05}_full_{name}"),
+                    mutate(seq, 10, rng.next_u64()),
+                )
+            } else {
+                (
+                    format!("q{i:05}_rand_none"),
+                    random_seq(150, rng.next_u64()),
+                )
+            }
+        })
+        .collect()
+}

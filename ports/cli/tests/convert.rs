@@ -189,11 +189,13 @@ fn convert_database_round_trips_full_database_in_all_formats() {
     let dir = TempDir::new().unwrap();
     let SyntheticDb { db, .. } = build_synthetic_db(dir.path(), 41);
     let original = load_database(db.clone()).unwrap();
-    let original_map = original.kmers_map.as_ref().unwrap();
+    let original_map = original.index.as_ref().unwrap().thaw().unwrap();
+    let original_map = &original_map;
 
     convert_db(&db, &dir.path().join("as-yaml"), "yaml", false);
     convert_db(&db, &dir.path().join("as-zstd"), "zstd", false);
     convert_db(&db, &dir.path().join("as-json"), "json", false);
+    convert_db(&db, &dir.path().join("as-binary"), "binary", false);
 
     let yaml_path = dir.path().join("as-yaml.cls.yaml");
     assert!(serde_saphyr::from_str::<serde_json::Value>(
@@ -201,14 +203,35 @@ fn convert_database_round_trips_full_database_in_all_formats() {
     )
     .is_ok());
 
-    for path in [yaml_path, dir.path().join("as-zstd.cls")] {
+    for path in [
+        yaml_path,
+        dir.path().join("as-zstd.cls"),
+        dir.path().join("as-binary.cls"),
+    ] {
         let converted = load_database(path.clone()).unwrap();
         assert_eq!(converted.id, original.id, "{path:?}");
         assert_eq!(converted.root, original.root, "{path:?}");
-        let map = converted.kmers_map.unwrap();
+        let map = converted.index.unwrap().thaw().unwrap();
         assert_eq!(map.get_kmer_size(), original_map.get_kmer_size());
         assert_eq!(map.get_map().len(), original_map.get_map().len());
     }
+
+    // The binary database `build-db` wrote and its conversion are identical,
+    // and so is the binary conversion of a legacy copy (FMT-04).
+    assert_eq!(
+        std::fs::read(&db).unwrap(),
+        std::fs::read(dir.path().join("as-binary.cls")).unwrap()
+    );
+    convert_db(
+        &dir.path().join("as-zstd.cls"),
+        &dir.path().join("zstd-to-binary"),
+        "binary",
+        false,
+    );
+    assert_eq!(
+        std::fs::read(&db).unwrap(),
+        std::fs::read(dir.path().join("zstd-to-binary.cls")).unwrap()
+    );
 
     let json: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(dir.path().join("as-json.cls.json")).unwrap(),
@@ -252,6 +275,15 @@ fn convert_database_only_tree_writes_root_clade_in_all_formats() {
     assert_eq!(from_zstd, original.root);
 
     assert!(load_database(dir.path().join("t.cls.yaml")).is_err());
+
+    cls()
+        .args(["convert", "database", "-t", "-f", "binary", "-d"])
+        .arg(&db)
+        .arg("-o")
+        .arg(dir.path().join("t-binary"))
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--only-tree"));
 }
 
 #[test]

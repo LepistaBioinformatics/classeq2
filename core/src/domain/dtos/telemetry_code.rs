@@ -61,11 +61,11 @@ pub(crate) enum TelemetryCode {
     ///
     UCPLACE0011,
     //
-    /// A one-vs-rest clade proposal set was built
+    /// The children of the current clade were scored
     ///
     UCPLACE0012,
     //
-    /// A one-vs-rest placement statistics was calculated
+    /// A child clade was compared with its strongest sibling
     ///
     UCPLACE0013,
     //
@@ -73,8 +73,8 @@ pub(crate) enum TelemetryCode {
     ///
     UCPLACE0014,
     //
-    /// If empty clade proposal set was reached the `MaxResolutionReached` state
-    /// is triggered
+    /// No child carries evidence for the query, so the `MaxResolutionReached`
+    /// state is triggered
     ///
     UCPLACE0015,
     //
@@ -92,9 +92,8 @@ pub(crate) enum TelemetryCode {
     ///
     UCPLACE0018,
     //
-    /// If multiple clade proposal set was reached, and the algorithm was unable
-    /// to filter proposals to a conclusive one, the `Inconclusive` state is
-    /// triggered
+    /// Several children tie for the best score: the `Inconclusive` state is
+    /// triggered, or `Unclassifiable` when the tie is at the root
     ///
     UCPLACE0019,
     // ? -----------------------------------------------------------------------

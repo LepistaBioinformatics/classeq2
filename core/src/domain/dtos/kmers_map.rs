@@ -1,4 +1,5 @@
 use mur3::murmurhash3_x64_128;
+#[cfg(test)]
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -34,6 +35,7 @@ impl MinimizerValue {
         true
     }
 
+    #[cfg(test)]
     fn get_hashed_kmers_with_node(&self, node: u64) -> Option<HashSet<u64>> {
         match self
             .0
@@ -52,6 +54,7 @@ impl MinimizerValue {
         }
     }
 
+    #[cfg(test)]
     fn get_overlapping_hashed_kmers(&self, kmers: &HashSet<u64>) -> Self {
         let mut map = MinimizerValue::new();
 
@@ -69,6 +72,7 @@ impl MinimizerValue {
         map
     }
 
+    #[cfg(test)]
     fn get(&self, kmer: u64) -> Option<&HashSet<u64>> {
         self.0.get(&kmer)
     }
@@ -96,6 +100,19 @@ impl KmersMap {
             k_size,
             m_size,
             map: HashMap::new(),
+        }
+    }
+
+    /// Rebuild a map from its parts (`KmerIndex::thaw`).
+    pub(crate) fn from_parts(
+        k_size: u64,
+        m_size: u64,
+        map: HashMap<MinimizerKey, MinimizerValue>,
+    ) -> Self {
+        KmersMap {
+            k_size,
+            m_size,
+            map,
         }
     }
 
@@ -186,6 +203,7 @@ impl KmersMap {
     /// assert_eq!(kmers, None);
     /// ```
     ///
+    #[cfg(test)]
     pub(crate) fn get_hashed_kmers_with_node(
         &self,
         node: u64,
@@ -208,6 +226,7 @@ impl KmersMap {
     /// is used to get all kmers that contain a given clade during the
     /// prediction process.
     ///
+    #[cfg(test)]
     pub(crate) fn get_minimized_hashes_with_node(
         &self,
         node: u64,
@@ -235,6 +254,7 @@ impl KmersMap {
     ///
     /// TODO: This method is not used and should be removed.
     ///
+    #[cfg(test)]
     #[allow(dead_code)]
     pub(crate) fn get_overlapping_hashes(
         &self,
@@ -270,6 +290,7 @@ impl KmersMap {
     /// Returns a new KmersMap with only the kmers that are present in the given
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
+    #[cfg(test)]
     pub(crate) fn get_overlapping_hashed_kmers(
         &self,
         hashed_kmers: Vec<(String, u64)>,
@@ -315,6 +336,7 @@ impl KmersMap {
     /// Returns a new KmersMap with only the kmers that are present in the given
     /// set. This method is used to filter the kmers map by a set of kmers.
     ///
+    #[cfg(test)]
     pub(crate) fn get_overlapping_minimized_hashes(
         &self,
         hashed_kmers: HashMap<&MinimizerKey, HashSet<u64>>,

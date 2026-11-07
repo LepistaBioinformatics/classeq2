@@ -1,12 +1,12 @@
 use crate::dtos::output_format::DatabaseOutputFormat;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::{ArgAction, Parser};
 use classeq_core::domain::dtos::{
     kmers_map::KmersMap, output_format::OutputFormat, tree::Tree,
 };
 use classeq_ports_lib::load_database;
-use std::{fs::File, path::PathBuf};
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Arguments {
@@ -29,7 +29,8 @@ pub(crate) enum Commands {
 
     /// Convert Classeq database
     ///
-    /// Convert a Classeq database between yaml and binary formats. This is util
+    /// Convert a Classeq database between the binary, zstd, yaml and json
+    /// formats.
     Database(DatabaseArguments),
 }
 
@@ -142,7 +143,19 @@ pub(crate) struct DatabaseArguments {
 }
 
 pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
-    let tree_content = load_database(args.database_file_path)?;
+    let mut tree_content = load_database(args.database_file_path)?;
+    let only_tree = args.only_tree.unwrap_or(false);
+
+    //
+    // The text formats carry the k-mers as a `KmersMap`: rebuild it from the
+    // index the loader froze.
+    //
+    if !only_tree && !matches!(args.out_format, DatabaseOutputFormat::Binary) {
+        if let Some(index) = tree_content.index.take() {
+            tree_content.kmers_map = Some(index.thaw()?);
+        }
+    }
+
     let mut output_file_path = args
         .output_file_path
         .unwrap_or_else(|| PathBuf::from("classeq-database"));
@@ -156,7 +169,7 @@ pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
             let writer = File::create(output_file_path)?;
             let mut writer = zstd::Encoder::new(writer, 0)?.auto_finish();
 
-            if args.only_tree.unwrap_or(false) {
+            if only_tree {
                 serde_saphyr::to_io_writer(&mut writer, &tree_content.root)?;
             } else {
                 serde_saphyr::to_io_writer(&mut writer, &tree_content)?;
@@ -166,17 +179,35 @@ pub(crate) fn convert_database_cmd(args: DatabaseArguments) -> Result<()> {
             output_file_path.set_extension("cls.yaml");
             let mut writer = File::create(output_file_path)?;
 
-            if args.only_tree.unwrap_or(false) {
+            if only_tree {
                 serde_saphyr::to_io_writer(&mut writer, &tree_content.root)?;
             } else {
                 serde_saphyr::to_io_writer(&mut writer, &tree_content)?;
             };
         }
+        DatabaseOutputFormat::Binary => {
+            if only_tree {
+                return Err(anyhow!(
+                    "--only-tree is not supported by the binary format"
+                ));
+            }
+
+            let index = tree_content
+                .index
+                .as_ref()
+                .ok_or_else(|| anyhow!("The database does not have k-mers."))?;
+
+            output_file_path.set_extension("cls");
+            index.write(
+                &tree_content,
+                BufWriter::new(File::create(output_file_path)?),
+            )?;
+        }
         DatabaseOutputFormat::Json => {
             output_file_path.set_extension("cls.json");
             let writer = File::create(output_file_path)?;
 
-            if args.only_tree.unwrap_or(false) {
+            if only_tree {
                 serde_json::to_writer_pretty(writer, &tree_content.root)?;
             } else {
                 serde_json::to_writer_pretty(writer, &tree_content)?;
