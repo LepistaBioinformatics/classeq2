@@ -169,7 +169,7 @@ fn build_indexes_all_records_including_first_and_last() {
 }
 
 #[test]
-fn build_strips_gaps_lowercase_and_non_acgt_before_kmer_extraction() {
+fn build_strips_gaps_and_lowercase_and_breaks_kmers_at_n() {
     let topology = synth::default_topology();
     let newick = synth::write_newick(&topology);
     let records = synth::evolve(&topology, L, 4);
@@ -182,8 +182,8 @@ fn build_strips_gaps_lowercase_and_non_acgt_before_kmer_extraction() {
         None,
     );
 
-    // Inserting an `N` and stripping it joins its neighbours back into the
-    // original sequence, so the map must equal the clean one.
+    // BUG-045: an `N` breaks the k-mers that would span it. The map then
+    // holds a strict subset of the clean one, with no new k-mer.
     let dirty_records: Vec<(String, String)> = records
         .iter()
         .map(|(name, seq)| {
@@ -201,7 +201,48 @@ fn build_strips_gaps_lowercase_and_non_acgt_before_kmer_extraction() {
         None,
     );
 
-    assert_eq!(canonical(&dirty), canonical(&clean));
+    let (dirty, clean) = (canonical(&dirty), canonical(&clean));
+    let count = |map: &BTreeMap<u64, BTreeMap<u64, BTreeSet<u64>>>| {
+        map.values().map(|bucket| bucket.len()).sum::<usize>()
+    };
+
+    assert!(count(&dirty) < count(&clean));
+
+    for (key, bucket) in &dirty {
+        for (hash, nodes) in bucket {
+            assert!(nodes.is_subset(&clean[key][hash]));
+        }
+    }
+}
+
+/// BUG-045: RNA input (`U`) builds the same database as its DNA form.
+#[test]
+fn build_reads_u_as_t() {
+    let topology = synth::default_topology();
+    let newick = synth::write_newick(&topology);
+    let records = synth::evolve(&topology, L, 4);
+
+    let rna_records: Vec<(String, String)> = records
+        .iter()
+        .map(|(name, seq)| (name.clone(), seq.replace('T', "U")))
+        .collect();
+
+    let dna = build(
+        &newick,
+        &synth::write_fasta(&records, 60, false, false),
+        Some(K),
+        Some(4),
+        None,
+    );
+    let rna = build(
+        &newick,
+        &synth::write_fasta(&rna_records, 60, false, false),
+        Some(K),
+        Some(4),
+        None,
+    );
+
+    assert_eq!(canonical(&rna), canonical(&dna));
 }
 
 #[test]

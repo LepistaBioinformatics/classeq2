@@ -42,15 +42,21 @@ impl SequenceBody {
 
     /// Remove non-IUPAC characters from a sequence
     ///
-    /// Returns a string with only IUPAC characters. This method is used to
-    /// remove non-IUPAC characters from a given sequence.
+    /// Returns the sequence in upper case with only `A`, `C`, `G`, `T` and
+    /// `N`. RNA `U` reads as `T`. Every IUPAC ambiguity code becomes `N`,
+    /// which stays in place so that no k-mer joins its neighbours: the k-mer
+    /// builders skip the windows that hold an `N`. Gaps and any other
+    /// character are removed.
     pub fn remove_non_iupac_from_sequence(sequence: &str) -> String {
         sequence
             .to_uppercase()
             .chars()
-            .filter(|c| match c {
-                'A' | 'C' | 'G' | 'T' => true,
-                _ => false,
+            .filter_map(|c| match c {
+                'A' | 'C' | 'G' | 'T' => Some(c),
+                'U' => Some('T'),
+                'N' | 'R' | 'Y' | 'K' | 'M' | 'S' | 'W' | 'B' | 'D' | 'H'
+                | 'V' => Some('N'),
+                _ => None,
             })
             .collect()
     }

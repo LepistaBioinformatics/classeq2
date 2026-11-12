@@ -1,5 +1,8 @@
 use self::PlacementStatus::*;
-use super::{adherence_test::AdherenceTest, annotation::Annotation};
+use super::{
+    adherence_test::AdherenceTest, annotation::Annotation,
+    evidence_rule::PlacementScores,
+};
 
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
@@ -122,6 +125,10 @@ pub struct PlacementResponse<T> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     placement: Option<T>,
+
+    /// Reported with the evidence rule only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    scores: Option<PlacementScores>,
 }
 
 impl<T> PlacementResponse<T> {
@@ -131,7 +138,13 @@ impl<T> PlacementResponse<T> {
             code,
             annotations: None,
             placement,
+            scores: None,
         }
+    }
+
+    pub fn with_scores(mut self, scores: Option<PlacementScores>) -> Self {
+        self.scores = scores;
+        self
     }
 
     pub fn with_annotation(

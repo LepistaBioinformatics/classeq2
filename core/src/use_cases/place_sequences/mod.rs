@@ -9,6 +9,7 @@ use place_sequence::*;
 use crate::domain::dtos::{
     annotation::Annotation,
     clade::Clade,
+    evidence_rule::EvidenceRule,
     file_or_stdin::FileOrStdin,
     kmer_index::KmerIndex,
     output_format::OutputFormat,
@@ -53,6 +54,7 @@ pub fn place_sequences(
     overwrite: &bool,
     output_format: &OutputFormat,
     remove_intersection: &Option<bool>,
+    evidence_rule: &Option<EvidenceRule>,
     parent_span: &Option<&tracing::Span>,
 ) -> Result<Vec<PlacementTime>, MappedErrors> {
     // ? -----------------------------------------------------------------------
@@ -175,12 +177,13 @@ pub fn place_sequences(
                     max_iterations,
                     min_match_coverage,
                     remove_intersection,
+                    evidence_rule,
                     parent_span,
                 ) {
                     Err(err) => {
                         write_record(&error_file, format!("{header}\t{err}\n"));
                     }
-                    Ok(placement) => {
+                    Ok((placement, scores)) => {
                         let mut output = PlacementResponse::new(
                             sequence.header_content().to_string(),
                             placement.to_string(),
@@ -188,7 +191,8 @@ pub fn place_sequences(
                                 PlacementStatus::Unclassifiable(_) => None,
                                 other => Some(other),
                             },
-                        );
+                        )
+                        .with_scores(scores);
 
                         if let (Some(annotations), Some(parents)) =
                             (annotations, &parents)

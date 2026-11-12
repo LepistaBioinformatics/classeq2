@@ -5,6 +5,7 @@ use clap::{ArgAction, Parser};
 use classeq_core::{
     domain::dtos::{
         annotation::Annotation,
+        evidence_rule::EvidenceRule,
         file_or_stdin::{FileOrStdin, Source},
         output_format::OutputFormat,
     },
@@ -55,7 +56,11 @@ pub(crate) struct Arguments {
 
     /// Minimum match coverage
     ///
-    /// The minimum match coverage between the query and the database sequences.
+    /// The minimum match coverage between the query and the database
+    /// sequences. Without a value, a database built with calibration (cls
+    /// 0.12 or later) sets it from its own leaves: a quarter of the lowest share of
+    /// a leaf's k-mers that the rest of the tree holds. Older databases use
+    /// 0.7.
     #[arg(short, long)]
     pub(super) match_coverage: Option<f64>,
 
@@ -65,6 +70,39 @@ pub(crate) struct Arguments {
     /// siblings share. Otherwise, by all query kmers indexed under the clade.
     #[arg(short, long, action=ArgAction::SetTrue)]
     pub(super) remove_intersection: Option<bool>,
+
+    /// Evidence rule
+    ///
+    /// Descend into a clade only when the query holds k-mers specific to it
+    /// (indexed under it, under none of its siblings and under no clade left
+    /// behind on the way from the root), and clearly more of them than any
+    /// sibling holds. Otherwise the placement stops at the parent clade. It
+    /// keeps queries from lineages missing from the reference out of a
+    /// sibling's clade. Each record then carries a `scores` field.
+    #[arg(short, long, action=ArgAction::SetTrue)]
+    pub(super) evidence_rule: bool,
+
+    /// Minimum evidence (evidence rule)
+    ///
+    /// The fewest specific k-mers the chosen clade must hold.
+    #[arg(long, default_value = "2", requires = "evidence_rule")]
+    pub(super) min_evidence: u32,
+
+    /// Maximum rival ratio (evidence rule)
+    ///
+    /// The largest ratio allowed between the specific k-mers of the strongest
+    /// sibling and those of the chosen clade.
+    #[arg(long, default_value = "0.2", requires = "evidence_rule")]
+    pub(super) max_rival_ratio: f64,
+
+    /// Minimum containment ratio (evidence rule, calibrated databases)
+    ///
+    /// The descent enters the children of a clade only when the share of the
+    /// query's k-mers under that clade is at least this ratio of the lowest
+    /// share any of the clade's own leaves has with the rest of it. Zero
+    /// turns the test off.
+    #[arg(long, default_value = "0.25", requires = "evidence_rule")]
+    pub(super) min_containment_ratio: f64,
 
     /// Force overwrite
     ///
@@ -157,6 +195,11 @@ pub(crate) fn place_sequences_cmd(
             &args.force_overwrite,
             &args.out_format,
             &args.remove_intersection,
+            &args.evidence_rule.then_some(EvidenceRule {
+                min_evidence: args.min_evidence,
+                max_rival_ratio: args.max_rival_ratio,
+                min_containment_ratio: args.min_containment_ratio,
+            }),
             &Some(&span),
         ) {
             Ok(buffer) => buffer,

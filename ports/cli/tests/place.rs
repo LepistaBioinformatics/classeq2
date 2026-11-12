@@ -88,6 +88,55 @@ fn place_writes_jsonl_lines() {
     assert_placed_results(&read_jsonl_results(&path), &s.queries);
 }
 
+/// 009-evidence-placement: `--evidence-rule` adds a `scores` object to every
+/// placed record, and the default rule writes none.
+#[test]
+fn place_with_evidence_rule_reports_scores() {
+    let s = setup(13);
+    let out = s.dir.path().join("out");
+
+    place(&s.db, &out)
+        .arg(&s.query_path)
+        .args(["--out-format", "jsonl", "--evidence-rule"])
+        .assert()
+        .success();
+
+    let results = read_jsonl_results(&s.dir.path().join("out.jsonl"));
+    assert_placed_results(&results, &s.queries);
+
+    for result in results.values() {
+        let scores = &result["scores"];
+        let coverage = scores["coverage"].as_f64().unwrap();
+        assert!(coverage > 0.0 && coverage <= 1.0, "{result}");
+        assert!(scores["evidence"].as_u64().unwrap() >= 2, "{result}");
+        assert!(scores["rival"].is_u64(), "{result}");
+    }
+
+    place(&s.db, &out)
+        .arg(&s.query_path)
+        .args(["--out-format", "jsonl", "-f"])
+        .assert()
+        .success();
+
+    for result in read_jsonl_results(&s.dir.path().join("out.jsonl")).values()
+    {
+        assert!(result.get("scores").is_none(), "{result}");
+    }
+}
+
+#[test]
+fn place_evidence_options_need_the_evidence_rule() {
+    let s = setup(14);
+    let out = s.dir.path().join("out");
+
+    place(&s.db, &out)
+        .arg(&s.query_path)
+        .args(["--min-evidence", "5"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--evidence-rule"));
+}
+
 #[test]
 fn place_reads_query_from_stdin_by_default() {
     let s = setup(13);

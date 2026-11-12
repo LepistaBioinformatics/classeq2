@@ -256,10 +256,7 @@ impl KmersMap {
     ///
     #[cfg(test)]
     #[allow(dead_code)]
-    pub(crate) fn get_overlapping_hashes(
-        &self,
-        hashes: &HashSet<u64>,
-    ) -> Self {
+    pub(crate) fn get_overlapping_hashes(&self, hashes: &HashSet<u64>) -> Self {
         let mut map = Self::new(self.k_size, self.m_size);
 
         map.map = self
@@ -434,6 +431,11 @@ impl KmersMap {
         let size = size as usize;
 
         for i in 0..sequence.len() - size + 1 {
+            // A window holding an `N` gives no k-mer
+            if sequence[i..i + size].contains(&b'N') {
+                continue;
+            }
+
             let kmer = match String::from_utf8(sequence[i..i + size].to_vec()) {
                 Ok(kmer) => kmer,
                 Err(_) => panic!("Invalid character in sequence"),
@@ -459,6 +461,7 @@ impl KmersMap {
                 't' | 'T' => 'A',
                 'c' | 'C' => 'G',
                 'g' | 'G' => 'C',
+                'n' | 'N' => 'N',
                 _ => panic!("Invalid character in sequence"),
             })
             .collect()
@@ -597,8 +600,26 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Invalid character in sequence")]
-    fn reverse_complement_panics_on_non_acgt() {
-        KmersMap::reverse_complement("ACGN".into());
+    fn reverse_complement_panics_on_non_acgtn() {
+        KmersMap::reverse_complement("ACG-".into());
+    }
+
+    /// BUG-045: `N` survives the reverse complement and breaks the k-mers.
+    #[test]
+    fn build_kmer_from_string_skips_windows_with_n() {
+        assert_eq!(KmersMap::reverse_complement("ACGN".into()), "NCGT");
+
+        let map = KmersMap::new(3, 0);
+        let kmers = map
+            .build_kmer_from_string("ACGTNACGT".into(), None)
+            .into_iter()
+            .map(|(kmer, _)| kmer)
+            .collect::<Vec<String>>();
+
+        assert_eq!(
+            kmers,
+            ["ACG", "CGT", "ACG", "CGT", "ACG", "CGT", "ACG", "CGT"]
+        );
     }
 
     // ? KMER-03 ---------------------------------------------------------------

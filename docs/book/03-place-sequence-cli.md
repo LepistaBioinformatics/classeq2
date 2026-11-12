@@ -116,6 +116,67 @@ query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'Unclassifiable: Query sequence has no overlapping kmers with the reference tree'
 ```
 
+## 3.3 The evidence rule
+
+By default the descent follows the child with the most query k-mers, by any
+margin. A query from a lineage that the reference lacks then ends inside a
+sibling's clade, for example in a sister species.
+
+With `--evidence-rule` (`-e`), the descent enters a child only on k-mers
+specific to it: indexed under that child, under none of its siblings, and under
+no clade left behind on the way from the root. The child must hold at least
+`--min-evidence` of them (default 2), and its strongest sibling at most
+`--max-rival-ratio` times as many (default 0.2; lower is stricter). Otherwise
+the placement stops at the current clade with `MaxResolutionReached`. A tie
+never happens, so no record is `Inconclusive`.
+
+Each placed record then carries a `scores` object:
+
+```yaml
+---
+query: NC_000964_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: Evidence below threshold'
+placement:
+  status: MaxResolutionReached
+  clade: 149
+  message: Evidence below threshold
+scores:
+  # Share of the query's distinct k-mers indexed under the placed clade
+  coverage: 0.14
+  # Specific k-mers of the last clade the descent entered, and of that
+  # clade's strongest sibling
+  evidence: 16
+  rival: 0
+```
+
+For `IdentityFound`, `one` and `rest` hold the same two counts as `evidence`
+and `rival`.
+
+## 3.4 Calibrated databases
+
+`cls build-db` measures two things on the reference and stores them in the
+database:
+
+- the mean number of distinct k-mers of a leaf;
+- for every internal clade, the lowest share of a leaf's k-mers that the rest
+  of the clade also holds, over the clade's leaves (its containment).
+
+Placement uses them as follows.
+
+- **Coverage of long queries.** A query with more k-mers than a typical leaf,
+  such as a genome placed on a database of genes, has its coverage measured
+  against the leaf's count instead of its own. A query that covers only part
+  of the reference loci, such as one scaffold, is underestimated.
+- **Default match coverage.** Without `-m`, the threshold is a quarter of the
+  root's containment: a query passes when it shares with the tree at least a
+  quarter of what the tree's most distant leaf shares with it. Databases without calibration
+  keep the 0.7 default.
+- **Novelty test of the evidence rule.** The descent enters the children of a
+  clade only when the query's coverage under that clade reaches
+  `--min-containment-ratio` (default 0.25) times the clade's containment.
+  Otherwise the query is taken to sit outside the clade's crown, and the
+  placement stops at the clade.
+
 ---
 
 [◀️ Prev | Build Classeq Database](/docs/book/02-build-db.md)
