@@ -491,6 +491,7 @@ fn do_placement(
         &true,
         &cls_config.output_format,
         &cls_config.remove_intersection,
+        &None,
         &Some(span),
     ) {
         let msg = format!(

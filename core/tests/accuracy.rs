@@ -1,7 +1,10 @@
 mod common;
 
 use classeq_core::{
-    domain::dtos::{file_or_stdin::FileOrStdin, output_format::OutputFormat},
+    domain::dtos::{
+        evidence_rule::EvidenceRule, file_or_stdin::FileOrStdin,
+        output_format::OutputFormat,
+    },
     use_cases::{map_kmers_to_tree, place_sequences},
 };
 use common::{synth, write_inputs};
@@ -125,7 +128,12 @@ fn mixed_topology() -> synth::Topology {
     )
 }
 
-fn run_seed(topology: &synth::Topology, seed: u64, tally: &mut Tally) {
+fn run_seed(
+    topology: &synth::Topology,
+    seed: u64,
+    rule: Option<EvidenceRule>,
+    tally: &mut Tally,
+) {
     let dir = TempDir::new().unwrap();
     let records = synth::evolve(topology, L, seed);
     let (tree_path, msa_path) = write_inputs(
@@ -181,6 +189,7 @@ fn run_seed(topology: &synth::Topology, seed: u64, tally: &mut Tally) {
         &false,
         &OutputFormat::Jsonl,
         &None,
+        &rule,
         &None,
     )
     .unwrap();
@@ -230,7 +239,7 @@ fn accuracy_mutated_reads_are_placed_in_their_source_clade() {
     let mut tally = Tally::default();
 
     for seed in SEEDS {
-        run_seed(&synth::default_topology(), seed, &mut tally);
+        run_seed(&synth::default_topology(), seed, None, &mut tally);
     }
 
     let rate = report("ACC-01", &tally);
@@ -244,7 +253,7 @@ fn accuracy_reads_from_leaves_next_to_clades() {
     let mut tally = Tally::default();
 
     for seed in SEEDS {
-        run_seed(&mixed_topology(), seed, &mut tally);
+        run_seed(&mixed_topology(), seed, None, &mut tally);
     }
 
     let rate = report("ACC-02", &tally);
@@ -305,15 +314,16 @@ fn leave_out_topologies() -> (synth::Topology, synth::Topology) {
         None,
         0.0,
     );
-    let reference = synth::node(
-        vec![cherry("X", 0.025), cherry("W", 0.025)],
-        None,
-        0.0,
-    );
+    let reference =
+        synth::node(vec![cherry("X", 0.025), cherry("W", 0.025)], None, 0.0);
     (full, reference)
 }
 
-fn run_leave_out_seed(seed: u64, tally: &mut LeaveOutTally) {
+fn run_leave_out_seed(
+    seed: u64,
+    rule: Option<EvidenceRule>,
+    tally: &mut LeaveOutTally,
+) {
     let dir = TempDir::new().unwrap();
     let (full, reference) = leave_out_topologies();
     let records = synth::evolve(&full, L, seed);
@@ -367,6 +377,7 @@ fn run_leave_out_seed(seed: u64, tally: &mut LeaveOutTally) {
         &false,
         &OutputFormat::Jsonl,
         &None,
+        &rule,
         &None,
     )
     .unwrap();
@@ -412,7 +423,7 @@ fn accuracy_reads_from_taxa_missing_from_the_reference() {
     let mut tally = LeaveOutTally::default();
 
     for seed in SEEDS {
-        run_leave_out_seed(seed, &mut tally);
+        run_leave_out_seed(seed, None, &mut tally);
     }
 
     eprintln!("ACC-03: {tally:?}");
@@ -425,4 +436,58 @@ fn accuracy_reads_from_taxa_missing_from_the_reference() {
         + tally.unplaced;
     assert_eq!(total, SEEDS.len() * 2 * READS_PER_LEAF * 4);
     assert_eq!(tally.wrong, 0, "{tally:?}");
+}
+
+// ? ---------------------------------------------------------------------------
+// ? ACC-04 and ACC-05: the evidence rule (009-evidence-placement)
+// ? ---------------------------------------------------------------------------
+
+/// With the evidence rule, fewer reads from a taxon missing from the
+/// reference end at a leaf of the cherry next to it, none ends in a tie, and
+/// none leaves the cherry. A 250-base read that crosses a private
+/// substitution of only one of the two leaves still cannot be told from a
+/// read of the other leaf, so the rule does not remove every such placement.
+#[test]
+fn evidence_rule_keeps_reads_from_missing_taxa_out_of_sibling_leaves() {
+    let mut default_rule = LeaveOutTally::default();
+    let mut tally = LeaveOutTally::default();
+
+    for seed in SEEDS {
+        run_leave_out_seed(seed, None, &mut default_rule);
+        run_leave_out_seed(seed, Some(EvidenceRule::default()), &mut tally);
+    }
+
+    eprintln!("ACC-04: {tally:?}");
+
+    assert_eq!(tally.wrong, 0, "{tally:?}");
+    assert_eq!(tally.inconclusive, 0, "{tally:?}");
+    assert!(
+        tally.over_resolved * 4 <= default_rule.over_resolved * 3,
+        "{tally:?} against the default rule {default_rule:?}"
+    );
+    assert!(tally.cherry > default_rule.cherry, "{tally:?}");
+}
+
+/// With the evidence rule, reads from leaves of the reference are never
+/// placed off their source leaf's path, and most still reach the leaf or
+/// its parent clade.
+#[test]
+fn evidence_rule_places_reference_reads_on_their_path() {
+    for (label, topology, leaves) in [
+        ("ACC-05 default", synth::default_topology(), 8),
+        ("ACC-05 mixed", mixed_topology(), 6),
+    ] {
+        let mut tally = Tally::default();
+
+        for seed in SEEDS {
+            run_seed(&topology, seed, Some(EvidenceRule::default()), &mut tally);
+        }
+
+        let rate = report(label, &tally);
+
+        assert_eq!(tally.total(), SEEDS.len() * leaves * READS_PER_LEAF);
+        assert_eq!(tally.wrong, 0, "{tally:?}");
+        assert_eq!(tally.inconclusive, 0, "{tally:?}");
+        assert!(rate >= 0.9, "accuracy {rate:.4} below 0.9: {tally:?}");
+    }
 }

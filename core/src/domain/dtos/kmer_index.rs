@@ -78,6 +78,7 @@ fn reverse_complement(sequence: &str) -> String {
             't' | 'T' => 'A',
             'c' | 'C' => 'G',
             'g' | 'G' => 'C',
+            'n' | 'N' => 'N',
             _ => panic!("Invalid character in sequence"),
         })
         .collect()
@@ -103,7 +104,21 @@ pub fn query_kmers(
     let mut kmers = Vec::with_capacity(2 * (sequence.len() - k + 1));
 
     for strand in [forward.as_bytes(), reverse.as_bytes()] {
-        for window in strand.windows(k) {
+        // The windows from `clear_from` on hold no `N` (BUG-045)
+        let mut clear_from = strand[..k]
+            .iter()
+            .rposition(|base| *base == b'N')
+            .map_or(0, |position| position + 1);
+
+        for (start, window) in strand.windows(k).enumerate() {
+            if window[k - 1] == b'N' {
+                clear_from = start + k;
+            }
+
+            if start < clear_from {
+                continue;
+            }
+
             let key = if m_size == 0 {
                 0
             } else {
@@ -841,6 +856,11 @@ impl KmerIndex {
 /// The posting lists of the distinct query k-mers found in the index.
 pub struct MatchSet<'a> {
     lists: Vec<PostingList<'a>>,
+
+    /// Per match: it is also indexed under a clade that the descent left
+    /// behind (a sibling of a clade on the path from the root). Only
+    /// `descend` sets it.
+    outside: Vec<bool>,
 }
 
 impl<'a> MatchSet<'a> {
@@ -870,7 +890,9 @@ impl<'a> MatchSet<'a> {
             }
         }
 
-        Ok(MatchSet { lists })
+        let outside = vec![false; lists.len()];
+
+        Ok(MatchSet { lists, outside })
     }
 
     pub fn len(&self) -> usize {
@@ -883,7 +905,57 @@ impl<'a> MatchSet<'a> {
 
     /// Keep only the matches indexed under `node`.
     pub fn retain_containing(&mut self, node: u64) {
+        let mut keep = self.lists.iter().map(|list| list.contains(node));
+        self.outside.retain(|_| keep.next().unwrap());
         self.lists.retain(|list| list.contains(node));
+    }
+
+    /// The evidence for each child: the number of matches indexed under it,
+    /// under no sibling, and under no clade the descent left behind. Such a
+    /// k-mer is specific to the child within the whole reference, so it is
+    /// evidence that the query is nested in the child, not only attached
+    /// near it (009-evidence-placement).
+    pub fn evidence(&self, children: &[u64]) -> Vec<usize> {
+        let mut evidence = vec![0; children.len()];
+
+        for (list, outside) in self.lists.iter().zip(&self.outside) {
+            if *outside {
+                continue;
+            }
+
+            let mut hits =
+                (0..children.len()).filter(|c| list.contains(children[*c]));
+
+            if let (Some(child), None) = (hits.next(), hits.next()) {
+                evidence[child] += 1;
+            }
+        }
+
+        evidence
+    }
+
+    /// Descend into `children[chosen]`: keep the matches indexed under it,
+    /// and mark those also indexed under one of its siblings.
+    pub fn descend(&mut self, children: &[u64], chosen: usize) {
+        let mut lists = Vec::with_capacity(self.lists.len());
+        let mut outside = Vec::with_capacity(self.lists.len());
+
+        for (list, was_outside) in self.lists.iter().zip(&self.outside) {
+            if !list.contains(children[chosen]) {
+                continue;
+            }
+
+            let in_sibling = children
+                .iter()
+                .enumerate()
+                .any(|(i, child)| i != chosen && list.contains(*child));
+
+            lists.push(*list);
+            outside.push(*was_outside || in_sibling);
+        }
+
+        self.lists = lists;
+        self.outside = outside;
     }
 
     /// The score of each child: the number of matches indexed under it or,
@@ -1035,10 +1107,23 @@ mod tests {
         }
     }
 
+    /// BUG-045: a window holding an `N` gives no k-mer, on either strand.
+    #[test]
+    fn query_kmers_skip_windows_with_n() {
+        let mut broken = query_kmers("ACGTNACGT", 3, 1);
+        let mut halves = query_kmers("ACGT", 3, 1);
+        halves.extend(query_kmers("ACGT", 3, 1));
+        broken.sort_unstable();
+        halves.sort_unstable();
+
+        assert_eq!(broken, halves);
+        assert!(query_kmers("ACNGT", 3, 1).is_empty());
+    }
+
     #[test]
     #[should_panic(expected = "Invalid character in sequence")]
-    fn query_kmers_panic_on_non_acgt() {
-        query_kmers("ACGTNACGT", 3, 1);
+    fn query_kmers_panic_on_other_characters() {
+        query_kmers("ACGT-ACGT", 3, 1);
     }
 
     // ? -----------------------------------------------------------------------

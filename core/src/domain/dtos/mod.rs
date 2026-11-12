@@ -1,6 +1,7 @@
 pub mod adherence_test;
 pub mod annotation;
 pub mod clade;
+pub mod evidence_rule;
 pub mod file_or_stdin;
 pub mod kmer_index;
 pub mod kmers_map;

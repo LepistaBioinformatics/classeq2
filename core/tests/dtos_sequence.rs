@@ -38,10 +38,12 @@ fn records(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
 // ? SEQ-01 --------------------------------------------------------------------
 
 #[test]
-fn remove_non_iupac_upper_cases_and_keeps_only_acgt() {
+fn remove_non_iupac_upper_cases_maps_u_and_keeps_ambiguity_as_n() {
+    // BUG-045: ambiguity codes stay as `N`, so no k-mer joins their
+    // neighbours, and RNA `U` reads as `T`. Gaps and other characters go.
     assert_eq!(
         SequenceBody::remove_non_iupac_from_sequence("acgt-NNryACGT.\r 12*u"),
-        "ACGTACGT"
+        "ACGTNNNNACGTT"
     );
     assert_eq!(SequenceBody::remove_non_iupac_from_sequence(""), "");
     assert_eq!(SequenceBody::remove_non_iupac_from_sequence("---"), "");

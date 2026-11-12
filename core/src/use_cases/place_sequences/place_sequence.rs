@@ -5,6 +5,7 @@ use super::{
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
     clade::Clade,
+    evidence_rule::{EvidenceRule, PlacementScores},
     kmer_index::{KmerIndex, MatchSet},
     placement_response::PlacementStatus::{self, *},
     sequence::{SequenceBody, SequenceHeader},
@@ -44,8 +45,9 @@ pub(super) fn place_sequence(
     max_iterations: &Option<i32>,
     min_match_coverage: &Option<f64>,
     remove_intersection: &Option<bool>,
+    evidence_rule: &Option<EvidenceRule>,
     parent_span: &Option<&tracing::Span>,
-) -> Result<PlacementStatus, MappedErrors> {
+) -> Result<(PlacementStatus, Option<PlacementScores>), MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Configure the logging span
     // ? -----------------------------------------------------------------------
@@ -134,7 +136,7 @@ pub(super) fn place_sequence(
 
         debug!(code = TelemetryCode::UCPLACE0006.to_string(), msg);
 
-        return Ok(Unclassifiable(msg));
+        return Ok((Unclassifiable(msg), None));
     }
 
     trace!(
@@ -158,7 +160,7 @@ pub(super) fn place_sequence(
         let msg = "Query sequence has no overlapping kmers with the \
             reference tree";
         trace!(code = TelemetryCode::UCPLACE0007.to_string(), msg);
-        return Ok(Unclassifiable(msg.to_string()));
+        return Ok((Unclassifiable(msg.to_string()), None));
     }
 
     Span::current()
@@ -194,6 +196,9 @@ pub(super) fn place_sequence(
     };
 
     let mut iteration = 0;
+
+    // The evidence and rival of the last child the evidence rule entered.
+    let mut last_evidence = (0u32, 0u32);
 
     // ? -----------------------------------------------------------------------
     // ? Set the initial parent
@@ -234,7 +239,7 @@ pub(super) fn place_sequence(
 
         trace!(code = TelemetryCode::UCPLACE0008.to_string(), msg);
 
-        return Ok(Unclassifiable(msg));
+        return Ok((Unclassifiable(msg), None));
     }
 
     // ? -----------------------------------------------------------------------
@@ -282,6 +287,96 @@ pub(super) fn place_sequence(
             )
             .with_code(TelemetryCode::UCPLACE0010.to_string().as_str())
             .as_error();
+        }
+
+        // ? -------------------------------------------------------------------
+        // ? Evidence rule (009-evidence-placement)
+        //
+        // Descend only into a child that holds k-mers specific to it, and
+        // clearly more of them than any sibling. Otherwise stop at the
+        // current clade.
+        //
+        // ? -------------------------------------------------------------------
+        if let Some(rule) = evidence_rule {
+            let child_ids =
+                children.iter().map(|child| child.id).collect::<Vec<u64>>();
+
+            let evidence = matches.evidence(&child_ids);
+
+            let (chosen, best) = evidence
+                .iter()
+                .copied()
+                .enumerate()
+                .max_by_key(|(_, value)| *value)
+                .unwrap_or((0, 0));
+
+            let rival = evidence
+                .iter()
+                .enumerate()
+                .filter(|(index, _)| *index != chosen)
+                .map(|(_, value)| *value)
+                .max()
+                .unwrap_or(0);
+
+            trace!(
+                code = TelemetryCode::UCPLACE0013.to_string(),
+                "Clade {id}: evidence {best} vs strongest sibling {rival}",
+                id = children.get(chosen).map(|c| c.id).unwrap_or(parent.id),
+            );
+
+            let decisive = best >= rule.min_evidence as usize
+                && best > 0
+                && rival as f64 <= rule.max_rival_ratio * best as f64;
+
+            if !decisive {
+                if iteration == 1 {
+                    let msg = format!(
+                        "No decisive evidence among the root children: \
+                        best {best}, strongest sibling {rival}"
+                    );
+                    trace!(code = TelemetryCode::UCPLACE0019.to_string(), msg);
+                    return Ok((Unclassifiable(msg), None));
+                }
+
+                return Ok((
+                    MaxResolutionReached(
+                        parent.id,
+                        "Evidence below threshold".to_string(),
+                    ),
+                    Some(PlacementScores {
+                        coverage: matches.len() as f64
+                            / query_distinct_kmers as f64,
+                        evidence: last_evidence.0,
+                        rival: last_evidence.1,
+                    }),
+                ));
+            }
+
+            matches.descend(&child_ids, chosen);
+            last_evidence = (best as u32, rival as u32);
+
+            (parent, children) = match update_introspection_node(
+                &children[chosen],
+                best as i32,
+                rival as i32,
+            ) {
+                Return(status) => {
+                    return Ok((
+                        status,
+                        Some(PlacementScores {
+                            coverage: matches.len() as f64
+                                / query_distinct_kmers as f64,
+                            evidence: last_evidence.0,
+                            rival: last_evidence.1,
+                        }),
+                    ))
+                }
+                Continue(new_parent, new_children) => {
+                    (new_parent, new_children)
+                }
+            };
+
+            continue;
         }
 
         // ? -------------------------------------------------------------------
@@ -365,7 +460,7 @@ pub(super) fn place_sequence(
                     sequence has no overlapping kmers with the reference \
                     tree";
                 trace!(code = TelemetryCode::UCPLACE0011.to_string(), msg);
-                return Ok(Unclassifiable(msg.to_string()));
+                return Ok((Unclassifiable(msg.to_string()), None));
             }
 
             trace!(
@@ -374,9 +469,9 @@ pub(super) fn place_sequence(
                 clade_id = parent.id
             );
 
-            return Ok(MaxResolutionReached(
-                parent.id,
-                "LCA Accepted".to_string(),
+            return Ok((
+                MaxResolutionReached(parent.id, "LCA Accepted".to_string()),
+                None,
             ));
         }
 
@@ -390,7 +485,7 @@ pub(super) fn place_sequence(
             //
             (parent, children) =
                 match update_introspection_node(clade, one, rest) {
-                    Return(status) => return Ok(status),
+                    Return(status) => return Ok((status, None)),
                     Continue(new_parent, new_children) => {
                         (new_parent, new_children)
                     }
@@ -418,7 +513,7 @@ pub(super) fn place_sequence(
                 kmers each"
             );
             trace!(code = TelemetryCode::UCPLACE0019.to_string(), msg);
-            return Ok(Unclassifiable(msg));
+            return Ok((Unclassifiable(msg), None));
         }
 
         //
@@ -430,16 +525,19 @@ pub(super) fn place_sequence(
             parent = parent.id
         );
 
-        return Ok(Inconclusive(
-            winners
-                .into_iter()
-                .map(|(clade, one, rest)| AdherenceTest {
-                    clade: UntaggedParent::Id(clade.id),
-                    one,
-                    rest,
-                })
-                .collect(),
-            "Multiple proposals".to_string(),
+        return Ok((
+            Inconclusive(
+                winners
+                    .into_iter()
+                    .map(|(clade, one, rest)| AdherenceTest {
+                        clade: UntaggedParent::Id(clade.id),
+                        one,
+                        rest,
+                    })
+                    .collect(),
+                "Multiple proposals".to_string(),
+            ),
+            None,
         ));
     }
 }
@@ -499,7 +597,9 @@ mod tests {
             &coverage,
             &remove_intersection,
             &None,
+            &None,
         )
+        .map(|(status, _)| status)
     }
 
     fn leaf_id(tree: &Tree, name: &str) -> u64 {

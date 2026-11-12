@@ -70,6 +70,7 @@ fn placement(c: &mut Criterion) {
                         &OutputFormat::Jsonl,
                         &Some(remove_intersection),
                         &None,
+                        &None,
                     )
                     .unwrap()
                 })

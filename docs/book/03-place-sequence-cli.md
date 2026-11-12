@@ -116,6 +116,42 @@ query: NC_000964_Bacillus_subtilis_subsp_subtilis
 code: 'Unclassifiable: Query sequence has no overlapping kmers with the reference tree'
 ```
 
+## 3.3 The evidence rule
+
+By default the descent follows the child with the most query k-mers, by any
+margin. A query from a lineage that the reference lacks then ends inside a
+sibling's clade, for example in a sister species.
+
+With `--evidence-rule` (`-e`), the descent enters a child only on k-mers
+specific to it: indexed under that child, under none of its siblings, and under
+no clade left behind on the way from the root. The child must hold at least
+`--min-evidence` of them (default 2), and its strongest sibling at most
+`--max-rival-ratio` times as many (default 0.5; lower is stricter). Otherwise
+the placement stops at the current clade with `MaxResolutionReached`. A tie
+never happens, so no record is `Inconclusive`.
+
+Each placed record then carries a `scores` object:
+
+```yaml
+---
+query: NC_000964_Bacillus_subtilis_subsp_subtilis
+code: 'MaxResolutionReached: Evidence below threshold'
+placement:
+  status: MaxResolutionReached
+  clade: 149
+  message: Evidence below threshold
+scores:
+  # Share of the query's distinct k-mers indexed under the placed clade
+  coverage: 0.14
+  # Specific k-mers of the last clade the descent entered, and of that
+  # clade's strongest sibling
+  evidence: 16
+  rival: 0
+```
+
+For `IdentityFound`, `one` and `rest` hold the same two counts as `evidence`
+and `rival`.
+
 ---
 
 [◀️ Prev | Build Classeq Database](/docs/book/02-build-db.md)
