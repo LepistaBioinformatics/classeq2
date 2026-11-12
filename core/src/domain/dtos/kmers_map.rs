@@ -116,6 +116,56 @@ impl KmersMap {
         }
     }
 
+    /// The bucket key of a k-mer: the hash of its first `m_size` characters.
+    pub(crate) fn bucket_key(&self, kmer: &str) -> u64 {
+        match self.m_size {
+            0 => 0,
+            size => MinimizerKey::build_minimizer_from_string(kmer, size).0,
+        }
+    }
+
+    /// The spaced k-mers of both strands of a sequence
+    /// (010-reference-assessment, SPS-01). `pattern` is a string of `1`
+    /// (the position counts) and `0` (the position is ignored), as long as
+    /// the window. A window with an `N` at a counted position gives no
+    /// k-mer.
+    pub(crate) fn spaced_kmers(
+        sequence: &str,
+        pattern: &str,
+    ) -> Vec<(String, u64)> {
+        let counted = pattern
+            .bytes()
+            .enumerate()
+            .filter(|(_, flag)| *flag == b'1')
+            .map(|(position, _)| position)
+            .collect::<Vec<usize>>();
+
+        let mut kmers = Vec::new();
+
+        if sequence.len() < pattern.len() || counted.is_empty() {
+            return kmers;
+        }
+
+        for strand in [
+            sequence.to_uppercase(),
+            KmersMap::reverse_complement(sequence.to_owned()),
+        ] {
+            for window in strand.as_bytes().windows(pattern.len()) {
+                let kmer = counted
+                    .iter()
+                    .map(|position| window[*position] as char)
+                    .collect::<String>();
+
+                if !kmer.contains('N') {
+                    let hash = KmersMap::hash_kmer(&kmer);
+                    kmers.push((kmer, hash));
+                }
+            }
+        }
+
+        kmers
+    }
+
     /// Get the map of kmers.
     ///
     /// Returns a reference to the map of kmers. This method is used to get the

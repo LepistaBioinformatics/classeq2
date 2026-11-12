@@ -54,11 +54,40 @@ pub fn map_kmers_to_tree_with_rooting(
     min_branch_support: Option<f64>,
     rooting: Option<RootingMethod>,
 ) -> Result<Tree, MappedErrors> {
+    map_spaced_kmers_to_tree(
+        tree_path,
+        msa_path,
+        k_size,
+        m_size,
+        min_branch_support,
+        rooting,
+        None,
+    )
+}
+
+/// Same as [`map_kmers_to_tree_with_rooting`], with spaced k-mers when
+/// `seed` is given (see `KmersMap::spaced_kmers`). The k-mer size is then
+/// the length of the pattern. Only `assess` uses a seed: a database built
+/// with one cannot be written.
+pub(crate) fn map_spaced_kmers_to_tree(
+    tree_path: PathBuf,
+    msa_path: PathBuf,
+    k_size: Option<u64>,
+    m_size: Option<u64>,
+    min_branch_support: Option<f64>,
+    rooting: Option<RootingMethod>,
+    seed: Option<&str>,
+) -> Result<Tree, MappedErrors> {
     // ? -----------------------------------------------------------------------
     // ? Initialize and Validate arguments
     // ? -----------------------------------------------------------------------
 
-    let k_size = k_size.unwrap_or(35);
+    let k_size = seed.map_or(k_size.unwrap_or(35), |seed| seed.len() as u64);
+
+    let build_kmers = |map: &KmersMap, sequence: String| match seed {
+        Some(seed) => KmersMap::spaced_kmers(&sequence, seed),
+        None => map.build_kmer_from_string(sequence, None),
+    };
 
     let m_size = m_size.unwrap_or(4);
 
@@ -125,7 +154,7 @@ pub fn map_kmers_to_tree_with_rooting(
 
                 let own_sender = sequence_sender.to_owned();
                 let cloned_header = header.clone();
-                let kmers = map.build_kmer_from_string(sequence.clone(), None);
+                let kmers = build_kmers(&map, sequence.clone());
 
                 let _ = thread::spawn(move || {
                     match own_sender
@@ -149,7 +178,7 @@ pub fn map_kmers_to_tree_with_rooting(
     }
 
     if !header.is_empty() {
-        let kmers = map.build_kmer_from_string(sequence.clone(), None);
+        let kmers = build_kmers(&map, sequence.clone());
         sequence_sender
             .send((header.clone(), kmers))
             .expect("Error sending kmers to the receiver");
