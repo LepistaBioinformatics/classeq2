@@ -58,7 +58,7 @@ pub(crate) struct Arguments {
     ///
     /// The minimum match coverage between the query and the database
     /// sequences. Without a value, a database built with calibration (cls
-    /// 0.12 or later) sets it from its own leaves: half the lowest share of
+    /// 0.12 or later) sets it from its own leaves: a quarter of the lowest share of
     /// a leaf's k-mers that the rest of the tree holds. Older databases use
     /// 0.7.
     #[arg(short, long)]
@@ -92,7 +92,7 @@ pub(crate) struct Arguments {
     ///
     /// The largest ratio allowed between the specific k-mers of the strongest
     /// sibling and those of the chosen clade.
-    #[arg(long, default_value = "0.5", requires = "evidence_rule")]
+    #[arg(long, default_value = "0.2", requires = "evidence_rule")]
     pub(super) max_rival_ratio: f64,
 
     /// Minimum containment ratio (evidence rule, calibrated databases)
@@ -101,7 +101,7 @@ pub(crate) struct Arguments {
     /// query's k-mers under that clade is at least this ratio of the lowest
     /// share any of the clade's own leaves has with the rest of it. Zero
     /// turns the test off.
-    #[arg(long, default_value = "0.5", requires = "evidence_rule")]
+    #[arg(long, default_value = "0.25", requires = "evidence_rule")]
     pub(super) min_containment_ratio: f64,
 
     /// Force overwrite

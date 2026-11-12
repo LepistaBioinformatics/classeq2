@@ -74,6 +74,7 @@ pub(super) fn place_sequence(
 
     let containment_ratio = evidence_rule
         .map(|rule| rule.min_containment_ratio)
+        .filter(|ratio| *ratio > 0.0)
         .unwrap_or(DEFAULT_CONTAINMENT_RATIO);
 
     let min_match_coverage = if let Some(value) = min_match_coverage {
@@ -1040,7 +1041,7 @@ mod tests {
         );
 
         // EVD-06: a calibrated database sets the default coverage from its
-        // own leaves, half the lowest share a leaf has with the rest.
+        // own leaves, a quarter of the lowest share a leaf has with the rest.
         let lowest = tree
             .calibration
             .as_ref()

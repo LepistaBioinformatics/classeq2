@@ -126,7 +126,7 @@ With `--evidence-rule` (`-e`), the descent enters a child only on k-mers
 specific to it: indexed under that child, under none of its siblings, and under
 no clade left behind on the way from the root. The child must hold at least
 `--min-evidence` of them (default 2), and its strongest sibling at most
-`--max-rival-ratio` times as many (default 0.5; lower is stricter). Otherwise
+`--max-rival-ratio` times as many (default 0.2; lower is stricter). Otherwise
 the placement stops at the current clade with `MaxResolutionReached`. A tie
 never happens, so no record is `Inconclusive`.
 
@@ -167,13 +167,13 @@ Placement uses them as follows.
   such as a genome placed on a database of genes, has its coverage measured
   against the leaf's count instead of its own. A query that covers only part
   of the reference loci, such as one scaffold, is underestimated.
-- **Default match coverage.** Without `-m`, the threshold is half the root's
-  containment: a query passes when it is no more than twice as distant from
-  the tree as the tree's most distant leaf. Databases without calibration
+- **Default match coverage.** Without `-m`, the threshold is a quarter of the
+  root's containment: a query passes when it shares with the tree at least a
+  quarter of what the tree's most distant leaf shares with it. Databases without calibration
   keep the 0.7 default.
 - **Novelty test of the evidence rule.** The descent enters the children of a
   clade only when the query's coverage under that clade reaches
-  `--min-containment-ratio` (default 0.5) times the clade's containment.
+  `--min-containment-ratio` (default 0.25) times the clade's containment.
   Otherwise the query is taken to sit outside the clade's crown, and the
   placement stops at the clade.
 

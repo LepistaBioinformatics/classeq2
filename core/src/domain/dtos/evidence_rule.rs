@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// The ratio of a clade's calibrated containment that a query must reach. It
 /// also sets the default match coverage of a calibrated database.
-pub const DEFAULT_CONTAINMENT_RATIO: f64 = 0.5;
+pub const DEFAULT_CONTAINMENT_RATIO: f64 = 0.25;
 
 /// The evidence placement rule (009-evidence-placement).
 ///
@@ -24,7 +24,8 @@ pub struct EvidenceRule {
     /// With a calibrated database: the descent enters the children of a
     /// clade only when the share of the query's k-mers under that clade is
     /// at least this ratio of the clade's own lowest leaf share
-    /// (`Calibration::containment`). Zero turns the test off.
+    /// (`Calibration::containment`). Zero turns the test off below the root;
+    /// the default match coverage then uses the default ratio.
     pub min_containment_ratio: f64,
 }
 
@@ -32,7 +33,7 @@ impl Default for EvidenceRule {
     fn default() -> Self {
         EvidenceRule {
             min_evidence: 2,
-            max_rival_ratio: 0.5,
+            max_rival_ratio: 0.2,
             min_containment_ratio: DEFAULT_CONTAINMENT_RATIO,
         }
     }
