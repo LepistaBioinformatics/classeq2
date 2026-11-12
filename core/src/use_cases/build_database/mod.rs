@@ -1,5 +1,8 @@
 use crate::domain::{
-    dtos::{kmers_map::KmersMap, sequence::SequenceBody, tree::Tree},
+    dtos::{
+        calibration::Calibration, kmers_map::KmersMap, sequence::SequenceBody,
+        tree::Tree,
+    },
     rooting::RootingMethod,
 };
 
@@ -205,6 +208,7 @@ pub fn map_kmers_to_tree_with_rooting(
     // ? Return a positive response
     // ? -----------------------------------------------------------------------
 
+    tree.calibration = Some(Calibration::measure(&tree.root, &map));
     tree.kmers_map = Some(map);
 
     Ok(tree)

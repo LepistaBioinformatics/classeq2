@@ -1,5 +1,6 @@
 pub mod adherence_test;
 pub mod annotation;
+pub mod calibration;
 pub mod clade;
 pub mod evidence_rule;
 pub mod file_or_stdin;

@@ -56,7 +56,11 @@ pub(crate) struct Arguments {
 
     /// Minimum match coverage
     ///
-    /// The minimum match coverage between the query and the database sequences.
+    /// The minimum match coverage between the query and the database
+    /// sequences. Without a value, a database built with calibration (cls
+    /// 0.12 or later) sets it from its own leaves: half the lowest share of
+    /// a leaf's k-mers that the rest of the tree holds. Older databases use
+    /// 0.7.
     #[arg(short, long)]
     pub(super) match_coverage: Option<f64>,
 
@@ -90,6 +94,15 @@ pub(crate) struct Arguments {
     /// sibling and those of the chosen clade.
     #[arg(long, default_value = "0.5", requires = "evidence_rule")]
     pub(super) max_rival_ratio: f64,
+
+    /// Minimum containment ratio (evidence rule, calibrated databases)
+    ///
+    /// The descent enters the children of a clade only when the share of the
+    /// query's k-mers under that clade is at least this ratio of the lowest
+    /// share any of the clade's own leaves has with the rest of it. Zero
+    /// turns the test off.
+    #[arg(long, default_value = "0.5", requires = "evidence_rule")]
+    pub(super) min_containment_ratio: f64,
 
     /// Force overwrite
     ///
@@ -185,6 +198,7 @@ pub(crate) fn place_sequences_cmd(
             &args.evidence_rule.then_some(EvidenceRule {
                 min_evidence: args.min_evidence,
                 max_rival_ratio: args.max_rival_ratio,
+                min_containment_ratio: args.min_containment_ratio,
             }),
             &Some(&span),
         ) {

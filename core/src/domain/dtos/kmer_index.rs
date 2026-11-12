@@ -8,6 +8,7 @@
 
 use super::{
     annotation::Annotation,
+    calibration::Calibration,
     clade::Clade,
     kmers_map::{KmersMap, MinimizerKey, MinimizerValue},
     tree::Tree,
@@ -621,6 +622,8 @@ struct TreeSection<'a> {
     root: &'a Clade,
     #[serde(skip_serializing_if = "Option::is_none")]
     annotations: Option<&'a Vec<Annotation>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    calibration: Option<&'a Calibration>,
 }
 
 fn align8(value: u64) -> u64 {
@@ -667,6 +670,7 @@ impl KmerIndex {
             min_branch_support: tree.min_branch_support,
             root: &tree.root,
             annotations: tree.annotations.as_ref(),
+            calibration: tree.calibration.as_ref(),
         })?;
 
         let shape = self.shape;
@@ -1047,6 +1051,7 @@ mod tests {
             min_branch_support: tree.min_branch_support,
             root: &tree.root,
             annotations: tree.annotations.as_ref(),
+            calibration: tree.calibration.as_ref(),
         })
         .unwrap()
     }
@@ -1304,6 +1309,8 @@ mod tests {
         // A mapped index writes the same bytes it was read from.
         let (opened_tree, opened) = open_bytes(&first).unwrap();
         assert_eq!(write_to_vec(&opened, &opened_tree), first);
+        assert!(tree.calibration.is_some());
+        assert_eq!(opened_tree.calibration, tree.calibration);
         assert_eq!(first.len() % 8, 0);
     }
 

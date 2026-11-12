@@ -1,5 +1,6 @@
 use super::{
-    annotation::Annotation, clade::Clade, kmer_index::KmerIndex,
+    annotation::Annotation, calibration::Calibration, clade::Clade,
+    kmer_index::KmerIndex,
     kmers_map::KmersMap, telemetry_code::TelemetryCode,
 };
 use crate::domain::rooting::{
@@ -50,6 +51,11 @@ pub struct Tree {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<Vec<Annotation>>,
 
+    /// What the reference says about itself, measured at `build-db`.
+    /// Databases built before 009-evidence-placement have none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub calibration: Option<Calibration>,
+
     /// The k-mers as built, or as read from a legacy database. Loaders
     /// freeze it into `index` and drop it.
     //#[serde(skip_serializing_if = "Option::is_none")]
@@ -78,6 +84,7 @@ impl Tree {
             min_branch_support,
             root,
             annotations: None,
+            calibration: None,
             kmers_map: None,
             index: None,
         }

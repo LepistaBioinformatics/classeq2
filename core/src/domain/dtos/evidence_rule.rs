@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
 
+/// The ratio of a clade's calibrated containment that a query must reach. It
+/// also sets the default match coverage of a calibrated database.
+pub const DEFAULT_CONTAINMENT_RATIO: f64 = 0.5;
+
 /// The evidence placement rule (009-evidence-placement).
 ///
 /// The default rule descends into the child with the most query k-mers, by
@@ -16,6 +20,12 @@ pub struct EvidenceRule {
     /// The largest ratio allowed between the specific k-mers of the strongest
     /// sibling and those of the chosen child.
     pub max_rival_ratio: f64,
+
+    /// With a calibrated database: the descent enters the children of a
+    /// clade only when the share of the query's k-mers under that clade is
+    /// at least this ratio of the clade's own lowest leaf share
+    /// (`Calibration::containment`). Zero turns the test off.
+    pub min_containment_ratio: f64,
 }
 
 impl Default for EvidenceRule {
@@ -23,6 +33,7 @@ impl Default for EvidenceRule {
         EvidenceRule {
             min_evidence: 2,
             max_rival_ratio: 0.5,
+            min_containment_ratio: DEFAULT_CONTAINMENT_RATIO,
         }
     }
 }
@@ -32,7 +43,8 @@ impl Default for EvidenceRule {
 #[serde(rename_all = "camelCase")]
 pub struct PlacementScores {
     /// The share of the query's distinct k-mers indexed under the placed
-    /// clade.
+    /// clade. With a calibrated database, a query with more k-mers than a
+    /// typical leaf is measured against the leaf's count.
     pub coverage: f64,
 
     /// The specific k-mers of the last child the descent entered.

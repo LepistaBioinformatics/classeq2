@@ -152,6 +152,31 @@ scores:
 For `IdentityFound`, `one` and `rest` hold the same two counts as `evidence`
 and `rival`.
 
+## 3.4 Calibrated databases
+
+`cls build-db` measures two things on the reference and stores them in the
+database:
+
+- the mean number of distinct k-mers of a leaf;
+- for every internal clade, the lowest share of a leaf's k-mers that the rest
+  of the clade also holds, over the clade's leaves (its containment).
+
+Placement uses them as follows.
+
+- **Coverage of long queries.** A query with more k-mers than a typical leaf,
+  such as a genome placed on a database of genes, has its coverage measured
+  against the leaf's count instead of its own. A query that covers only part
+  of the reference loci, such as one scaffold, is underestimated.
+- **Default match coverage.** Without `-m`, the threshold is half the root's
+  containment: a query passes when it is no more than twice as distant from
+  the tree as the tree's most distant leaf. Databases without calibration
+  keep the 0.7 default.
+- **Novelty test of the evidence rule.** The descent enters the children of a
+  clade only when the query's coverage under that clade reaches
+  `--min-containment-ratio` (default 0.5) times the clade's containment.
+  Otherwise the query is taken to sit outside the clade's crown, and the
+  placement stops at the clade.
+
 ---
 
 [◀️ Prev | Build Classeq Database](/docs/book/02-build-db.md)

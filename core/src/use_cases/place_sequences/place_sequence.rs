@@ -5,7 +5,9 @@ use super::{
 use crate::domain::dtos::{
     adherence_test::AdherenceTest,
     clade::Clade,
-    evidence_rule::{EvidenceRule, PlacementScores},
+    evidence_rule::{
+        EvidenceRule, PlacementScores, DEFAULT_CONTAINMENT_RATIO,
+    },
     kmer_index::{KmerIndex, MatchSet},
     placement_response::PlacementStatus::{self, *},
     sequence::{SequenceBody, SequenceHeader},
@@ -64,12 +66,26 @@ pub(super) fn place_sequence(
     let remove_intersection = remove_intersection.unwrap_or(false);
     let max_iterations = max_iterations.unwrap_or(1000);
 
+    // Without a value from the caller, a calibrated database sets the
+    // threshold from its own leaves (009-evidence-placement, EVD-06): a
+    // ratio of the lowest share of a leaf's k-mers that the rest of the
+    // tree holds.
+    let calibration = tree.calibration.as_ref();
+
+    let containment_ratio = evidence_rule
+        .map(|rule| rule.min_containment_ratio)
+        .unwrap_or(DEFAULT_CONTAINMENT_RATIO);
+
     let min_match_coverage = if let Some(value) = min_match_coverage {
         match value.to_owned() {
             value if value > 1.0 => 1.0,
             value if value < 0.0 => 0.0,
             value => value,
         }
+    } else if let Some(lowest) =
+        calibration.and_then(|c| c.containment_of(tree.root.id))
+    {
+        containment_ratio * lowest
     } else {
         0.7
     };
@@ -114,6 +130,15 @@ pub(super) fn place_sequence(
         .map(|(_, hash)| *hash)
         .collect::<HashSet<u64>>()
         .len();
+
+    // A query longer than the reference's leaves (a genome against a
+    // database of genes) is measured against a typical leaf (EVD-05).
+    let query_distinct_kmers = match calibration {
+        Some(c) if c.mean_leaf_kmers > 0 => {
+            query_distinct_kmers.min(c.mean_leaf_kmers as usize)
+        }
+        _ => query_distinct_kmers,
+    };
 
     let view = index.view();
 
@@ -300,6 +325,33 @@ pub(super) fn place_sequence(
         if let Some(rule) = evidence_rule {
             let child_ids =
                 children.iter().map(|child| child.id).collect::<Vec<u64>>();
+
+            // Novelty test (EVD-06): a query that shares less with this
+            // clade than the clade's own leaves share with each other sits
+            // outside its crown, so it stops here.
+            let lowest = calibration
+                .and_then(|c| c.containment_of(parent.id))
+                .filter(|_| iteration > 1);
+
+            if let Some(lowest) = lowest {
+                let coverage =
+                    matches.len() as f64 / query_distinct_kmers as f64;
+
+                if coverage < rule.min_containment_ratio * lowest {
+                    return Ok((
+                        MaxResolutionReached(
+                            parent.id,
+                            "Query more distant than the clade's leaves"
+                                .to_string(),
+                        ),
+                        Some(PlacementScores {
+                            coverage,
+                            evidence: last_evidence.0,
+                            rival: last_evidence.1,
+                        }),
+                    ));
+                }
+            }
 
             let evidence = matches.evidence(&child_ids);
 
@@ -600,6 +652,61 @@ mod tests {
             &None,
         )
         .map(|(status, _)| status)
+    }
+
+    /// EVD-06: under the evidence rule, a query that shares less with a
+    /// clade than the clade's calibrated containment allows stops at that
+    /// clade instead of entering its children.
+    #[test]
+    fn evidence_rule_stops_at_a_clade_the_query_is_too_distant_from() {
+        let (mut tree, records) = default_dataset(1);
+        let (name, seq) = &records[0];
+        let query = synth::mutate(seq, 40, 5);
+        let index = KmerIndex::freeze(tree.kmers_map.as_ref().unwrap());
+
+        let (leaf, path) = tree
+            .root
+            .get_leaves_with_paths(None)
+            .into_iter()
+            .find(|(clade, _)| clade.name.as_deref() == Some(name.as_str()))
+            .unwrap();
+        let parent = path[path.len() - 2];
+
+        // Only the leaf's parent clade demands a containment, the highest.
+        let calibration = tree.calibration.as_mut().unwrap();
+        calibration.containment.values_mut().for_each(|v| *v = 0);
+        calibration.containment.insert(parent, 1_000_000);
+
+        let mut place = |ratio: f64| {
+            place_sequence(
+                &SequenceHeader::new("query"),
+                &SequenceBody::new(query.as_str()),
+                &tree,
+                &index,
+                &None,
+                &Some(0.05),
+                &None,
+                &Some(EvidenceRule {
+                    min_containment_ratio: ratio,
+                    ..EvidenceRule::default()
+                }),
+                &None,
+            )
+            .unwrap()
+        };
+
+        let (status, scores) = place(0.9);
+        assert!(scores.unwrap().coverage < 0.9);
+        assert_eq!(
+            status,
+            MaxResolutionReached(
+                parent,
+                "Query more distant than the clade's leaves".to_string()
+            )
+        );
+
+        let (status, _) = place(0.0);
+        assert_eq!(identity_clade_id(&status), Some(leaf.id));
     }
 
     fn leaf_id(tree: &Tree, name: &str) -> u64 {
@@ -925,13 +1032,27 @@ mod tests {
 
     #[test]
     fn place_query_with_half_unrelated_kmers_is_below_coverage() {
-        let (tree, records) = default_dataset(1);
+        let (mut tree, records) = default_dataset(1);
         let query = format!(
             "{}{}",
             &records[0].1[..L / 2],
             synth::random_seq(L / 2, 77)
         );
 
+        // EVD-06: a calibrated database sets the default coverage from its
+        // own leaves, half the lowest share a leaf has with the rest.
+        let lowest = tree
+            .calibration
+            .as_ref()
+            .and_then(|c| c.containment_of(tree.root.id))
+            .unwrap();
+        assert!(lowest > 0.0 && lowest < 0.9, "{lowest}");
+
+        let status = place(&tree, &query, None, None, None).unwrap();
+        assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
+
+        // A database without calibration keeps the 0.7 default.
+        tree.calibration = None;
         let status = place(&tree, &query, None, None, None).unwrap();
 
         assert!(matches!(status, Unclassifiable(_)), "{status:?}");
