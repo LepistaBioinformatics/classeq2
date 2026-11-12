@@ -240,6 +240,67 @@ bytes.
 opens a database, and checks every offset when it reads one. A damaged file
 gives an error, never a crash.
 
+## 2.6 Check a reference before building
+
+`cls assess` estimates how well `cls place --evidence-rule` will work on a
+reference. It takes the tree and the alignment of `build-db`, with the same
+options, and writes no database.
+
+```bash
+cls assess \
+    /path/to/tree.nwk \
+    /path/to/alignment.fasta \
+    --root midpoint
+```
+
+The command places each reference sequence as if its own clade were missing
+from the reference, so every answer can be checked against the tree. It
+reports four kinds of query:
+
+| Query | What it stands for |
+|---|---|
+| `MissingLeafFullLength` | A new member of a known clade, full length |
+| `MissingLeafReads` | The same, as reads (`--read-length`, default 150) |
+| `MissingCladeFullLength` | A member of a clade the reference lacks, full length |
+| `MissingCladeReads` | The same, as reads |
+
+For each kind it gives the share of every outcome:
+
+| Outcome | Meaning |
+|---|---|
+| `Exact` | The clade the missing one was attached to in the input tree |
+| `Under` | A clade that contains it: correct, but shallow |
+| `Over`, `Wrong` | False annotations |
+| `Refused` | Unclassifiable |
+
+Three more values say why queries stop above their clade:
+
+- `Reachable`: the share of queries whose exact clade exists at the chosen
+  `--min-branch-support`. `Exact` cannot be higher. A low value means the
+  tree has few supported branches.
+- `UnderNoEvidence`: no child held k-mers of its own. The reference
+  sequences are too similar to tell apart.
+- `UnderContested`: two children held k-mers of their own. This is the
+  usual case for a conserved marker over a deep, sparsely sampled tree,
+  such as 18S across a kingdom.
+
+Each kind of query gets a verdict:
+
+| Verdict | Rule |
+|---|---|
+| `Poor` | More than 10% false annotations, or more than 25% refused |
+| `Shallow` | Otherwise, fewer than 20% exact |
+| `Good` | Otherwise |
+
+The thresholds come from three datasets, so read the verdict as an
+indication. With a `Poor` verdict for the kind of query you have, use an
+alignment-based placement tool instead.
+
+Options `-k`, `-s`, `--min-evidence` and `--max-rival-ratio` have the meaning
+they have in `build-db` and `place`, so the command also shows what a
+different value would change. `--per-query FILE` writes one line per
+simulated query.
+
 ---
 
 [◀️ Prev | Installation](/docs/book/01-installation.md)

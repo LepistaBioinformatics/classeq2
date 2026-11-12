@@ -18,6 +18,9 @@ enum Opts {
     /// Build the index database
     BuildDb(cmds::build_db::Arguments),
 
+    /// Estimate, from the reference alone, how well sequences will be placed
+    Assess(cmds::assess::Arguments),
+
     /// Place sequences on the tree
     Place(cmds::place_sequences::Arguments),
 
@@ -117,6 +120,9 @@ fn main() -> Result<()> {
         },
         BuildDb(db_args) => {
             cmds::build_db::build_database_cmd(db_args, args.threads)?;
+        }
+        Assess(assess_args) => {
+            cmds::assess::assess_cmd(assess_args, args.threads)?;
         }
         Place(place_args) => cmds::place_sequences::place_sequences_cmd(
             place_args,
