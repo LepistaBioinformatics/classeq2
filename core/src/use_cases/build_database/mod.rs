@@ -1,9 +1,12 @@
-use crate::domain::{
-    dtos::{
-        calibration::Calibration, kmers_map::KmersMap, sequence::SequenceBody,
-        tree::Tree,
+use crate::{
+    domain::{
+        dtos::{
+            calibration::Calibration, kmers_map::KmersMap,
+            sequence::SequenceBody, tree::Tree,
+        },
+        rooting::RootingMethod,
     },
-    rooting::RootingMethod,
+    use_cases::assess_reference::read_reference_records,
 };
 
 use mycelium_base::utils::errors::MappedErrors;
@@ -101,7 +104,7 @@ pub fn map_kmers_to_tree_with_rooting(
     let mut header = String::new();
     let mut sequence = String::new();
 
-    let reader = match std::fs::File::open(msa_path) {
+    let reader = match std::fs::File::open(&msa_path) {
         Err(err) => panic!("The MSA file could not be opened: {err}"),
         Ok(file) => std::io::BufReader::new(file),
     };
@@ -208,7 +211,15 @@ pub fn map_kmers_to_tree_with_rooting(
     // ? Return a positive response
     // ? -----------------------------------------------------------------------
 
-    tree.calibration = Some(Calibration::measure(&tree.root, &map));
+    let mut calibration = Calibration::measure(&tree.root, &map);
+
+    calibration.measure_root_crossing(
+        &tree.root,
+        &map,
+        &read_reference_records(&msa_path)?,
+    );
+
+    tree.calibration = Some(calibration);
     tree.kmers_map = Some(map);
 
     Ok(tree)

@@ -154,12 +154,16 @@ and `rival`.
 
 ## 3.4 Calibrated databases
 
-`cls build-db` measures two things on the reference and stores them in the
+`cls build-db` measures three things on the reference and stores them in the
 database:
 
 - the mean number of distinct k-mers of a leaf;
 - for every internal clade, the lowest share of a leaf's k-mers that the rest
-  of the clade also holds, over the clade's leaves (its containment).
+  of the clade also holds, over the clade's leaves (its containment);
+- the root crossing: the median share of a leaf's k-mers that leaves under
+  another child of the root hold. It is measured on whole leaves and on
+  windows of 100, 150, 250, 500 and 1000 bases, so that a read is compared
+  with windows of its own length.
 
 Placement uses them as follows.
 
@@ -167,10 +171,15 @@ Placement uses them as follows.
   such as a genome placed on a database of genes, has its coverage measured
   against the leaf's count instead of its own. A query that covers only part
   of the reference loci, such as one scaffold, is underestimated.
-- **Default match coverage.** Without `-m`, the threshold is a quarter of the
-  root's containment: a query passes when it shares with the tree at least a
-  quarter of what the tree's most distant leaf shares with it. Databases without calibration
-  keep the 0.7 default.
+- **Default match coverage.** Without `-m`, a query passes when it shares
+  with the tree at least as much as the tree's most distant leaf shares with
+  it (the root's containment), or as much as the two sides of the root share
+  with each other (the root crossing), whichever is lower. The threshold is
+  never below a quarter of the root's containment, which is also the
+  threshold of a database built before the root crossing existed. This
+  refuses sequences of a sister group of the reference; on a deep reference,
+  where the two sides of the root share almost nothing, it changes nothing.
+  Databases without calibration keep the 0.7 default.
 - **Novelty test of the evidence rule.** The descent enters the children of a
   clade only when the query's coverage under that clade reaches
   `--min-containment-ratio` (default 0.25) times the clade's containment.
