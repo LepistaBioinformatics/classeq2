@@ -58,9 +58,10 @@ pub(crate) struct Arguments {
     ///
     /// The minimum match coverage between the query and the database
     /// sequences. Without a value, a database built with calibration (cls
-    /// 0.12 or later) sets it from its own leaves: a quarter of the lowest share of
-    /// a leaf's k-mers that the rest of the tree holds. Older databases use
-    /// 0.7.
+    /// 0.12 or later) sets it from its own leaves: the lowest share of a
+    /// leaf's k-mers that the rest of the tree holds, or the share that the
+    /// two sides of the root hold of each other, whichever is lower, and
+    /// never less than a quarter of the first. Older databases use 0.7.
     #[arg(short, long)]
     pub(super) match_coverage: Option<f64>,
 

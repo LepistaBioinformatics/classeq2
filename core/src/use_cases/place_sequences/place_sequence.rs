@@ -83,10 +83,10 @@ pub(super) fn place_sequence(
             value if value < 0.0 => 0.0,
             value => value,
         }
-    } else if let Some(lowest) =
-        calibration.and_then(|c| c.containment_of(tree.root.id))
-    {
-        containment_ratio * lowest
+    } else if let Some(coverage) = calibration.and_then(|c| {
+        c.root_coverage(tree.root.id, containment_ratio, sequence.seq().len())
+    }) {
+        coverage
     } else {
         0.7
     };
@@ -1049,6 +1049,19 @@ mod tests {
             .unwrap();
         assert!(lowest > 0.0 && lowest < 0.9, "{lowest}");
 
+        let status = place(&tree, &query, None, None, None).unwrap();
+        assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
+
+        // 014: a root crossing above the floor raises the threshold to the
+        // lower of the crossing and the root containment.
+        let length = query.len() as u32;
+        let calibration = tree.calibration.as_mut().unwrap();
+        calibration.containment.insert(tree.root.id, 800_000);
+        calibration.root_crossing.insert(length, 900_000);
+        let status = place(&tree, &query, None, None, None).unwrap();
+        assert!(matches!(status, Unclassifiable(_)), "{status:?}");
+
+        tree.calibration.as_mut().unwrap().root_crossing.clear();
         let status = place(&tree, &query, None, None, None).unwrap();
         assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
 

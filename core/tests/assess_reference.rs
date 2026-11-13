@@ -239,6 +239,7 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
                     reference.calibration = Some(Calibration {
                         mean_leaf_kmers: whole.mean_leaf_kmers,
                         containment,
+                        root_crossing: whole.root_crossing.clone(),
                     });
 
                     reference

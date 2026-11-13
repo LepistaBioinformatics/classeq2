@@ -438,8 +438,8 @@ fn simulate(
         .unwrap_or(DEFAULT_CONTAINMENT_RATIO);
 
     let min_match_coverage = calibration
-        .and_then(|c| c.containment_of(root))
-        .map_or(0.7, |lowest| containment_ratio * lowest);
+        .and_then(|c| c.root_coverage(root, containment_ratio, sequence.len()))
+        .unwrap_or(0.7);
 
     let holders = Holders::find(map, layout, &kmers, missing);
     let mut alive = (0..holders.bounds.len()).collect::<Vec<usize>>();
