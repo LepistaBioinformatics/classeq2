@@ -186,6 +186,59 @@ Placement uses them as follows.
   Otherwise the query is taken to sit outside the clade's crown, and the
   placement stops at the clade.
 
+## 3.5 Refused queries
+
+A query that classeq2 does not place is `Unclassifiable`. With the evidence
+rule on a calibrated database there are three reasons, given in the message:
+
+| Message | Meaning |
+|---|---|
+| `may not be related to the phylogeny` | No k-mer of the query is in the database. |
+| `Insufficient kmers coverage` | The query shares fewer k-mers with the tree than the default match coverage of [3.4](#34-calibrated-databases) asks. This is the test that measures distance. |
+| `No decisive evidence among the root children` | The query is related to the tree, but no child of the root holds clearly more k-mers of its own than the others. Sequences of a sister group of the reference often end here. |
+
+Refused queries are the intended answer for sequences from outside the
+reference. Use `-m` to set the coverage threshold by hand.
+
+## 3.6 When to use classeq2
+
+classeq2 was compared with EPA-ng, pplacer, APPLES-2, EPIK, App-SpaM and BLAST
+on protein-coding genes of the *Bacillus subtilis* group, GAPDH of
+*Colletotrichum* and 18S of eukaryotes. For 150-base reads of a
+protein-coding gene, with `--evidence-rule`:
+
+| | classeq2 | EPIK | BLAST | EPA-ng |
+|---|---|---|---|---|
+| Threshold to choose | none | yes | yes | yes |
+| Sequences of other species of the genus, or farther, accepted | 0% | 50% to 100% | 0% | 0% |
+| Sequences of a sister group at 85% to 90% ANI accepted | 15% | 76% to 96% | 17% | 13% |
+| Reads per second, one thread | 19,000 | 39,000 | 258 | 44 |
+| Memory | 23 MB | 47 MB | 1.3 GB | 0.3 GB |
+| False annotations, in-lineage reads | 22% | 27% | 1% (with LCA) | 42% |
+| Exact clade, in-lineage reads | 21% | 35% | 8% (with LCA) | 32% |
+
+**Use classeq2** to classify many short reads of a protein-coding marker
+when the reference does not cover everything in the sample: it is fast, it
+needs no alignment of the reads, and it refuses sequences from outside the
+reference without a threshold to set.
+
+**Use another tool when:**
+
+- the placements must be as deep as possible and the sample is known to be
+  in lineage (EPIK, or EPA-ng and pplacer);
+- a false annotation costs more than time (BLAST with a lowest common
+  ancestor);
+- the queries are full-length genes: EPA-ng or pplacer, filtered on pendant
+  length, are as safe and reach the exact clade 2.5 times more often;
+- the marker is conserved over a deep, sparsely sampled tree, such as 18S
+  across a kingdom.
+
+`cls assess` ([2.6](/docs/book/02-build-db.md#26-check-a-reference-before-building))
+tells which case a reference falls in before any query is placed.
+
+These numbers come from one bacterial group and two other markers. They
+depend on the reference: check yours with `cls assess`.
+
 ---
 
 [◀️ Prev | Build Classeq Database](/docs/book/02-build-db.md)
