@@ -208,21 +208,22 @@ about equally. Root the tree at the midpoint or with an outgroup
 ## 3.6 When to use classeq2
 
 classeq2 was compared with EPA-ng, pplacer, APPLES-2, EPIK, App-SpaM and BLAST
-on five protein-coding genes of two bacterial groups (the *Bacillus subtilis*
-group and *Xanthomonas*), GAPDH of *Colletotrichum* and 18S of eukaryotes.
-For 150-base reads of a protein-coding gene, with `--evidence-rule`; cells
-with two values are the first and the second bacterial group:
+on five protein-coding genes of five bacterial groups (the *Bacillus subtilis*
+group, *Xanthomonas*, *Bacteroides*, *Burkholderia* and *Streptomyces*), GAPDH
+of *Colletotrichum* and 18S of eukaryotes. For 150-base reads of a
+protein-coding gene, with `--evidence-rule`; cells with a range are the median
+of the five groups, with the lowest and the highest group:
 
 | | classeq2 | EPIK | BLAST | EPA-ng |
 |---|---|---|---|---|
 | Threshold to choose | none | yes | yes | yes |
 | Reads per second, one thread | 19,000 | 39,000 | 258 | 44 |
 | Memory | 23 MB | 47 MB | 1.3 GB | 0.3 GB |
-| Reads of other genera accepted, reference of a clade | 0% / 4% | 50% / 28% | 0% / 1% | 0% / 0.7% |
-| Reads of a sister group at 85% to 90% ANI accepted | 15% / 26% | 76% / 22% | 17% / 14% | 13% / 13% |
-| Reads of other genera accepted, reference of the whole genus | 0.8% / 36% | 20% / 92% | 0% / 25% | 0% / 18% |
-| False annotations, in-lineage reads | 22% / 31% | 27% / 47% | 1% / 0.2% (with LCA) | 42% / 65% |
-| Exact clade, in-lineage reads | 21% / 14% | 35% / 23% | 8% / 2% (with LCA) | 32% / 22% |
+| Reads of other genera accepted, reference of a clade | 2% (0 to 11%) | 28% (11 to 60%) | 0.1% (0 to 5%) | 0.7% (0 to 4%) |
+| Reads of a sister group at 85% to 90% ANI accepted | 21% (15 to 32%) | 46% (15 to 76%) | 15% (8 to 27%) | 13% (9 to 28%) |
+| Reads of other genera accepted, reference of the whole genus | 22% (0.8 to 63%) | 68% (20 to 92%) | 6% (0 to 49%) | 4% (0 to 37%) |
+| False annotations, in-lineage reads | 28% (12 to 32%) | 34% (16 to 54%) | 0.8% (0.1 to 2%), with LCA | 53% (21 to 67%) |
+| Exact clade, in-lineage reads | 14% (9 to 24%) | 23% (17 to 35%) | 5% (2 to 16%), with LCA | 22% (15 to 35%) |
 
 The other tools are cut on their own score where they refuse as many
 in-lineage reads as classeq2 does.
@@ -235,9 +236,9 @@ alignment-free placer, cannot do.
 
 **How well it refuses depends on the reference.** The threshold comes from
 how much the two sides of the root share with each other. When the reference
-holds clades as distant from each other as the outsiders are from it (the
-whole genus *Xanthomonas*, whose two clades are under 80% ANI apart), the
-threshold is low and reads of neighbouring genera pass; BLAST or a placer
+holds clades as distant from each other as the outsiders are from it (a
+whole genus such as *Xanthomonas* or *Streptomyces*, with clades under 80%
+ANI apart), the threshold is low and reads of neighbouring genera pass; BLAST or a placer
 filtered on pendant length then refuse more. A reference of one clade, or
 of a group whose members are closer to each other than to anything outside,
 refuses as well as they do. For such deep references, set `-m` by hand or
@@ -250,7 +251,7 @@ build one reference per clade.
 - a false annotation costs more than time (BLAST with a lowest common
   ancestor);
 - the queries are full-length genes: EPA-ng or pplacer, filtered on pendant
-  length, are as safe and reach the exact clade 2.5 to 4 times more often;
+  length, are as safe and reach the exact clade 2 to 4 times more often;
 - the marker is conserved over a deep, sparsely sampled tree, such as 18S
   across a kingdom.
 
@@ -259,7 +260,7 @@ tells which case a reference falls in before any query is placed. It
 measures in-lineage queries only: it does not tell how the reference will
 treat outsiders.
 
-These numbers come from two bacterial groups and two other markers. They
+These numbers come from five bacterial groups and two other markers. They
 depend on the reference: check yours with `cls assess`, and with sequences
 you know to be outside it.
 
