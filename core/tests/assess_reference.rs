@@ -240,6 +240,7 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
                         mean_leaf_kmers: whole.mean_leaf_kmers,
                         containment,
                         root_crossing: whole.root_crossing.clone(),
+                        side_share: Default::default(),
                     });
 
                     reference

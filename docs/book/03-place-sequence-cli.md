@@ -189,12 +189,13 @@ Placement uses them as follows.
 ## 3.5 Refused queries
 
 A query that classeq2 does not place is `Unclassifiable`. With the evidence
-rule on a calibrated database there are three reasons, given in the message:
+rule on a calibrated database there are four reasons, given in the message:
 
 | Message | Meaning |
 |---|---|
 | `may not be related to the phylogeny` | No k-mer of the query is in the database. |
 | `Insufficient kmers coverage` | The query shares fewer k-mers with the tree than the default match coverage of [3.4](#34-calibrated-databases) asks. This is the test that measures distance. |
+| `Insufficient kmers coverage under the root child` | The reference is deep: the two sides of its root share with each other under a quarter of what a side shares within itself. The query shares less with the side it enters than nearly all of that side's own leaves do (their 5th percentile, measured at `build-db`). Sequences of neighbouring genera end here on a reference of a whole genus, and so do many species the reference does not hold. |
 | `No decisive evidence among the root children` | The query is related to the tree, but no child of the root holds clearly more k-mers of its own than the others. Sequences of a sister group of the reference often end here. |
 
 Refused queries are the intended answer for sequences from outside the
