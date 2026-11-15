@@ -450,6 +450,39 @@ fn simulate(
         return Some((None, Stop::Coverage));
     }
 
+    // Under a deep root, the coverage of the side entered (017-side-coverage).
+    // A root left with one side is that side, which has no such measure
+    let sides = layout.nodes[&root]
+        .children
+        .iter()
+        .filter(|side| !layout.nodes[*side].within(missing))
+        .collect::<Vec<&u64>>();
+
+    let entered = sides
+        .iter()
+        .filter(|_| sides.len() > 1)
+        .map(|side| {
+            let span = layout.nodes[*side].span();
+            let held = alive
+                .iter()
+                .filter(|kmer| holders.any_within(**kmer, span))
+                .count();
+
+            (**side, held)
+        })
+        .max_by_key(|(_, held)| *held)
+        .and_then(|(side, held)| {
+            calibration?
+                .side_coverage(side, sequence.len())
+                .map(|lowest| (held, lowest))
+        });
+
+    if let Some((held, lowest)) = entered {
+        if (held as f64) < (distinct as f64 * lowest).round() {
+            return Some((None, Stop::Coverage));
+        }
+    }
+
     let mut clade = root;
     let mut at_root = true;
 
