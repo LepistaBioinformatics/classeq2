@@ -207,7 +207,7 @@ reports the exact, under, false and refused shares for a missing leaf and for
 a missing clade.
 
 The numbers come from 1,249 tests on 25 references of five bacterial groups
-(five marker genes each of *Bacillus*, the *Bacillus cereus* group,
+(five marker genes each of the *Bacillus subtilis* group, *Bacteroides*,
 *Burkholderia*, *Streptomyces* and *Xanthomonas*). In each test a clade was
 removed from the reference and its sequences were placed. Every value from 8
 to 64 lowered the false placements in all five groups, least in
