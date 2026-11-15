@@ -220,14 +220,15 @@ of the five groups, with the lowest and the highest group:
 | Threshold to choose | none | yes | yes | yes |
 | Reads per second, one thread | 19,000 | 39,000 | 258 | 44 |
 | Memory | 23 MB | 47 MB | 1.3 GB | 0.3 GB |
-| Reads of other genera accepted, reference of a clade | 2% (0 to 11%) | 28% (11 to 60%) | 0.1% (0 to 5%) | 0.7% (0 to 4%) |
-| Reads of a sister group at 85% to 90% ANI accepted | 21% (15 to 32%) | 46% (15 to 76%) | 15% (8 to 27%) | 13% (9 to 28%) |
-| Reads of other genera accepted, reference of the whole genus | 22% (0.8 to 63%) | 68% (20 to 92%) | 6% (0 to 49%) | 4% (0 to 37%) |
-| False annotations, in-lineage reads | 28% (12 to 32%) | 34% (16 to 54%) | 0.8% (0.1 to 2%), with LCA | 53% (21 to 67%) |
-| Exact clade, in-lineage reads | 14% (9 to 24%) | 23% (17 to 35%) | 5% (2 to 16%), with LCA | 22% (15 to 35%) |
+| Reads of other genera accepted, reference of a clade | 2% (0 to 7%) | 26% (10 to 43%) | 0% (0 to 3%) | 0.4% (0 to 3%) |
+| Reads of a sister group at 85% to 90% ANI accepted | 19% (15 to 29%) | 33% (13 to 63%) | 11% (3 to 20%) | 10% (8 to 21%) |
+| Reads of other genera accepted, reference of the whole genus | 4% (0 to 13%) | 40% (10 to 48%) | 1% (0 to 9%) | 2% (0 to 9%) |
+| False annotations, in-lineage reads | 16% (6 to 27%) | 32% (9 to 36%) | 0.1% (0.1 to 0.8%), with LCA | 39% (13 to 51%) |
+| Exact clade, in-lineage reads | 12% (8 to 19%) | 21% (17 to 32%) | 4% (2 to 11%), with LCA | 20% (15 to 32%) |
 
-The other tools are cut on their own score where they refuse as many
-in-lineage reads as classeq2 does.
+The in-lineage reads are those of a clade taken out of the reference;
+classeq2 refuses 38% of them (23% to 53%), and the other tools are cut on
+their own score where they refuse as many.
 
 **Use classeq2** to classify many short reads of a protein-coding marker
 when the reference does not cover everything in the sample: it is fast, it
@@ -235,15 +236,16 @@ needs no alignment of the reads, and it refuses sequences from outside the
 reference without a threshold to set, which EPIK, the other fast
 alignment-free placer, cannot do.
 
-**How well it refuses depends on the reference.** The threshold comes from
-how much the two sides of the root share with each other. When the reference
-holds clades as distant from each other as the outsiders are from it (a
-whole genus such as *Xanthomonas* or *Streptomyces*, with clades under 80%
-ANI apart), the threshold is low and reads of neighbouring genera pass; BLAST or a placer
-filtered on pendant length then refuse more. A reference of one clade, or
-of a group whose members are closer to each other than to anything outside,
-refuses as well as they do. For such deep references, set `-m` by hand or
-build one reference per clade.
+**What the refusal costs.** A read of a strain the reference does not hold
+is usually placed (6% to 28% refused); a read of a species it does not hold
+is refused about half of the time (48% to 69%). When the two sides of the
+root share little with each other (a whole genus such as *Xanthomonas* or
+*Streptomyces*, with clades under 80% ANI apart), the query must share with
+the side it enters as much as the leaves of that side share with each other
+(the fourth reason above); most full-length genes of a new species are then
+refused. BLAST or a placer filtered on pendant length still refuse reads of
+other genera a little better on such references. To accept more, set `-m`
+by hand, or build one reference per clade.
 
 **Use another tool when:**
 
@@ -252,7 +254,7 @@ build one reference per clade.
 - a false annotation costs more than time (BLAST with a lowest common
   ancestor);
 - the queries are full-length genes: EPA-ng or pplacer, filtered on pendant
-  length, are as safe and reach the exact clade 2 to 4 times more often;
+  length, are as safe and reach the exact clade 2.5 times more often;
 - the marker is conserved over a deep, sparsely sampled tree, such as 18S
   across a kingdom.
 
