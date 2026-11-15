@@ -106,6 +106,42 @@ fn weaken(topology: &Topology, count: &mut usize) -> Topology {
     }
 }
 
+/// A copy of `topology`, with the branch above it set to `above` if given.
+fn copy(topology: &Topology, above: Option<f64>) -> Topology {
+    match topology {
+        Topology::Leaf { name, length } => {
+            synth::leaf(name, above.unwrap_or(*length))
+        }
+        Topology::Node {
+            children,
+            support,
+            length,
+        } => synth::node(
+            children.iter().map(|child| copy(child, None)).collect(),
+            *support,
+            above.unwrap_or(*length),
+        ),
+    }
+}
+
+/// `topology` with a branch of `length` above each child of the root, so
+/// that the two sides of the root share few k-mers (a deep root).
+fn deepen(topology: &Topology, length: f64) -> Topology {
+    match topology {
+        Topology::Node {
+            children, support, ..
+        } => synth::node(
+            children
+                .iter()
+                .map(|child| copy(child, Some(length)))
+                .collect(),
+            *support,
+            0.0,
+        ),
+        leaf => copy(leaf, None),
+    }
+}
+
 fn leaf_names(clade: &Clade, names: &mut BTreeSet<String>) {
     match clade.children.as_deref() {
         Some(children) if !children.is_empty() => {
@@ -179,14 +215,34 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
     let mut placed = 0;
     let mut clades = 0;
 
-    for (seed, weak) in [(11, false), (12, true), (13, true)] {
+    let mut side_tested = 0;
+
+    for (seed, weak, deep) in [
+        (11, false, false),
+        (12, true, false),
+        (13, true, false),
+        (14, false, true),
+    ] {
         let topology = match weak {
             false => synth::yule(LEAVES, seed),
             true => weaken(&synth::yule(LEAVES, seed), &mut 0),
         };
+        let topology = match deep {
+            true => deepen(&topology, 0.3),
+            false => topology,
+        };
         let records = synth::evolve(&topology, L, seed);
         let (tree, input_root) = build(&topology, &records);
         let sets = clade_leaves(&tree.root);
+
+        // 017-side-coverage: under the deep root the side test applies
+        let calibration = tree.calibration.as_ref().unwrap();
+        side_tested += calibration
+            .side_share
+            .keys()
+            .filter(|side| calibration.side_coverage(**side, L).is_some())
+            .count();
+
         let input_sets = clade_leaves(&input_root);
 
         let options = AssessOptions {
@@ -221,7 +277,9 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
                     // reference gets the same values
                     let whole = tree.calibration.as_ref().unwrap();
 
-                    let containment = clade_leaves(&reference.root)
+                    // The clade of the whole reference that each clade of
+                    // the pruned one comes from
+                    let origin = clade_leaves(&reference.root)
                         .into_iter()
                         .filter_map(|(id, leaves)| {
                             sets.iter()
@@ -229,10 +287,30 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
                                     set.difference(missing).eq(leaves.iter())
                                 })
                                 .min_by_key(|(_, set)| set.len())
-                                .and_then(|(full, _)| {
-                                    whole.containment.get(full)
+                                .map(|(full, _)| (id, *full))
+                        })
+                        .collect::<HashMap<u64, u64>>();
+
+                    let containment = origin
+                        .iter()
+                        .filter_map(|(id, full)| {
+                            whole.containment.get(full).map(|v| (*id, *v))
+                        })
+                        .collect();
+
+                    // A side of the root keeps its measure, whatever it lost
+                    let side_share = clade_leaves(&reference.root)
+                        .into_iter()
+                        .filter_map(|(id, leaves)| {
+                            whole
+                                .side_share
+                                .iter()
+                                .find(|(full, _)| {
+                                    sets[*full]
+                                        .difference(missing)
+                                        .eq(leaves.iter())
                                 })
-                                .map(|value| (id, *value))
+                                .map(|(_, share)| (id, share.clone()))
                         })
                         .collect();
 
@@ -240,6 +318,7 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
                         mean_leaf_kmers: whole.mean_leaf_kmers,
                         containment,
                         root_crossing: whole.root_crossing.clone(),
+                        side_share,
                     });
 
                     reference
@@ -264,6 +343,7 @@ fn assessment_matches_placement_on_a_reference_without_the_clade() {
         }
     }
 
+    assert!(side_tested > 0, "no reference with a deep root");
     assert!(compared > 3 * 2 * LEAVES, "{compared} compared");
     assert!(clades > 3 * LEAVES / 2, "{clades} from missing clades");
     assert!(placed * 2 > compared, "{placed} of {compared} placed");

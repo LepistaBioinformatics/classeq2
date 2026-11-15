@@ -13,6 +13,13 @@ const CROSSING_WINDOWS: [usize; 5] = [100, 150, 250, 500, 1000];
 /// The most windows of one length taken from a leaf, evenly spaced.
 const CROSSING_WINDOWS_PER_LEAF: usize = 32;
 
+/// The root is deep when its crossing is under this share of what the side
+/// a query enters holds within itself (017-side-coverage).
+const DEEP_ROOT_RATIO: f64 = 0.25;
+
+/// The side share is this percentile of the windows of the side's leaves.
+const SIDE_SHARE_PERCENTILE: usize = 5;
+
 /// What the reference says about itself, measured at `build-db`
 /// (009-evidence-placement, EVD-05 and EVD-06).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -39,22 +46,50 @@ pub struct Calibration {
     /// of its root are to each other.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub root_crossing: BTreeMap<u32, u32>,
+
+    /// Per child of the root (a side) and sequence length in bases: the
+    /// share of a leaf's k-mers that another leaf of the same side holds, in
+    /// parts per million, at the 5th percentile of the windows measured for
+    /// `root_crossing` (017-side-coverage). A side of one leaf has no entry.
+    /// A query that shares less than this with the side it enters is less
+    /// related to it than nearly all of the side's own leaves are.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub side_share: BTreeMap<u64, BTreeMap<u32, u32>>,
+}
+
+/// The value measured at the length nearest to `length`, by ratio.
+fn nearest(values: &BTreeMap<u32, u32>, length: usize) -> Option<f64> {
+    let length = (length.max(1) as f64).ln();
+
+    values
+        .iter()
+        .min_by(|a, b| {
+            let a = ((*a.0).max(1) as f64).ln() - length;
+            let b = ((*b.0).max(1) as f64).ln() - length;
+            a.abs().total_cmp(&b.abs())
+        })
+        .map(|(_, ppm)| *ppm as f64 / 1e6)
 }
 
 impl Calibration {
     /// The root crossing for a query of `length` bases: the one measured at
     /// the nearest length, by ratio.
     pub fn root_crossing_of(&self, length: usize) -> Option<f64> {
-        let length = (length.max(1) as f64).ln();
+        nearest(&self.root_crossing, length)
+    }
 
-        self.root_crossing
-            .iter()
-            .min_by(|a, b| {
-                let a = ((*a.0).max(1) as f64).ln() - length;
-                let b = ((*b.0).max(1) as f64).ln() - length;
-                a.abs().total_cmp(&b.abs())
-            })
-            .map(|(_, ppm)| *ppm as f64 / 1e6)
+    /// The lowest share of its k-mers that a query of `length` bases must
+    /// find under `side`, the child of the root it enters, when the root is
+    /// deep: the two sides of the root share with each other less than a
+    /// quarter of what the side shares within itself. Then the root crossing
+    /// says little about how related a query must be, and the side's own
+    /// leaves say it. `None` when the root is not deep or the side has no
+    /// measure: no test applies.
+    pub fn side_coverage(&self, side: u64, length: usize) -> Option<f64> {
+        let share = nearest(self.side_share.get(&side)?, length)?;
+        let crossing = self.root_crossing_of(length)?;
+
+        (crossing < DEEP_ROOT_RATIO * share).then_some(share)
     }
 
     /// The lowest share of its k-mers that a query of `length` bases must
@@ -88,8 +123,10 @@ impl Calibration {
         map: &KmersMap,
         records: &[(String, String)],
     ) {
-        // The child of the root each leaf sits under
+        // The child of the root each leaf sits under, by name and by id
         let mut side_of = HashMap::<&str, u64>::new();
+        let mut id_of = HashMap::<&str, u64>::new();
+        let mut side_of_id = HashMap::<u64, u64>::new();
 
         for child in root.children.as_deref().unwrap_or_default() {
             let mut stack = vec![child];
@@ -102,7 +139,10 @@ impl Calibration {
                     _ => {
                         if let Some(name) = clade.name.as_deref() {
                             side_of.insert(name, child.id);
+                            id_of.insert(name, clade.id);
                         }
+
+                        side_of_id.insert(clade.id, child.id);
                     }
                 }
             }
@@ -111,54 +151,91 @@ impl Calibration {
         let sides = side_of.values().copied().collect::<HashSet<u64>>();
         let (k_size, m_size) = (map.get_kmer_size(), map.get_minimizer_size());
 
-        // The share of the distinct k-mers of `sequence` that a leaf under
-        // another child of the root holds
-        let crossing = |sequence: &str, side: u64| -> Option<u32> {
-            let mut seen = HashSet::<u64>::new();
-            let mut shared = 0u64;
+        // The shares of the distinct k-mers of `sequence`, taken from `leaf`
+        // under `side`, that a leaf under another child of the root holds
+        // and that another leaf of the same side holds
+        let shares_of =
+            |sequence: &str, side: u64, leaf: u64| -> Option<(u32, u32)> {
+                let mut seen = HashSet::<u64>::new();
+                let (mut across, mut within) = (0u64, 0u64);
 
-            for (key, hash) in query_kmers(sequence, k_size, m_size) {
-                if !seen.insert(hash) {
-                    continue;
+                for (key, hash) in query_kmers(sequence, k_size, m_size) {
+                    if !seen.insert(hash) {
+                        continue;
+                    }
+
+                    let Some(nodes) = map
+                        .get_map()
+                        .get(&MinimizerKey(key))
+                        .and_then(|bucket| bucket.0.get(&hash))
+                    else {
+                        continue;
+                    };
+
+                    across += sides
+                        .iter()
+                        .any(|other| *other != side && nodes.contains(other))
+                        as u64;
+
+                    within += nodes.iter().any(|node| {
+                        *node != leaf && side_of_id.get(node) == Some(&side)
+                    }) as u64;
                 }
 
-                let across = map
-                    .get_map()
-                    .get(&MinimizerKey(key))
-                    .and_then(|bucket| bucket.0.get(&hash))
-                    .is_some_and(|nodes| {
-                        sides.iter().any(|other| {
-                            *other != side && nodes.contains(other)
-                        })
-                    });
+                let total = seen.len() as u64;
 
-                shared += across as u64;
-            }
-
-            (!seen.is_empty())
-                .then(|| (shared * 1_000_000 / seen.len() as u64) as u32)
-        };
+                (total > 0).then(|| {
+                    (
+                        (across * 1_000_000 / total) as u32,
+                        (within * 1_000_000 / total) as u32,
+                    )
+                })
+            };
 
         let leaves = records
             .iter()
             .filter_map(|(name, sequence)| {
-                side_of.get(name.as_str()).map(|side| (sequence, *side))
+                let side = side_of.get(name.as_str())?;
+                Some((sequence, *side, *id_of.get(name.as_str())?))
             })
-            .collect::<Vec<(&String, u64)>>();
+            .collect::<Vec<(&String, u64, u64)>>();
+
+        // A side of one leaf has no other leaf to share with
+        let mut side_sizes = HashMap::<u64, usize>::new();
+
+        for side in side_of_id.values() {
+            *side_sizes.entry(*side).or_default() += 1;
+        }
 
         if leaves.is_empty() {
             return;
         }
 
-        let mean_length =
-            leaves.iter().map(|(s, _)| s.len()).sum::<usize>() / leaves.len();
+        let mean_length = leaves.iter().map(|(s, _, _)| s.len()).sum::<usize>()
+            / leaves.len();
 
         let mut shares = BTreeMap::<u32, Vec<u32>>::new();
+        let mut within = BTreeMap::<u64, BTreeMap<u32, Vec<u32>>>::new();
 
-        for (sequence, side) in &leaves {
-            if let Some(share) = crossing(sequence, *side) {
-                shares.entry(mean_length as u32).or_default().push(share);
-            }
+        for (sequence, side, leaf) in &leaves {
+            let mut record = |length: usize, measured: Option<(u32, u32)>| {
+                let Some((across, inside)) = measured else {
+                    return;
+                };
+
+                shares.entry(length as u32).or_default().push(across);
+
+                if side_sizes.get(side).copied().unwrap_or(0) > 1 {
+                    within
+                        .entry(*side)
+                        .or_default()
+                        .entry(length as u32)
+                        .or_default()
+                        .push(inside);
+                }
+            };
+
+            record(mean_length, shares_of(sequence, *side, *leaf));
 
             for window in CROSSING_WINDOWS {
                 if window >= mean_length || window > sequence.len() {
@@ -176,12 +253,12 @@ impl Calibration {
                         i * room / (count - 1)
                     };
 
-                    if let Some(share) = sequence
-                        .get(start..start + window)
-                        .and_then(|w| crossing(w, *side))
-                    {
-                        shares.entry(window as u32).or_default().push(share);
-                    }
+                    record(
+                        window,
+                        sequence
+                            .get(start..start + window)
+                            .and_then(|w| shares_of(w, *side, *leaf)),
+                    );
                 }
             }
         }
@@ -191,6 +268,22 @@ impl Calibration {
             .map(|(length, mut values)| {
                 values.sort_unstable();
                 (length, values[values.len() / 2])
+            })
+            .collect();
+
+        self.side_share = within
+            .into_iter()
+            .map(|(side, lengths)| {
+                let lengths = lengths
+                    .into_iter()
+                    .map(|(length, mut values)| {
+                        values.sort_unstable();
+                        let at = values.len() * SIDE_SHARE_PERCENTILE / 100;
+                        (length, values[at])
+                    })
+                    .collect();
+
+                (side, lengths)
             })
             .collect();
     }
@@ -284,6 +377,7 @@ impl Calibration {
             mean_leaf_kmers: leaf_kmers.values().sum::<u64>() / counted,
             containment,
             root_crossing: BTreeMap::new(),
+            side_share: BTreeMap::new(),
         }
     }
 }
@@ -420,6 +514,45 @@ mod tests {
     }
 
     #[test]
+    fn side_share_is_what_another_leaf_of_the_side_holds() {
+        let one = "ACGTTGCAAGGCTTAACCGGTATCGATTGC";
+        let other = "TTTTTCCCCCGGGGGAAAAATTTTTCCCCC";
+
+        // Two identical leaves on a side share everything; the side of one
+        // leaf has no measure.
+        let same = crossing_of(one, one, other);
+        assert_eq!(same.side_share.keys().collect::<Vec<_>>(), [&3]);
+        assert_eq!(same.side_share[&3][&30], 1_000_000);
+
+        // Two unrelated leaves on a side share nothing.
+        let apart = crossing_of(one, other, one);
+        assert_eq!(apart.side_share[&3][&30], 0);
+    }
+
+    #[test]
+    fn side_coverage_applies_only_under_a_deep_root() {
+        let with = |crossing: u32| Calibration {
+            mean_leaf_kmers: 0,
+            containment: BTreeMap::new(),
+            root_crossing: BTreeMap::from([(150, crossing)]),
+            side_share: BTreeMap::from([(3, BTreeMap::from([(150, 600_000)]))]),
+        };
+
+        // The sides of the root share under a quarter of what side 3 shares
+        // within itself: the side sets the coverage.
+        assert_eq!(with(0).side_coverage(3, 150), Some(0.6));
+        assert_eq!(with(140_000).side_coverage(3, 140), Some(0.6));
+        // From a quarter up the root is not deep, and no test applies.
+        assert_eq!(with(150_000).side_coverage(3, 150), None);
+        assert_eq!(with(900_000).side_coverage(3, 150), None);
+        // A side without a measure, or a database without a root crossing.
+        assert_eq!(with(0).side_coverage(4, 150), None);
+        let mut bare = with(0);
+        bare.root_crossing.clear();
+        assert_eq!(bare.side_coverage(3, 150), None);
+    }
+
+    #[test]
     fn root_crossing_is_read_at_the_nearest_length() {
         let calibration = Calibration {
             mean_leaf_kmers: 0,
@@ -429,6 +562,7 @@ mod tests {
                 (250, 200_000),
                 (1900, 300_000),
             ]),
+            side_share: BTreeMap::new(),
         };
 
         assert_eq!(calibration.root_crossing_of(90), Some(0.1));
@@ -447,6 +581,7 @@ mod tests {
             root_crossing: crossing
                 .map(|ppm| BTreeMap::from([(150, ppm)]))
                 .unwrap_or_default(),
+            side_share: BTreeMap::new(),
         };
 
         // Without a crossing: the floor, a ratio of the containment.

@@ -77,6 +77,9 @@ pub(super) fn place_sequence(
         .filter(|ratio| *ratio > 0.0)
         .unwrap_or(DEFAULT_CONTAINMENT_RATIO);
 
+    // A coverage from the caller replaces every calibrated coverage test.
+    let calibrated_coverage = min_match_coverage.is_none();
+
     let min_match_coverage = if let Some(value) = min_match_coverage {
         match value.to_owned() {
             value if value > 1.0 => 1.0,
@@ -266,6 +269,44 @@ pub(super) fn place_sequence(
         trace!(code = TelemetryCode::UCPLACE0008.to_string(), msg);
 
         return Ok((Unclassifiable(msg), None));
+    }
+
+    // ? -----------------------------------------------------------------------
+    // ? Coverage of the side entered, under a deep root (017-side-coverage)
+    //
+    // When the two sides of the root share little with each other, the root
+    // threshold is low and says little. The query must then share with the
+    // child of the root that holds most of its k-mers as much as that
+    // child's own leaves share with each other.
+    //
+    // ? -----------------------------------------------------------------------
+
+    if let Some(calibration) = calibration.filter(|_| calibrated_coverage) {
+        let sides = children.iter().map(|c| c.id).collect::<Vec<u64>>();
+        let held = matches.scores(&sides, false);
+
+        let entered = sides
+            .iter()
+            .zip(&held)
+            .max_by_key(|(_, held)| **held)
+            .and_then(|(side, held)| {
+                calibration
+                    .side_coverage(*side, sequence.seq().len())
+                    .map(|lowest| (*side, *held, lowest))
+            });
+
+        if let Some((side, held, lowest)) = entered {
+            if (held as f64) < (query_distinct_kmers as f64 * lowest).round() {
+                let msg = format!(
+                    "Insufficient kmers coverage under the root child \
+                    {side}: {held}"
+                );
+
+                trace!(code = TelemetryCode::UCPLACE0008.to_string(), msg);
+
+                return Ok((Unclassifiable(msg), None));
+            }
+        }
     }
 
     // ? -----------------------------------------------------------------------
@@ -603,6 +644,7 @@ mod tests {
         synth,
         use_cases::map_kmers_to_tree,
     };
+    use std::collections::BTreeMap;
     use tempfile::TempDir;
     use uuid::Uuid;
 
@@ -1049,6 +1091,11 @@ mod tests {
             .unwrap();
         assert!(lowest > 0.0 && lowest < 0.9, "{lowest}");
 
+        // This test is about the root coverage alone: the side measure of
+        // 017 is left out (its own test is
+        // `place_under_a_deep_root_checks_the_side_the_query_enters`).
+        tree.calibration.as_mut().unwrap().side_share.clear();
+
         let status = place(&tree, &query, None, None, None).unwrap();
         assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
 
@@ -1070,6 +1117,58 @@ mod tests {
         let status = place(&tree, &query, None, None, None).unwrap();
 
         assert!(matches!(status, Unclassifiable(_)), "{status:?}");
+    }
+
+    /// 017: under a deep root, a query must share with the child of the
+    /// root it enters as much as that child's leaves share with each other.
+    #[test]
+    fn place_under_a_deep_root_checks_the_side_the_query_enters() {
+        let (mut tree, records) = default_dataset(1);
+        let query = format!(
+            "{}{}",
+            &records[0].1[..L / 2],
+            synth::random_seq(L / 2, 77)
+        );
+
+        let length = query.len() as u32;
+        let sides = tree
+            .root
+            .children
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|child| child.id)
+            .collect::<Vec<u64>>();
+
+        let calibration = tree.calibration.as_mut().unwrap();
+        calibration.root_crossing = BTreeMap::from([(length, 100_000)]);
+        calibration.side_share = sides
+            .iter()
+            .map(|side| (*side, BTreeMap::from([(length, 900_000)])))
+            .collect();
+
+        // Deep root: half of the query is not enough for a side whose
+        // leaves share nine tenths.
+        let status = place(&tree, &query, None, None, None).unwrap();
+        assert!(
+            matches!(&status, Unclassifiable(msg) if msg.contains("under the root child")),
+            "{status:?}"
+        );
+
+        // A coverage from the caller replaces the test.
+        let status = place(&tree, &query, None, Some(0.1), None).unwrap();
+        assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
+
+        // The whole leaf passes it.
+        let status = place(&tree, &records[0].1, None, None, None).unwrap();
+        assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
+
+        // A root that is not deep: no test below it.
+        let calibration = tree.calibration.as_mut().unwrap();
+        calibration.root_crossing = BTreeMap::from([(length, 300_000)]);
+        calibration.containment.insert(tree.root.id, 300_000);
+        let status = place(&tree, &query, None, None, None).unwrap();
+        assert!(!matches!(status, Unclassifiable(_)), "{status:?}");
     }
 
     #[test]
