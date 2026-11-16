@@ -85,7 +85,12 @@ pub(crate) struct Arguments {
 
     /// Minimum evidence (evidence rule)
     ///
-    /// The fewest specific k-mers the chosen clade must hold.
+    /// The fewest specific k-mers the chosen clade must hold. A higher value
+    /// trades resolution for precision: a doubtful step is not taken and the
+    /// query stays at the parent clade. For samples that may hold lineages
+    /// the reference lacks, 32 to 64 suits reads of 150 bases and 64 to 96
+    /// reads of 250 bases. Keep it under a quarter of the query's k-mers,
+    /// 2 x (length - k + 1). See section 3.3 of the book.
     #[arg(long, default_value = "2", requires = "evidence_rule")]
     pub(super) min_evidence: u32,
 

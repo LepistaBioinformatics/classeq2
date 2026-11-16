@@ -152,6 +152,68 @@ scores:
 For `IdentityFound`, `one` and `rest` hold the same two counts as `evidence`
 and `rival`.
 
+### Choosing `--min-evidence`
+
+`--min-evidence` sets how sure the descent must be before it enters a child.
+With a higher value, a doubtful step is not taken: the query stays at the
+parent clade, with `MaxResolutionReached: Evidence below threshold`. A
+placement that would have been false, in a sister species for example, becomes
+a right one at a higher level. The price is resolution: some placements that
+were right at the deepest clade also stay one level up.
+
+The default of 2 keeps the most resolution. The table shows what higher values
+do to queries from lineages the reference does not hold, which is where false
+placements come from. "False" is the share of placed queries that end inside a
+wrong clade; "right" is the share of all queries placed at the clade their
+lineage attaches to or above it; "exact" is the share placed at that clade.
+
+| `--min-evidence` | 150 bases: false | right | exact | 250 bases: false | right | exact | Full gene: false | right | exact |
+|---|---|---|---|---|---|---|---|---|---|
+| 2 (default) | 32% | 29% | 8.3% | 29% | 30% | 9.0% | 17% | 36% | 12.1% |
+| 16 | 26% | 31% | 7.8% | 25% | 32% | 8.6% | 16% | 37% | 12.2% |
+| 32 | 21% | 32% | 7.2% | 21% | 33% | 8.2% | 13% | 38% | 12.4% |
+| 64 | 14% | 32% | 5.6% | 14% | 34% | 7.0% | 11% | 39% | 12.5% |
+| 96 | 10% | 29% | 3.5% | 9% | 34% | 4.9% | 8% | 40% | 11.4% |
+| 128 | 11% | 25% | 2.4% | 8% | 32% | 4.0% | 8% | 40% | 11.0% |
+
+When to raise it:
+
+- **Reads from a sample that may hold lineages the reference lacks**, such as
+  an environmental sample or a product under quality control, when a false
+  call at the species is worse than a right call at the genus. Use 32 to 64
+  for reads of 150 bases and 64 to 96 for reads of 250 bases. This halves the
+  false placements or better, and the share of right placements does not
+  fall.
+- **Full-length genes or longer queries**, with the same concern: 64 to 128.
+
+When to leave it at 2:
+
+- **Queries expected to belong to species the reference holds**, when the
+  deepest clade is what you want, as when confirming the identity of an
+  isolate.
+- **Queries shorter than about 100 bases.** The value is a count of k-mers, so
+  it must stay well under what the query has. A query of `L` bases has
+  `2 × (L − k + 1)` k-mers, both strands counted: 232 for 150 bases at the
+  default `k` of 35. Keep `--min-evidence` under a quarter of that. At 256,
+  every read of 150 bases is refused.
+
+What it does not do: it does not refuse sequences from outside the reference
+clade. That is the job of the calibrated coverage (section 3.4), and the share
+of outside sequences placed is the same at every value in the table.
+
+To see the effect on your own reference before placing anything, run
+`cls assess` with the same option (section 2.6 of the `build-db` chapter): it
+reports the exact, under, false and refused shares for a missing leaf and for
+a missing clade.
+
+The numbers come from 1,249 tests on 25 references of five bacterial groups
+(five marker genes each of the *Bacillus subtilis* group, *Bacteroides*,
+*Burkholderia*, *Streptomyces* and *Xanthomonas*). In each test a clade was
+removed from the reference and its sequences were placed. Every value from 8
+to 64 lowered the false placements in all five groups, least in
+*Burkholderia* (43% to 25% at 64, reads of 150 bases). Other groups and other
+kinds of marker were not tested.
+
 ## 3.4 Calibrated databases
 
 `cls build-db` measures three things on the reference and stores them in the
