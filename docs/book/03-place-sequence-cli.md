@@ -201,27 +201,51 @@ rule on a calibrated database there are four reasons, given in the message:
 Refused queries are the intended answer for sequences from outside the
 reference. Use `-m` to set the coverage threshold by hand.
 
+The third reason depends on where the tree is rooted: it refuses a distant
+sequence only when the root splits the reference into sides that match it
+about equally. Root the tree at the midpoint or with an outgroup
+([2.1](/docs/book/02-build-db.md#21-root-the-reference-tree)), not at an arbitrary leaf.
+
 ## 3.6 When to use classeq2
 
 classeq2 was compared with EPA-ng, pplacer, APPLES-2, EPIK, App-SpaM and BLAST
-on protein-coding genes of the *Bacillus subtilis* group, GAPDH of
-*Colletotrichum* and 18S of eukaryotes. For 150-base reads of a
-protein-coding gene, with `--evidence-rule`:
+on five protein-coding genes of five bacterial groups (the *Bacillus subtilis*
+group, *Xanthomonas*, *Bacteroides*, *Burkholderia* and *Streptomyces*), GAPDH
+of *Colletotrichum* and 18S of eukaryotes. For 150-base reads of a
+protein-coding gene, with `--evidence-rule`; cells with a range are the median
+of the five groups, with the lowest and the highest group:
 
 | | classeq2 | EPIK | BLAST | EPA-ng |
 |---|---|---|---|---|
 | Threshold to choose | none | yes | yes | yes |
-| Sequences of other species of the genus, or farther, accepted | 0% | 50% to 100% | 0% | 0% |
-| Sequences of a sister group at 85% to 90% ANI accepted | 15% | 76% to 96% | 17% | 13% |
 | Reads per second, one thread | 19,000 | 39,000 | 258 | 44 |
 | Memory | 23 MB | 47 MB | 1.3 GB | 0.3 GB |
-| False annotations, in-lineage reads | 22% | 27% | 1% (with LCA) | 42% |
-| Exact clade, in-lineage reads | 21% | 35% | 8% (with LCA) | 32% |
+| Reads of other genera accepted, reference of a clade | 2% (0 to 7%) | 26% (10 to 43%) | 0% (0 to 3%) | 0.4% (0 to 3%) |
+| Reads of a sister group at 85% to 90% ANI accepted | 19% (15 to 29%) | 33% (13 to 63%) | 11% (3 to 20%) | 10% (8 to 21%) |
+| Reads of other genera accepted, reference of the whole genus | 4% (0 to 13%) | 40% (10 to 48%) | 1% (0 to 9%) | 2% (0 to 9%) |
+| False annotations, in-lineage reads | 16% (6 to 27%) | 32% (9 to 36%) | 0.1% (0.1 to 0.8%), with LCA | 39% (13 to 51%) |
+| Exact clade, in-lineage reads | 12% (8 to 19%) | 21% (17 to 32%) | 4% (2 to 11%), with LCA | 20% (15 to 32%) |
+
+The in-lineage reads are those of a clade taken out of the reference;
+classeq2 refuses 38% of them (23% to 53%), and the other tools are cut on
+their own score where they refuse as many.
 
 **Use classeq2** to classify many short reads of a protein-coding marker
 when the reference does not cover everything in the sample: it is fast, it
 needs no alignment of the reads, and it refuses sequences from outside the
-reference without a threshold to set.
+reference without a threshold to set, which EPIK, the other fast
+alignment-free placer, cannot do.
+
+**What the refusal costs.** A read of a strain the reference does not hold
+is usually placed (6% to 28% refused); a read of a species it does not hold
+is refused about half of the time (48% to 69%). When the two sides of the
+root share little with each other (a whole genus such as *Xanthomonas* or
+*Streptomyces*, with clades under 80% ANI apart), the query must share with
+the side it enters as much as the leaves of that side share with each other
+(the fourth reason above); most full-length genes of a new species are then
+refused. BLAST or a placer filtered on pendant length still refuse reads of
+other genera a little better on such references. To accept more, set `-m`
+by hand, or build one reference per clade.
 
 **Use another tool when:**
 
@@ -235,10 +259,13 @@ reference without a threshold to set.
   across a kingdom.
 
 `cls assess` ([2.6](/docs/book/02-build-db.md#26-check-a-reference-before-building))
-tells which case a reference falls in before any query is placed.
+tells which case a reference falls in before any query is placed. It
+measures in-lineage queries only: it does not tell how the reference will
+treat outsiders.
 
-These numbers come from one bacterial group and two other markers. They
-depend on the reference: check yours with `cls assess`.
+These numbers come from five bacterial groups and two other markers. They
+depend on the reference: check yours with `cls assess`, and with sequences
+you know to be outside it.
 
 ---
 
