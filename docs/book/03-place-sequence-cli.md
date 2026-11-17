@@ -475,8 +475,8 @@ annotation file and its README.
 
 Every file is checked against the SHA-256 recorded in the index. If a file
 fails the check, nothing is written. If the database was built by a classeq2
-of another major or minor version than the one running, a warning says so; the
-database can then be built again from its alignment and tree (`--all`).
+newer than the one running, a warning says so: update classeq2, or build the
+database again from its alignment and tree (`--all`).
 
 **Versions.** Each database is versioned by itself, with whole numbers. A
 database gets a new version only when one of its files changed, so a new

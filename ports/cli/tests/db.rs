@@ -79,7 +79,7 @@ fn mirror(root: &Path, bad_sum: bool) {
 ]}}"#,
         version(1, "db-demo-v1", "0.12.0"),
         version(2, "db-demo-v2", "0.12.0"),
-        version(1, "db-other-v1", "0.1.0"),
+        version(1, "db-other-v1", "999.0.0"),
     );
     fs::create_dir_all(root.join("databases")).unwrap();
     fs::write(root.join("databases/index.json"), index).unwrap();
@@ -317,7 +317,7 @@ fn an_existing_file_is_kept_unless_forced() {
 }
 
 #[test]
-fn a_database_built_by_another_minor_version_gets_a_warning() {
+fn only_a_database_built_by_a_newer_cls_gets_a_warning() {
     let dir = TempDir::new().unwrap();
     let out = TempDir::new().unwrap();
     mirror(dir.path(), false);
@@ -334,7 +334,15 @@ fn a_database_built_by_another_minor_version_gets_a_warning() {
         .arg(out.path())
         .assert()
         .success()
-        .stderr(predicate::str::contains("0.1.0"));
+        .stderr(predicate::str::contains("999.0.0"));
+
+    // demo was built by 0.12.0, which is not newer than the cls under test
+    cls()
+        .args(["db", "fetch", "demo", "--index", &index_of(dir.path()), "-o"])
+        .arg(out.path())
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("newer").not());
 }
 
 #[test]

@@ -185,9 +185,9 @@ fn sha256_hex(content: &[u8]) -> String {
 }
 
 /// Major and minor numbers of a version string.
-fn major_minor(version: &str) -> Option<(&str, &str)> {
+fn major_minor(version: &str) -> Option<(u64, u64)> {
     let mut parts = version.split('.');
-    Some((parts.next()?, parts.next()?))
+    Some((parts.next()?.parse().ok()?, parts.next()?.parse().ok()?))
 }
 
 pub(crate) fn list_databases_cmd(args: ListArguments) -> Result<()> {
@@ -335,11 +335,13 @@ was written.",
 
     let running = env!("CARGO_PKG_VERSION");
 
-    if major_minor(&version.cls) != major_minor(running) {
+    // A newer cls reads the databases of an older one. The other way round
+    // is not promised, so only that case is reported.
+    if major_minor(&version.cls) > major_minor(running) {
         tracing::warn!(
-            "Database {} version {} was built with cls {}, and this is cls \
-{running}. If it does not load, build it again from its alignment and tree \
-(`cls db fetch --all`).",
+            "Database {} version {} was built with cls {}, which is newer \
+than this cls {running}. If it does not load, update cls, or build the \
+database again from its alignment and tree (`cls db fetch --all`).",
             database.name,
             version.version,
             version.cls
