@@ -1,4 +1,15 @@
 
+## v0.13.0 (2026-11-17)
+
+### Feat
+
+- list and download ready-made databases (cls db) (#27)
+
+### Fix
+
+- warn only when a fetched database was built by a newer cls (#31)
+
+
 ## v0.12.0 (2026-11-17)
 
 ### BREAKING CHANGE
