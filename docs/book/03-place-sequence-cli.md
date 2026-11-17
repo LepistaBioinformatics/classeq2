@@ -329,6 +329,112 @@ These numbers come from five bacterial groups and two other markers. They
 depend on the reference: check yours with `cls assess`, and with sequences
 you know to be outside it.
 
+## 3.7 Naming the clades: annotations (`-a`)
+
+A placement gives a clade by its number. With an annotation file, `cls place`
+also reports what that clade is: its name, its rank, its taxon identifier.
+
+```bash
+cls place \
+    -d bsub-gyrb.cls \
+    -a annotations.yaml \
+    -e \
+    -o placed_sequences \
+    sequences.fasta
+```
+
+The file is a YAML list. Each item names a clade of the database tree by its
+number and gives it tags:
+
+```yaml
+- clade: 0
+  meta:
+  - !Taxid 653685
+  - !SciName Bacillus subtilis group
+  - !Rank species group
+  - !Gene gyrB
+  - !InferenceMethod Maximum likelihood
+  - !Note A free text about the reference.
+
+- clade: 70
+  meta:
+  - !Taxid 1938374
+  - !SciName Bacillus amyloliquefaciens group
+  - !Rank species group
+
+- clade: 7
+  meta:
+  - !Taxid 1423
+  - !SciName Bacillus subtilis
+  - !Rank species
+```
+
+| Tag | Value |
+|---|---|
+| `Taxid` | A whole number, for example an NCBI taxon identifier |
+| `SciName` | The scientific name |
+| `Rank` | The rank, as free text (`species`, `species group`, `genus`) |
+| `Gene` | The gene of the reference |
+| `InferenceMethod` | How the tree was inferred |
+| `Note` | Free text |
+
+Every tag is optional, and a clade without an item has no annotation.
+
+**Finding the clade numbers.** The numbers are those of the database, not of
+the Newick file. Write the tree of the database out and read them there; each
+clade has its `id`, its `parent` and, for a leaf, its `name`:
+
+```bash
+cls convert database -d bsub-gyrb.cls --only-tree -f json -o tree
+```
+
+Branches under `--min-branch-support` are removed when the database is built,
+so annotate the tree of the database you will place on. A database built again
+with another support, or from another tree, numbers its clades anew.
+
+**What is reported.** A placed query carries the annotations of every
+annotated clade between its own clade and the root, sorted by clade number.
+Clades are numbered from the root down, so the last item is the deepest name:
+
+```yaml
+---
+query: read_4
+code: "MaxResolutionReached: Evidence below threshold"
+annotations:
+- clade: 0
+  meta:
+  - Taxid: 653685
+  - SciName: Bacillus subtilis group
+  - Rank: species group
+  - Gene: gyrB
+- clade: 70
+  meta:
+  - Taxid: 1938374
+  - SciName: Bacillus amyloliquefaciens group
+  - Rank: species group
+placement:
+  status: MaxResolutionReached
+  clade: 77
+  message: Evidence below threshold
+scores:
+  coverage: 1.0
+  evidence: 190
+  rival: 0
+```
+
+Here the query stopped at clade 77, an unnamed clade inside the *Bacillus
+amyloliquefaciens* group, so the group is the deepest name it can be given. A
+query that stops at a species clade, or below one, carries the species as its
+last item. A refused query has no placement and no annotations.
+
+**Which clades to annotate.** Annotate a species on the clade that holds all
+its sequences, and only when that clade holds no sequence of another species.
+A gene tree does not resolve every species; a species whose sequences are
+mixed with those of another is better left without a clade of its own, and its
+queries are then reported at the group above. Annotating the root with the
+group and the gene makes every placed query say which reference it was placed
+on.
+
 ---
 
 [◀️ Prev | Build Classeq Database](/docs/book/02-build-db.md)

@@ -26,7 +26,7 @@ distributed way.
 
 - [01. Installation ⚙️](/docs/book/01-installation.md)
 - [02. Build Database 🏗️](/docs/book/02-build-db.md): rooting, building, the database format, `cls assess`
-- [03. Place Sequences with CLI </>](/docs/book/03-place-sequence-cli.md): output, the evidence rule, calibrated databases, refused queries, when to use classeq2
+- [03. Place Sequences with CLI </>](/docs/book/03-place-sequence-cli.md): output, the evidence rule, calibrated databases, refused queries, when to use classeq2, clade annotations
 - [04. Configure the API server 🔧](/docs/book/04-configure-api-server.md)
 - [05. Place Sequences using the API 🔗](/docs/book/05-submit-placement-to-api.md)
 - [06. Telemetry and Benchmarking Classeq 🕒](/docs/book/06-telemetry-and-benchmark.md)
