@@ -1,3 +1,28 @@
+
+## v0.12.0 (2026-11-17)
+
+### BREAKING CHANGE
+
+- in YAML placement output, annotation tags are written as single-key maps (`Taxid: 5`) instead of YAML tags (`!Taxid 5`), the same shape as the JSONL output. Annotation input files in either form are still accepted.
+- placement results change: IdentityFound reports the leaf rather than its parent clade, ties are reported as Inconclusive, and `rest` in adherence records is the strongest sibling score. Databases are written in the v2 binary format by default, and older `cls` versions cannot read them; use `build-db --format legacy` or `convert database -f zstd` for an older release.
+
+### Feat
+
+- strongest-sibling placement rule, binary database format and faster placement (#13)
+- native tree rooting (cls root-tree) and typed rooting errors (#14)
+- evidence placement rule, database calibration and BUG-045 fix (#18)
+- estimate from the reference how well sequences will be placed (#19)
+- root-crossing threshold refuses sequences of a sister group (#20)
+- coverage test under a deep root (#23)
+
+### Perf
+
+- log unrelated queries at DEBUG and rotate watcher logs daily (#17)
+
+### Refactor
+
+- replace the deprecated serde_yaml with serde-saphyr (#11)
+
 ## v0.11.0 (2026-11-05)
 
 ### BREAKING CHANGE
