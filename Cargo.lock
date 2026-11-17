@@ -1098,7 +1098,7 @@ checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
 
 [[package]]
 name = "classeq-api"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "actix-files",
  "actix-http",
@@ -1133,7 +1133,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-cli"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1162,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-core"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "clap",
  "crc32fast",
@@ -1186,7 +1186,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-ports-lib"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "apalis",
@@ -1204,7 +1204,7 @@ dependencies = [
 
 [[package]]
 name = "classeq-watcher"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "apalis",
