@@ -435,6 +435,68 @@ queries are then reported at the group above. Annotating the root with the
 group and the gene makes every placed query say which reference it was placed
 on.
 
+## 3.8 Ready-made databases (`cls db`)
+
+Some databases are published with classeq2, each with the names of its species
+annotated on the tree ([3.7](#37-naming-the-clades-annotations--a)). `cls db`
+lists them and downloads one.
+
+```bash
+cls db list
+```
+
+```
+name       version  latest  date        cls     size    title
+bsub-gyrb  1        yes     2026-11-17  0.12.0  3.0 MB  Bacillus subtilis group, gyrB
+xan-gyrb   1        yes     2026-11-17  0.12.0  5.0 MB  Xanthomonas, gyrB
+bur-reca   1        yes     2026-11-17  0.12.0  1.5 MB  Burkholderia, recA
+```
+
+The output is tab-separated, one line per version. `cls` is the version of
+classeq2 that built the database, and `size` is that of all its files.
+
+```bash
+cls db fetch bsub-gyrb
+cls place -d bsub-gyrb/bsub-gyrb.cls -a bsub-gyrb/annotations.yaml -e \
+    -o placed_sequences sequences.fasta
+```
+
+`fetch` writes into a directory named after the database, inside the current
+directory or the one given with `-o`. It downloads the database, its
+annotation file and its README.
+
+| Option | Effect |
+|---|---|
+| `--version N` | Download version `N` and not the latest |
+| `--all` | Also download the alignment and the tree the database was built from, the report of `cls assess`, and an example sample with its expected report |
+| `-o DIR` | Write into `DIR/<name>/` |
+| `--force` | Overwrite files that already exist |
+| `--index LOCATION` | Read another index, at an `http(s)` address or a local path |
+
+Every file is checked against the SHA-256 recorded in the index. If a file
+fails the check, nothing is written. If the database was built by a classeq2
+of another major or minor version than the one running, a warning says so; the
+database can then be built again from its alignment and tree (`--all`).
+
+**Versions.** Each database is versioned by itself, with whole numbers. A
+database gets a new version only when one of its files changed, so a new
+release of classeq2 does not by itself make new versions of the databases.
+Give `--version` in a script or a pipeline whose results must stay the same.
+
+**Where the files are.** Each version is a release of the classeq2 repository
+on GitHub, tagged `db-<name>-v<N>`, with the files as its assets; they can be
+downloaded from the release page without `cls`. The list read by `cls db` is
+`index.json`, in the release tagged `databases`.
+
+**A mirror.** A machine without access to GitHub can use a copy. Keep the
+layout of the releases, `<root>/databases/index.json` and
+`<root>/db-<name>-v<N>/<file>`, and give the index:
+
+```bash
+cls db list --index /data/classeq/databases/index.json
+cls db fetch bsub-gyrb --index /data/classeq/databases/index.json
+```
+
 ---
 
 [◀️ Prev | Build Classeq Database](/docs/book/02-build-db.md)

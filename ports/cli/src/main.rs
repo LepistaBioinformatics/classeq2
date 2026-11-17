@@ -29,6 +29,9 @@ enum Opts {
 
     /// Root a Newick tree (midpoint or outgroup)
     RootTree(cmds::root_tree::Arguments),
+
+    /// List and download ready-made databases
+    Db(cmds::db::Arguments),
 }
 
 fn main() -> Result<()> {
@@ -134,6 +137,14 @@ fn main() -> Result<()> {
         RootTree(root_args) => {
             cmds::root_tree::root_tree_cmd(root_args)?;
         }
+        Db(db_args) => match db_args.db {
+            cmds::db::Commands::List(list_args) => {
+                cmds::db::list_databases_cmd(list_args)?;
+            }
+            cmds::db::Commands::Fetch(fetch_args) => {
+                cmds::db::fetch_database_cmd(fetch_args)?;
+            }
+        },
     }
 
     Ok(())

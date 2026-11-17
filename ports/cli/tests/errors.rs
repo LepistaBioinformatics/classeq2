@@ -18,6 +18,8 @@ fn missing_required_arguments_exit_with_usage_error() {
         vec!["convert", "tree"],
         vec!["convert", "kmers"],
         vec!["convert", "database"],
+        vec!["db"],
+        vec!["db", "fetch"],
     ] {
         cls()
             .args(&args)
