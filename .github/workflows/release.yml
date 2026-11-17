@@ -6,8 +6,12 @@ name: release
 # the crates to crates.io and creates the GitHub release with the changelog
 # of that version.
 #
+# The crates and the GitHub release are published by separate jobs that do
+# not wait for each other, so a failure of one does not hold the other back.
+#
 # It can also be started by hand, from main, for a tag that already exists;
-# crates and releases that are already published are left as they are.
+# crates and releases that are already published are left as they are, which
+# makes a second run the way to finish a release that stopped halfway.
 #
 # The crates.io token is the secret CARGO_REGISTRY_TOKEN of the environment
 # "production", which accepts deployments from the branch main only. That is
@@ -120,7 +124,7 @@ jobs:
 
   github:
     name: create the GitHub release
-    needs: [check, crates]
+    needs: check
     runs-on: ubuntu-latest
     permissions:
       contents: write
