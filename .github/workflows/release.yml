@@ -1,21 +1,22 @@
 name: release
 
-# A release starts with an annotated tag vX.Y.Z pushed on the merge commit of
-# the version bump on main. This workflow then tests that commit, publishes
-# the crates to crates.io and creates the GitHub release with the changelog of
-# that version. It can also be started by hand for a tag that already exists;
+# A release starts when the version bump is merged to main: a commit whose
+# message begins with "bump:" (the squash-merge of the release/vX.Y.Z pull
+# request). This workflow then tests that commit, tags it vX.Y.Z, publishes
+# the crates to crates.io and creates the GitHub release with the changelog
+# of that version.
+#
+# It can also be started by hand, from main, for a tag that already exists;
 # crates and releases that are already published are left as they are.
 #
-# It needs the repository secret CARGO_REGISTRY_TOKEN, a crates.io token that
-# may publish new versions of the five classeq crates.
-#
-# Tags of the ready-made databases (db-<name>-v<N>, databases) do not match
-# the pattern and do not start it.
+# The crates.io token is the secret CARGO_REGISTRY_TOKEN of the environment
+# "production", which accepts deployments from the branch main only. That is
+# why the workflow runs on main and creates the tag itself: a run started by
+# a pushed tag would be refused by the environment.
 
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
@@ -28,7 +29,6 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  TAG: ${{ inputs.tag || github.ref_name }}
 
 concurrency:
   group: release
@@ -36,36 +36,67 @@ concurrency:
 
 jobs:
   check:
-    name: check the tag
+    name: test and tag
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'bump:')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ inputs.tag || github.sha }}
           fetch-depth: 0
-      - name: The tag is the workspace version and is on main
+      - name: The version, its tag and its place on main
+        id: version
+        env:
+          GIVEN: ${{ inputs.tag }}
         run: |
           version=$(grep -m1 '^version = ' Cargo.toml | cut -d '"' -f 2)
-          if [ "v$version" != "$TAG" ]; then
-            echo "::error::Tag $TAG does not match the workspace version $version"
+          tag="v$version"
+          if [ -n "$GIVEN" ] && [ "$GIVEN" != "$tag" ]; then
+            echo "::error::Tag $GIVEN does not match the workspace version $version at that tag"
             exit 1
           fi
           if ! git merge-base --is-ancestor "$(git rev-parse HEAD)" origin/main; then
-            echo "::error::Tag $TAG is not on main"
+            echo "::error::The commit to release is not on main"
             exit 1
           fi
+          if [ -z "$GIVEN" ] && git rev-parse -q --verify "refs/tags/$tag" >/dev/null \
+            && [ "$(git rev-parse "$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+            echo "::error::Tag $tag already exists on another commit; was the version bumped?"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace --locked
+      - name: Tag the commit
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists on this commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
 
   crates:
     name: publish to crates.io
     needs: check
     runs-on: ubuntu-latest
+    environment: production
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ needs.check.outputs.tag }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Publish the crates in dependency order
@@ -73,7 +104,7 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
           if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
-            echo "::error::The secret CARGO_REGISTRY_TOKEN is not set"
+            echo "::error::The secret CARGO_REGISTRY_TOKEN of the environment production is not set"
             exit 1
           fi
           version=${TAG#v}
@@ -89,14 +120,16 @@ jobs:
 
   github:
     name: create the GitHub release
-    needs: crates
+    needs: [check, crates]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ needs.check.outputs.tag }}
       - name: Create the release with the changelog of this version
         env:
           GH_TOKEN: ${{ github.token }}
