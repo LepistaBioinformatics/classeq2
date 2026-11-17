@@ -1,6 +1,7 @@
 pub(crate) mod assess;
 pub mod build_db;
 pub mod convert;
+pub(crate) mod db;
 pub mod describe_db;
 pub mod place_sequences;
 pub mod root_tree;
