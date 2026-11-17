@@ -1,0 +1,149 @@
+name: release
+
+# A release starts when the version bump is merged to main: a commit whose
+# message begins with "bump:" (the squash-merge of the release/vX.Y.Z pull
+# request). This workflow then tests that commit, tags it vX.Y.Z, publishes
+# the crates to crates.io and creates the GitHub release with the changelog
+# of that version.
+#
+# It can also be started by hand, from main, for a tag that already exists;
+# crates and releases that are already published are left as they are.
+#
+# The crates.io token is the secret CARGO_REGISTRY_TOKEN of the environment
+# "production", which accepts deployments from the branch main only. That is
+# why the workflow runs on main and creates the tag itself: a run started by
+# a pushed tag would be refused by the environment.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, for example v0.12.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: test and tag
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'bump:')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.sha }}
+          fetch-depth: 0
+      - name: The version, its tag and its place on main
+        id: version
+        env:
+          GIVEN: ${{ inputs.tag }}
+        run: |
+          version=$(grep -m1 '^version = ' Cargo.toml | cut -d '"' -f 2)
+          tag="v$version"
+          if [ -n "$GIVEN" ] && [ "$GIVEN" != "$tag" ]; then
+            echo "::error::Tag $GIVEN does not match the workspace version $version at that tag"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$(git rev-parse HEAD)" origin/main; then
+            echo "::error::The commit to release is not on main"
+            exit 1
+          fi
+          if [ -z "$GIVEN" ] && git rev-parse -q --verify "refs/tags/$tag" >/dev/null \
+            && [ "$(git rev-parse "$tag^{commit}")" != "$(git rev-parse HEAD)" ]; then
+            echo "::error::Tag $tag already exists on another commit; was the version bumped?"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace --locked
+      - name: Tag the commit
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists on this commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+
+  crates:
+    name: publish to crates.io
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check.outputs.tag }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Publish the crates in dependency order
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "::error::The secret CARGO_REGISTRY_TOKEN of the environment production is not set"
+            exit 1
+          fi
+          version=${TAG#v}
+          for crate in classeq-core classeq-ports-lib classeq-cli classeq-api classeq-watcher; do
+            status=$(curl -s -o /dev/null -w '%{http_code}' -A "classeq2-release-workflow" \
+              "https://crates.io/api/v1/crates/$crate/$version")
+            if [ "$status" = "200" ]; then
+              echo "$crate $version is already on crates.io"
+              continue
+            fi
+            cargo publish --locked -p "$crate"
+          done
+
+  github:
+    name: create the GitHub release
+    needs: [check, crates]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check.outputs.tag }}
+      - name: Create the release with the changelog of this version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"
+            exit 0
+          fi
+          awk -v tag="$TAG" '
+            /^## / { on = ($2 == tag) }
+            on && !/^## / { print }
+          ' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::CHANGELOG.md has no section for $TAG"
+            exit 1
+          fi
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file notes.md
